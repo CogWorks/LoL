@@ -15,12 +15,14 @@ import credentials
 
 # using SSH Tunnel because to connect directly to MySQL on server we need to comment out 
 # 'skip-networking' in /etc/mysql/my.cnf which allows non-local connections and is generally less secure
+# 
+# server = credentials.server
+# server.start()
 
-server = credentials.server
-server.start()
+
 
 try:
- cnx = mysql.connector.connect(**credentials.config(server.local_bind_port))
+ cnx = mysql.connector.connect(**credentials.config())
 except mysql.connector.Error as err:
   if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
     print("Something is wrong with your user name or password")
@@ -29,7 +31,8 @@ except mysql.connector.Error as err:
   else:
     print(err)
 else:
-  cnx.close()
+  print "Connected to %s database" % credentials.config()['database']
+
 cursor = cnx.cursor()
 
 keys = credentials.keys

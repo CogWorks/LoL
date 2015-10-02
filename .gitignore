@@ -1,0 +1,11 @@
+*.pyo
+.DS_Store
+*.pyc
+*.bin
+<<<<<<< HEAD
+reference.py
+LoLtest.py
+credentials.py
+=======
+reference.py
+>>>>>>> parent of 2ef7bcd... preliminary functions

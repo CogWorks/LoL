@@ -41,8 +41,8 @@ key = keys[1]
 
 
         
-def  get_master():
-  url = "https://na.api.pvp.net/api/lol/na/v2.5/league/master?type=RANKED_TEAM_5x5&api_key=%s" % key
+def  get_master(queue="RANKED_TEAM_5x5"):
+  url = "https://na.api.pvp.net/api/lol/na/v2.5/league/master?type=%s&api_key=%s" % (queue, key)
   print "Calling: %s" % url
   return json.loads(urllib2.urlopen(url).read())
 
@@ -50,15 +50,45 @@ def  get_master():
 
 
 
-def create_tables(server):
+def create_tables():
  
  DB_NAME = 'lol'
 
  TABLES = {}
- TABLES['challenger'] = (
-    "CREATE TABLE `challenger` ("
+#  TABLES['challenger'] = (
+#     "CREATE TABLE `challenger` ("
+#     "  `isFreshBlood` bool NOT NULL,"
+#     "  `division` varchar(2) NOT NULL,"
+#     "  `isVeteran` bool NOT NULL,"
+#     "  `wins` int(8) NOT NULL,"
+#     "  `losses` int(8) NOT NULL,"
+#     "  `playerOrTeamId` varchar(50) NOT NULL,"
+#     "  `playerOrTeamName` varchar(25) NOT NULL,"
+#     "  `isInactive` bool NOT NULL,"
+#     "  `isHotStreak` bool NOT NULL,"
+#     "  `leaguePoints` int(8) NOT NULL,"
+#     "  PRIMARY KEY (`playerOrTeamId`)"
+#     ") CHARACTER SET utf8 ENGINE=InnoDB")
+#  
+#  TABLES['master'] = (
+#     "CREATE TABLE `master` ("
+#     "  `isFreshBlood` bool NOT NULL,"
+#     "  `division` varchar(2) NOT NULL,"
+#     "  `isVeteran` bool NOT NULL,"
+#     "  `wins` int(8) NOT NULL,"
+#     "  `losses` int(8) NOT NULL,"
+#     "  `playerOrTeamId` varchar(50) NOT NULL,"
+#     "  `playerOrTeamName` varchar(25) NOT NULL,"
+#     "  `isInactive` bool NOT NULL,"
+#     "  `isHotStreak` bool NOT NULL,"
+#     "  `leaguePoints` int(8) NOT NULL,"
+#     "  PRIMARY KEY (`playerOrTeamId`)"
+#     ") CHARACTER SET utf8 ENGINE=InnoDB") 
+    
+ TABLES['by_league'] = (
+    "CREATE TABLE `by_league` ("
     "  `isFreshBlood` bool NOT NULL,"
-    "  `division` varchar(2) NOT NULL,"
+    "  `division` varchar(5) NOT NULL,"
     "  `isVeteran` bool NOT NULL,"
     "  `wins` int(8) NOT NULL,"
     "  `losses` int(8) NOT NULL,"
@@ -67,23 +97,13 @@ def create_tables(server):
     "  `isInactive` bool NOT NULL,"
     "  `isHotStreak` bool NOT NULL,"
     "  `leaguePoints` int(8) NOT NULL,"
-    "  PRIMARY KEY (`playerOrTeamId`)"
-    ") CHARACTER SET utf8 ENGINE=InnoDB")
- 
- TABLES['master'] = (
-    "CREATE TABLE `master` ("
-    "  `isFreshBlood` bool NOT NULL,"
-    "  `division` varchar(2) NOT NULL,"
-    "  `isVeteran` bool NOT NULL,"
-    "  `wins` int(8) NOT NULL,"
-    "  `losses` int(8) NOT NULL,"
-    "  `playerOrTeamId` varchar(50) NOT NULL,"
-    "  `playerOrTeamName` varchar(25) NOT NULL,"
-    "  `isInactive` bool NOT NULL,"
-    "  `isHotStreak` bool NOT NULL,"
-    "  `leaguePoints` int(8) NOT NULL,"
-    "  PRIMARY KEY (`playerOrTeamId`)"
+    "  `league` varchar(25) NOT NULL,"
+    "  `team` bool NOT NULL,"
+    "  `queue` varchar(25) NOT NULL,"
+    "  CONSTRAINT id_queue PRIMARY KEY (`playerOrTeamId`, `queue`)"
     ") CHARACTER SET utf8 ENGINE=InnoDB") 
+    
+    
     
  TABLES['team'] = (
     "CREATE TABLE `team` ("
@@ -122,7 +142,7 @@ def create_tables(server):
      "  `opposingTeamKills` int(6) NOT NULL,"
      "  `opposingTeamName` varchar(25) NOT NULL,"
      "  `win` bool NOT NULL,"
-     "  PRIMARY KEY (`gameId`, `fullId`)"
+     "  CONSTRAINT game_team PRIMARY KEY (`gameId`, `fullId`)"
      ") CHARACTER SET utf8 ENGINE=InnoDB") 
     
  TABLES['team_roster'] = (
@@ -133,7 +153,7 @@ def create_tables(server):
      "  `status` varchar(25) NOT NULL,"
      "  `isCaptain` bool NOT NULL,"
      "  `teamId` varchar(50) NOT NULL,"
-     "  PRIMARY KEY (`playerId`, `teamId`)"
+     "  CONSTRAINT player_team PRIMARY KEY (`playerId`, `teamId`)"
      ") CHARACTER SET utf8 ENGINE=InnoDB")
       
       
@@ -177,18 +197,21 @@ w = riotwatcher.RiotWatcher(key)
 
 
 
-def update_table(table, create=False):
+def update_table(table, queue="RANKED_TEAM_5x5", create=False):
  if create == True:
-  create_tables(server)
+  create_tables()
 
  if table=="challenger":
-  add_challenger = ("INSERT INTO challenger "
-               "(isFreshBlood, division, isVeteran, wins, losses, playerOrTeamId, playerOrTeamName, isInactive, isHotStreak, leaguePoints) "
-               "VALUES (%(isFreshBlood)s, %(division)s, %(isVeteran)s, %(wins)s, %(losses)s, %(playerOrTeamId)s, %(playerOrTeamName)s, %(isInactive)s, %(isHotStreak)s, %(leaguePoints)s)")
+  add_challenger = ("INSERT INTO by_league "
+               "(isFreshBlood, division, isVeteran, wins, losses, playerOrTeamId, playerOrTeamName, isInactive, isHotStreak, leaguePoints, league, team, queue) "
+               "VALUES (%(isFreshBlood)s, %(division)s, %(isVeteran)s, %(wins)s, %(losses)s, %(playerOrTeamId)s, %(playerOrTeamName)s, %(isInactive)s, %(isHotStreak)s, %(leaguePoints)s, %(league)s, %(team)s, %(queue)s)")
 
-  challenger = w.get_challenger(queue="RANKED_TEAM_5x5")
+  challenger = w.get_challenger(queue=queue)
  
   for x in todict(challenger)['entries']:
+   x['league'] = "challenger"
+   x['team'] = (True if queue!="RANKED_SOLO_5x5" else False)
+   x['queue'] = queue
    try:
     cursor.execute(add_challenger, x)
    except mysql.connector.Error as err:
@@ -198,21 +221,68 @@ def update_table(table, create=False):
   
   
  if table=="master":
-  add_master = ("INSERT INTO master "
-               "(isFreshBlood, division, isVeteran, wins, losses, playerOrTeamId, playerOrTeamName, isInactive, isHotStreak, leaguePoints) "
-               "VALUES (%(isFreshBlood)s, %(division)s, %(isVeteran)s, %(wins)s, %(losses)s, %(playerOrTeamId)s, %(playerOrTeamName)s, %(isInactive)s, %(isHotStreak)s, %(leaguePoints)s)")
-#   master = w.get_master(queue="RANKED_TEAM_5x5")
+  add_master = ("INSERT INTO by_league "
+               "(isFreshBlood, division, isVeteran, wins, losses, playerOrTeamId, playerOrTeamName, isInactive, isHotStreak, leaguePoints, league, team, queue) "
+               "VALUES (%(isFreshBlood)s, %(division)s, %(isVeteran)s, %(wins)s, %(losses)s, %(playerOrTeamId)s, %(playerOrTeamName)s, %(isInactive)s, %(isHotStreak)s, %(leaguePoints)s, %(league)s, %(team)s, %(queue)s)")
+
+#   master = w.get_master(queue=queue)
   ## TEMPORARILY CREATED MY OWN "Get_Master" Function
-  master = get_master()
-  
+  master = get_master(queue=queue)
   for x in todict(master)['entries']:
+   x['league'] = "master"
+   x['team'] = (True if queue!="RANKED_SOLO_5x5" else False)
+   x['queue'] = queue
    try:
     cursor.execute(add_master, x)
    except mysql.connector.Error as err:
     print(err.msg)
    else:
     print "Updated Master"
+    
+    
+    
+ if table=="checkteams":
+   add_league = ("INSERT INTO by_league "
+               "(isFreshBlood, division, isVeteran, wins, losses, playerOrTeamId, playerOrTeamName, isInactive, isHotStreak, leaguePoints, league, team, queue) "
+               "VALUES (%(isFreshBlood)s, %(division)s, %(isVeteran)s, %(wins)s, %(losses)s, %(playerOrTeamId)s, %(playerOrTeamName)s, %(isInactive)s, %(isHotStreak)s, %(leaguePoints)s, %(league)s, %(team)s, %(queue)s)")
+
+   cursor.execute("SELECT fullId FROM team" )  
   
+   team_ids_raw = []   
+   team_ids_raw = cursor.fetchall()
+   team_ids = [] 
+  
+   for x in team_ids_raw:
+    for y in x:
+     team_ids.append(y)
+   
+   for x in xrange(0,int(round(len(team_ids), -1)/10)):
+    stop = ((x+1)*10)
+    if x == int(round(len(team_ids), -1)/10) - 1:
+     stop = (len(team_ids))
+
+  
+    league_entries = w.get_league_entry(team_ids=team_ids[(x*10):stop])
+    
+
+    for z in league_entries:
+     for y in league_entries[z]:
+      for v in y['entries']:
+       v['league'] = y['tier']
+       v['team'] = (True if y['queue']!="RANKED_SOLO_5x5" else False)
+       v['queue'] = y['queue']
+       try:
+ #        print x['playerOrTeamId']
+        cursor.execute(add_league, v)
+       except mysql.connector.Error as err:
+        print(err.msg)
+       else:
+        print "Updated By-League"    
+
+    print "Finished %s of %s" % (stop, len(team_ids))
+        
+        
+        
  if table=="team":
    
    add_team = ("INSERT INTO team "
@@ -227,7 +297,7 @@ def update_table(table, create=False):
             "(inviteDate, joinDate, playerId, status, isCaptain, teamId)"
             "VALUES (%(inviteDate)s, %(joinDate)s, %(playerId)s, %(status)s, %(isCaptain)s, %(teamId)s)")
    
-   cursor.execute("SELECT playerOrTeamId FROM challenger UNION ALL SELECT playerOrTeamId FROM master" )         
+   cursor.execute("SELECT playerOrTeamId FROM by_league WHERE team = True" )         
    
 
    
@@ -238,28 +308,13 @@ def update_table(table, create=False):
    for x in team_ids_raw:
     for y in x:
      team_ids.append(y)
-   
-#    print load(team_ids[0])
-   
-#    for id in cursor:
-#     print(id)
-
-
-#    challenger_ids = cursor.execute("SELECT playerOrTeamId FROM challenger")
-#    master_ids = cursor.execute("SELECT playerOrTeamId FROM master")
-
-   
-#    team_ids[0]
-
-    
-#    for x in team_ids:
 
     
    teams_data = []
    
-   for x in range(0,int(round(len(team_ids), -1)/10 + 1)):
-    stop = ((x+1)*10)-1
-    if x == int(round(len(team_ids), -1)/10):
+   for x in xrange(0,int(round(len(team_ids), -1)/10)):
+    stop = ((x+1)*10)
+    if x == int(round(len(team_ids), -1)/10) - 1:
      stop = (len(team_ids))
 
     teams_data = w.get_teams(team_ids[(x*10):stop])
@@ -336,32 +391,33 @@ def update_table(table, create=False):
         print "Finished %s of %s" % (stop + 1, len(team_ids))
 
 
-    
-#    print(todict(todict(teams_data)))
-   
-#    print teams2[1]
-#    print teams_data
-#    for x in team_ids:
-#     try:
-#      w.get_team(x)
-#     except Exception as err:
-#      print(err)
-#     else:
-#      print x
-#   
- cnx.commit()
-# cursor.execute("ALTER TABLE challenger CONVERT TO CHARACTER SET UTF8")
 
-# cursor.execute("ALTER TABLE team_history ADD PRIMARY KEY (`gameId`, `fullId`)")
-# cursor.execute("ALTER TABLE team_roster ADD PRIMARY KEY (`playerId`, `teamId`)")
+ cnx.commit()
+
 
 update_table("team", create = False)
 
 
 
-
-
 cursor.close()
 cnx.close()
-server.stop()
+# server.stop()
 
+
+
+
+# cursor.execute("ALTER TABLE challenger CONVERT TO CHARACTER SET UTF8")
+
+# cursor.execute("ALTER TABLE by_league DROP PRIMARY KEY")
+# cursor.execute("ALTER TABLE by_league ADD CONSTRAINT id_queue PRIMARY KEY (`playerOrTeamId`, `queue`)")
+# 
+# 
+# cursor.execute("ALTER TABLE team_history DROP PRIMARY KEY")
+# cursor.execute("ALTER TABLE team_history ADD CONSTRAINT game_team PRIMARY KEY (`gameId`, `fullId`)")
+# 
+# cursor.execute("ALTER TABLE team_roster DROP PRIMARY KEY")
+# cursor.execute("ALTER TABLE team_roster ADD CONSTRAINT player_team PRIMARY KEY (`playerId`, `teamId`)")
+     
+     
+# cursor.execute("ALTER TABLE by_league MODIFY division varchar(5) NOT NULL")
+# cursor.execute("DROP TABLE IF EXISTS by_league")

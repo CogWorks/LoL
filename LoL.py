@@ -14,9 +14,11 @@ from time import sleep
 
 import credentials
 
+ssh = True
+
 # using SSH Tunnel because to connect directly to MySQL on server we need to comment out 
 # 'skip-networking' in /etc/mysql/my.cnf which allows non-local connections and is generally less secure
-# 
+
 # server = credentials.server
 # server.start()
 
@@ -25,7 +27,7 @@ import credentials
 requests.packages.urllib3.disable_warnings()
 
 try:
- cnx = mysql.connector.connect(**credentials.config())
+ cnx = mysql.connector.connect(**credentials.config(ssh=ssh))
 except mysql.connector.Error as err:
   if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
     print("Something is wrong with your user name or password")
@@ -37,7 +39,7 @@ else:
   print "Connected to %s database" % credentials.config()['database']
 
 cursor = cnx.cursor()
-
+ 
 keys = credentials.keys
 
 key = keys[0]
@@ -158,7 +160,181 @@ def create_tables():
      "  `teamId` varchar(50) NOT NULL,"
      "  CONSTRAINT player_team PRIMARY KEY (`playerId`, `teamId`)"
      ") CHARACTER SET utf8 ENGINE=InnoDB")
+    
+    
       
+ TABLES['matches'] = ( 
+     "CREATE TABLE `matches` ("
+     "		`mapId`		int(4)		NOT NULL	,"
+     "		`matchCreation`		BIGINT		NOT NULL	,"
+     "		`matchDuration`	int(6)		NOT NULL	,"
+     "		`matchId`	varchar(20)		NOT NULL	,"
+     "		`matchMode`	varchar(20)		DEFAULT NULL	,"
+     "		`matchType`	varchar(20)		DEFAULT NULL	,"
+     "		`matchVersion`	varchar(20)		DEFAULT NULL	,"
+     "		`platformId`	varchar(8)		DEFAULT NULL	,"
+     "		`queueType`	varchar(20)		DEFAULT NULL	,"
+     "		`region`	varchar(8)		DEFAULT NULL	,"
+     "		`season`	varchar(20)		DEFAULT NULL	,"
+     " PRIMARY KEY (`matchId`)"
+     ") CHARACTER SET utf8 ENGINE=InnoDB")
+ 
+ 
+ 
+ 
+
+
+ TABLES['match_participants'] = (
+     "CREATE TABLE `match_participants` ("
+     "		`matchId`	varchar(20)		NOT NULL	,"
+     "		`championId`	int(4)		NOT NULL	,"
+     "		`highestAchievedSeasonTier`	varchar(16)		DEFAULT NULL	,"
+     "		`participantId`	tinyint		NOT NULL	,"
+     "		`profileIcon`	smallint		DEFAULT NULL	,"
+     "		`matchHistoryUri`	varchar(45)		DEFAULT NULL	,"
+     "		`summonerName`	varchar(25)		DEFAULT NULL	,"
+     "		`summonerId`	varchar(16)		NOT NULL	,"
+     "		`spell1Id`	smallint		DEFAULT NULL	,"
+     "		`spell2Id`	smallint		DEFAULT NULL	,"
+     "		`assists`	tinyint		DEFAULT NULL	,"
+     "		`champLevel`	tinyint		DEFAULT NULL	,"
+     "		`combatPlayerScore`	varchar(8)		DEFAULT NULL	,"
+     "		`deaths`	tinyint		DEFAULT NULL	,"
+     "		`doubleKills`	tinyint		DEFAULT NULL	,"
+     "		`firstBloodAssist`	bool		DEFAULT NULL	,"
+     "		`firstBloodKill`	bool		DEFAULT NULL	,"
+     "		`firstInhibitorAssist`	bool		DEFAULT NULL	,"
+     "		`firstInhibitorKill`	bool		DEFAULT NULL	,"
+     "		`firstTowerAssist`	bool		DEFAULT NULL	,"
+     "		`firstTowerKill`	bool		DEFAULT NULL	,"
+     "		`goldEarned`	int(8)		DEFAULT NULL	,"
+     "		`goldSpent`	int(8)		DEFAULT NULL	,"
+     "		`inhibitorKills`	tinyint		DEFAULT NULL	,"
+     "		`item0`		smallint		DEFAULT NULL	,"
+     "		`item1`		smallint		DEFAULT NULL	,"
+     "		`item2`	smallint		DEFAULT NULL	,"
+     "		`item3`	smallint		DEFAULT NULL	,"
+     "		`item4`	smallint		DEFAULT NULL	,"
+     "		`item5`	smallint		DEFAULT NULL	,"
+     "		`item6`	smallint		DEFAULT NULL	,"
+     "		`killingSprees`	tinyint		DEFAULT NULL	,"
+     "		`kills`	tinyint		DEFAULT NULL	,"
+     "		`largestCriticalStrike`	mediumint		DEFAULT NULL	,"
+     "		`largestKillingSpree`	tinyint		DEFAULT NULL	,"
+     "		`largestMultiKill`	tinyint		DEFAULT NULL	,"
+     "		`magicDamageDealt`	mediumint		DEFAULT NULL	,"
+     "		`magicDamageDealtToChampions`	mediumint		DEFAULT NULL	,"
+     "		`magicDamageTaken`	mediumint		DEFAULT NULL	,"
+     "		`minionsKilled`	smallint		DEFAULT NULL	,"
+     "		`neutralMinionsKilled`	smallint		DEFAULT NULL	,"
+     "		`neutralMinionsKilledEnemyJungle`	smallint		DEFAULT NULL	,"
+     "		`neutralMinionsKilledTeamJungle`	smallint		DEFAULT NULL	,"
+     "		`nodeCapture`	smallint		DEFAULT NULL	,"
+     "		`nodeCaptureAssist`	smallint		DEFAULT NULL	,"
+     "		`nodeNeutralize`	smallint		DEFAULT NULL	,"
+     "		`nodeNeutralizeAssist`	smallint		DEFAULT NULL	,"
+     "		`objectivePlayerScore`	smallint		DEFAULT NULL	,"
+     "		`pentaKills`	tinyint		DEFAULT NULL	,"
+     "		`physicalDamageDealt`	mediumint		DEFAULT NULL	,"
+     "		`physicalDamageDealtToChampions`	mediumint		DEFAULT NULL	,"
+     "		`physicalDamageTaken`	mediumint		DEFAULT NULL	,"
+     "		`quadrakills`	tinyint		DEFAULT NULL	,"
+     "		`sightWardsBoughtInGame`	smallint		DEFAULT NULL	,"
+     "		`teamObjective`	smallint		DEFAULT NULL	,"
+     "		`totalDamageDealt`	mediumint		DEFAULT NULL	,"
+     "		`totalDamageDealtToChampions`	mediumint		DEFAULT NULL	,"
+     "		`totalDamageTaken`	mediumint		DEFAULT NULL	,"
+     "		`totalHeal`	mediumint		DEFAULT NULL	,"
+     "		`totalPlayerScore`	smallint		DEFAULT NULL	,"
+     "		`totalScoreRank`	smallint		DEFAULT NULL	,"
+     "		`totalTimeCrowdControlDealt`	smallint		DEFAULT NULL	,"
+     "		`totalUnitsHealed`	tinyint		DEFAULT NULL	,"
+     "		`towerKills`	tinyint		DEFAULT NULL	,"
+     "		`tripleKills`	tinyint		DEFAULT NULL	,"
+     "		`trueDamageDealt`	mediumint		DEFAULT NULL	,"
+     "		`trueDamageDealtToChampions`	mediumint		DEFAULT NULL	,"
+     "		`trueDamageTaken`	mediumint		DEFAULT NULL	,"
+     "		`unrealKills`	tinyint		DEFAULT NULL	,"
+     "		`visionWardsBoughtInGame`	tinyint		DEFAULT NULL	,"
+     "		`wardsKilled`	tinyint		DEFAULT NULL	,"
+     "		`wardsPlaced`	tinyint		DEFAULT NULL	,"
+     "		`winner`	bool		DEFAULT NULL	,"
+     "		`teamId`	varchar(35)		NOT NULL	,"
+     "		`lane`	varchar(16)		DEFAULT NULL	,"
+     "		`role`	varchar(16)		DEFAULT NULL	,"
+     "  CONSTRAINT match_player PRIMARY KEY (`matchId`, `summonerId`)"
+     ") CHARACTER SET utf8 ENGINE=InnoDB")
+     
+ TABLES['match_participant_masteries'] = (
+     "CREATE TABLE `match_participant_masteries` ("
+     " `matchId` varchar(20) NOT NULL,"
+     " `summonerId` varchar(20) NOT NULL,"
+     " `rank` smallint NOT NULL,"
+     "	`masteryId`	smallint		NOT NULL	,"
+     " CONSTRAINT match_participant_mastery PRIMARY KEY (`matchId`, `summonerId`, `masteryId`)"
+     ") CHARACTER SET utf8 ENGINE=InnoDB")
+           
+ TABLES['match_participant_runes'] = (
+     "CREATE TABLE `match_participant_runes` ("
+     " `matchId` varchar(20) NOT NULL,"
+     " `summonerId` varchar(20) NOT NULL,"
+     " `rank` smallint NOT NULL,"
+     "	`runeId`	smallint		NOT NULL	,"
+     " CONSTRAINT match_participant_rune PRIMARY KEY (`matchId`, `summonerId`, `runeId`)"
+     ") CHARACTER SET utf8 ENGINE=InnoDB")
+     
+     
+ TABLES['match_participant_deltas'] = (
+     "CREATE TABLE `match_participant_deltas` ("
+     " `matchId` varchar(20) NOT NULL,"
+     " `summonerId` varchar(20) NOT NULL,"
+     " `deltaName` varchar(40) NOT NULL,"
+     " `deltaTimeframe` varchar(20) NOT NULL,"
+     " `value` double NOT NULL,"
+     " CONSTRAINT match_participant_delta PRIMARY KEY (`matchID`, `summonerId`, `deltaName`, `deltaTimeframe`)"
+     ") CHARACTER SET utf8 ENGINE=InnoDB")
+
+
+     
+
+     
+  
+ TABLES['match_teams'] = (
+     "CREATE TABLE `match_teams` ("
+     "		`matchId`	varchar(20)		NOT NULL	,"
+     "		`teamId`	varchar(35)		NOT NULL	,"
+     "		`baronKills`	tinyint		DEFAULT NULL	,"
+     "		`dominionVictoryScore`	varchar(10)		DEFAULT NULL	,"
+     "		`dragonKills`	tinyint		DEFAULT NULL	,"
+     "		`firstBaron`	bool		DEFAULT NULL	,"
+     "		`firstBlood`	bool		DEFAULT NULL	,"
+     "		`firstDragon`	bool		DEFAULT NULL	,"
+     "		`firstInhibitor`	bool		DEFAULT NULL	,"
+     "		`firstRiftHerald`	bool		DEFAULT NULL	,"
+     "		`firstTower`	bool		DEFAULT NULL	,"
+     "		`inhibitorKills`	tinyint		DEFAULT NULL	,"
+     "		`riftHeraldKills`	tinyint		DEFAULT NULL	,"
+     "		`towerKills`	tinyint		DEFAULT NULL	,"
+     "		`vilemawKills`	tinyint		DEFAULT NULL	,"
+     "		`winner`	bool		DEFAULT NULL	,"
+     "  CONSTRAINT match_team PRIMARY KEY (`matchId`, `teamId`)"
+     ") CHARACTER SET utf8 ENGINE=InnoDB")
+ 
+ 
+
+ TABLES['match_team_bans'] = (
+     "CREATE TABLE `match_team_bans` ("
+     " `matchId` varchar(20) NOT NULL ,"
+     " `teamId` varchar(35) NOT NULL ,"
+     " `pickTurn` tinyint NOT NULL ,"
+     " `championId` smallint NOT NULL ,"
+     "CONSTRAINT match_team_ban PRIMARY KEY (`matchId`, `teamId`, `pickTurn`)"
+     ") CHARACTER SET utf8 ENGINE=InnoDB")
+
+
+# match_timeline
+
+
       
  def create_database(cursor):
     try:
@@ -169,11 +345,13 @@ def create_tables():
         exit(1)
 
  try:
-     cnx.database = DB_NAME    
+     cnx.database = DB_NAME 
+#      print "Test"   
  except mysql.connector.Error as err:
      if err.errno == errorcode.ER_BAD_DB_ERROR:
          create_database(cursor)
          cnx.database = DB_NAME
+         
      else:
          print(err)
          exit(1)   
@@ -202,12 +380,11 @@ def new_key (t):
 
 
 
-def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, create=False, teamIds=False, checkTeams= False, hangwait=False):
+def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, create=False, teamIds=False, matchIds=False, checkTeams= False, hangwait=False):
  key = keys[0]
  new_key(key)
- 
 
- if create == True:
+ if create== True:
   create_tables()
 
  if table=="challenger":
@@ -625,9 +802,226 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
      print "Finished %s of %s, %s teams found." % (int(stop-iteratestart), int(iterate), len(team_ids)) 
     print "Updating Team Table"
     update_table("team", teamIds = team_ids, checkTeams = checkTeams)  
-      
+ 
+ 
+ if table=="all":
+  update_table("challenger")
+  update_table("master")
+  update_table("team", checkTeams =True)
   
+ if table=="match":
+   add_match = ("INSERT INTO matches "
+              "(mapId, matchCreation, matchDuration, matchId, matchMode, matchType, matchVersion, platformId, queueType, region, season) " 
+              "VALUES (%(mapId)s, %(matchCreation)s, %(matchDuration)s, %(matchId)s, %(matchMode)s, %(matchType)s, %(matchVersion)s, %(platformId)s, %(queueType)s, %(region)s, %(season)s)")
 
+   add_match_participants = ("INSERT INTO match_participants "
+              "(matchId, championId, highestAchievedSeasonTier, participantId, profileIcon, matchHistoryUri, summonerName, summonerId, spell1Id, spell2Id, assists, champLevel, combatPlayerScore, deaths, doubleKills, firstBloodAssist, firstBloodKill, firstInhibitorAssist, firstInhibitorKill, firstTowerAssist, firstTowerKill, goldEarned, goldSpent, inhibitorKills, item0, item1, item2, item3, item4, item5, item6, killingSprees, kills, largestCriticalStrike, largestKillingSpree, largestMultiKill, magicDamageDealt, magicDamageDealtToChampions, magicDamageTaken, minionsKilled, neutralMinionsKilled, neutralMinionsKilledEnemyJungle, neutralMinionsKilledTeamJungle, nodeCapture, nodeCaptureAssist, nodeNeutralize, nodeNeutralizeAssist, objectivePlayerScore, pentaKills, physicalDamageDealt, physicalDamageDealtToChampions, physicalDamageTaken, quadrakills, sightWardsBoughtInGame, teamObjective, totalDamageDealt, totalDamageDealtToChampions, totalDamageTaken, totalHeal, totalPlayerScore, totalScoreRank, totalTimeCrowdControlDealt, totalUnitsHealed, towerKills, tripleKills, trueDamageDealt, trueDamageDealtToChampions, trueDamageTaken, unrealKills, visionWardsBoughtInGame, wardsKilled, wardsPlaced, winner, teamId, lane, role) " 
+              "VALUES (%(matchId)s, %(championId)s, %(highestAchievedSeasonTier)s,  %(participantId)s, %(profileIcon)s, %(matchHistoryUri)s, %(summonerName)s, %(summonerId)s, %(spell1Id)s, %(spell2Id)s, %(assists)s, %(champLevel)s, %(combatPlayerScore)s, %(deaths)s, %(doubleKills)s, %(firstBloodAssist)s, %(firstBloodKill)s, %(firstInhibitorAssist)s, %(firstInhibitorKill)s, %(firstTowerAssist)s, %(firstTowerKill)s, %(goldEarned)s, %(goldSpent)s, %(inhibitorKills)s, %(item0)s, %(item1)s, %(item2)s, %(item3)s, %(item4)s, %(item5)s, %(item6)s, %(killingSprees)s, %(kills)s, %(largestCriticalStrike)s, %(largestKillingSpree)s, %(largestMultiKill)s, %(magicDamageDealt)s, %(magicDamageDealtToChampions)s, %(magicDamageTaken)s, %(minionsKilled)s, %(neutralMinionsKilled)s, %(neutralMinionsKilledEnemyJungle)s, %(neutralMinionsKilledTeamJungle)s, %(nodeCapture)s, %(nodeCaptureAssist)s, %(nodeNeutralize)s, %(nodeNeutralizeAssist)s, %(objectivePlayerScore)s, %(pentaKills)s, %(physicalDamageDealt)s, %(physicalDamageDealtToChampions)s, %(physicalDamageTaken)s, %(quadrakills)s, %(sightWardsBoughtInGame)s, %(teamObjective)s, %(totalDamageDealt)s, %(totalDamageDealtToChampions)s, %(totalDamageTaken)s, %(totalHeal)s, %(totalPlayerScore)s, %(totalScoreRank)s, %(totalTimeCrowdControlDealt)s, %(totalUnitsHealed)s, %(towerKills)s, %(tripleKills)s, %(trueDamageDealt)s, %(trueDamageDealtToChampions)s, %(trueDamageTaken)s, %(unrealKills)s, %(visionWardsBoughtInGame)s, %(wardsKilled)s, %(wardsPlaced)s, %(winner)s, %(teamId)s, %(lane)s, %(role)s)")
+
+   add_match_participant_rune = ("INSERT INTO match_participant_runes "
+              "(matchId, summonerId, rank, runeId)"
+              "VALUES (%(matchId)s, %(summonerId)s, %(rank)s, %(runeId)s)")
+              
+   add_match_participant_mastery = ("INSERT INTO match_participant_masteries "
+              "(matchId, summonerId, rank, masteryId)"
+              "VALUES (%(matchId)s, %(summonerId)s, %(rank)s, %(masteryId)s)")
+
+   add_match_participant_delta = ("INSERT INTO match_participant_deltas "
+              "(matchId, summonerId, deltaName, deltaTimeframe, value)"
+              "VALUES (%(matchId)s, %(summonerId)s, %(deltaName)s, %(deltaTimeframe)s, %(value)s)")
+																
+   add_match_teams = ("INSERT INTO match_teams "
+               "(matchId, teamId, baronKills, dominionVictoryScore, dragonKills, firstBaron, firstBlood, firstDragon, firstInhibitor, firstRiftHerald, firstTower, inhibitorKills, riftHeraldKills, towerKills, vilemawKills, winner) " 
+               "VALUES (%(matchId)s, %( teamId)s, %( baronKills)s, %( dominionVictoryScore)s, %( dragonKills)s, %( firstBaron)s, %( firstBlood)s, %( firstDragon)s, %( firstInhibitor)s, %( firstRiftHerald)s, %( firstTower)s, %( inhibitorKills)s, %( riftHeraldKills)s, %( towerKills)s, %( vilemawKills)s, %( winner)s	)")
+   
+   add_match_bans = ("INSERT INTO match_team_bans "
+               "(matchId, teamId, pickTurn, championId) " 
+               "VALUES (%(matchId)s, %(teamId)s, %(pickTurn)s, %(championId)s)")
+   
+   
+   if(matchIds==False):
+    print "No list of match ids, defaulting to search team_history"
+    cursor.execute("SELECT gameId FROM team_history" )         
+   
+
+    match_ids_raw = cursor.fetchall()
+   
+    match_ids = [] 
+   
+    for x in match_ids_raw:
+     for y in x:
+      match_ids.append(y)
+     
+   else:
+    print "Given list of match ids."
+    match_ids = matchIds
+ 
+#    print match_ids
+   teams_data = []
+   
+   for x in match_ids:
+#     print x
+    finished = False 
+    while finished == False:
+     try: 
+      cur_match_raw = w.get_match( x, region=None, include_timeline=False)
+     
+     except riotwatcher.riotwatcher.LoLException as err:
+      if str(err) == "Too many requests" or str(err) == "Unauthorized":
+#         print "New Key" 
+        if str(err) == "Unauthorized":
+         print "Unauthorized, using new key"
+        if key == keys[len(keys)-1]:
+         key = keys[0]
+        else:
+         if len(keys)>1:
+          key = keys[keys.index(key)+1]
+         else:
+          print "Too many requests, not enough keys."
+          if hangwait == False:
+           break 
+        new_key(key)
+        
+      else:
+
+       print "%s, Match: %s" % (str(err), x)
+       break
+#      except:
+#       print "Other Error"
+      
+     else:
+      finished = True
+      
+    cur_match = {}
+      
+    for y in ["mapId", "matchCreation", "matchDuration", "matchId", "matchMode", "matchType", "matchVersion", "platformId", "queueType", "region", "season"]:
+     try:
+      cur_match[y] = cur_match_raw[y]
+     except:
+      cur_match[y] = None
+    
+#     print cur_match
+    
+    try:
+     cursor.execute(add_match, cur_match)
+    except mysql.connector.Error as err:
+
+      if err.errno != 1062:
+       print "%s, Match: %s" % (err.msg, x)
+#       print add_team % cur_team
+    else:
+      print "Updated Match"
+    
+    cur_match_participants_raw = cur_match_raw["participants"]
+    cur_match_pi = {}
+    for y in cur_match_raw["participantIdentities"]:
+     cur_match_pi[y["participantId"]] = y["player"]
+     
+    
+#     print cur_match_pi
+
+    for y in cur_match_participants_raw:
+     cur_match_participant = {}
+     for z in cur_match_pi[y["participantId"]]:
+      cur_match_participant[z] = cur_match_pi[y["participantId"]][z]
+#       print cur_match_participant
+     cur_match_participant["matchId"] = x
+     for z in y:
+#       print z
+      if isinstance(y[z], list) or isinstance(y[z], dict):
+       
+       if z == "runes":
+        cur_rune = {}
+        cur_rune["matchId"] = x
+        cur_rune["summonerId"] = cur_match_pi[y["participantId"]]["summonerId"]
+        for r in y[z]:
+         for r2 in r:
+          cur_rune[r2] = r[r2]
+          
+         try:
+          cursor.execute(add_match_participant_rune, cur_rune)
+         except mysql.connector.Error as err:
+          if err.errno != 1062:
+           print "%s, Match: %s, Player %s" % (err.msg, x, cur_match_pi[y["participantId"]]["summonerId"])
+ #          print add_team % cur_team
+         else:
+          print "Updated Rune"
+         
+         
+       elif z == "masteries": 
+        cur_mastery = {}  
+        cur_mastery["matchId"] = x
+        cur_mastery["summonerId"] = cur_match_pi[y["participantId"]]["summonerId"]
+        for r in y[z]:
+         for r2 in r:
+          cur_mastery[r2] = r[r2]
+          
+         try:
+          cursor.execute(add_match_participant_mastery, cur_mastery)
+         except mysql.connector.Error as err:
+          if err.errno != 1062:
+           print "%s, Match: %s, Player: %s" % (err.msg, x, cur_match_pi[y["participantId"]]["summonerId"])
+ #          print add_team % cur_team
+         else:
+          print "Updated Mastery"        
+       
+       elif z == "stats": 
+        for r in ["assists", "champLevel", "combatPlayerScore", "deaths", "doubleKills", "firstBloodAssist", "firstBloodKill", "firstInhibitorAssist", "firstInhibitorKill", "firstTowerAssist", "firstTowerKill", "goldEarned", "goldSpent", "inhibitorKills", "item0", "item1", "item2", "item3", "item4", "item5", "item6", "killingSprees", "kills", "largestCriticalStrike", "largestKillingSpree", "largestMultiKill", "magicDamageDealt", "magicDamageDealtToChampions", "magicDamageTaken", "minionsKilled", "neutralMinionsKilled", "neutralMinionsKilledEnemyJungle", "neutralMinionsKilledTeamJungle", "nodeCapture", "nodeCaptureAssist", "nodeNeutralize", "nodeNeutralizeAssist", "objectivePlayerScore", "pentaKills", "physicalDamageDealt", "physicalDamageDealtToChampions", "physicalDamageTaken", "quadrakills", "sightWardsBoughtInGame", "teamObjective", "totalDamageDealt", "totalDamageDealtToChampions", "totalDamageTaken", "totalHeal", "totalPlayerScore", "totalScoreRank", "totalTimeCrowdControlDealt", "totalUnitsHealed", "towerKills", "tripleKills", "trueDamageDealt", "trueDamageDealtToChampions", "trueDamageTaken", "unrealKills", "visionWardsBoughtInGame", "wardsKilled", "wardsPlaced", "winner"]:
+         try:
+          cur_match_participant[r] = y[z][r]
+         except:
+          cur_match_participant[r] = None
+       elif z == "timeline":
+        for r in y[z]:
+         if r=="role" or r=="lane":
+          cur_match_participant[r] = y[z][r]
+         else:
+          cur_delta = {}
+          for r2 in y[z][r]:
+           cur_delta["matchId"] = x
+           cur_delta["summonerId"] = cur_match_pi[y["participantId"]]["summonerId"]
+           cur_delta["deltaName"] = r
+           cur_delta["deltaTimeframe"] = r2
+           cur_delta["value"] = y[z][r][r2]
+           try:
+            cursor.execute(add_match_participant_delta, cur_delta)
+           except mysql.connector.Error as err:
+            if err.errno != 1062:
+             print "%s, Match: %s, Player: %s" % (err.msg, x, cur_match_pi[y["participantId"]]["summonerId"])
+   #          print add_team % cur_team
+           else:
+            print "Updated Mastery"  
+       
+       else:
+        print z
+       
+       
+      else:
+       cur_match_participant[z] = y[z]
+     
+#      print cur_match_participant_raw     
+     print cur_match_participant["nodeCapture"]
+     try: 
+      cursor.execute(add_match_participants, cur_match_participant)
+#       print "Try"
+     
+     except mysql.connector.Error as err:
+      if err.errno != 1062:
+       print "%s, Match: %s" % (err.msg, x)
+#       print add_team % cur_team
+     else:
+      print "Updated Match-Participant"
+
+
+
+
+ 
+ 
+																																																																																																					
+																																																																																																					
+																																																																																																					
+																																																																																											
+																																																																																																					
 
 
  cnx.commit()
@@ -636,7 +1030,7 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
 
 # HOW TO USE.
 
-# update_table(create = False)
+# update_table(table= "create", create = False)
 # creates tables default is false, using create_tables, you can set this true while using any other pseudo-function below
 
 
@@ -673,23 +1067,32 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
 # This function will now iterate through keys in the same way check teams does, hangwait is also an option.
 
 
+# update_table("all")
+# this function will cycle from updating challenger -> master -> team -> checkteam, will not do iterate
+
+# update_table("match", matchIds=[], create=False)
+# this function will import all non-timeline data from a given list of matchIds. if no matchIds are supplied, it will automatically search through the list of matchIds in 'team-history'
+
 
 # update_table("iterate",iteratestart=300, iterate=700, checkTeams=True)
-# update_table("checkteams")
+
+
+
+# update_table("match", matchIds=[2044253864], create=False)
 
 
 
 
 cursor.close()
 cnx.close()
-
-# server.stop()
+if ssh == True:
+ credentials.server.stop()
 
 
 
 ##For personal reference, just to keep track of alterations i've made after table creation
 # cursor.execute("ALTER TABLE team_roster MODIFY joinDate BIGINT DEFAULT NULL")
-# cursor.execute("ALTER TABLE team MODIFY secondLastJoinDate BIGINT DEFAULT NULL")
+
 # cursor.execute("ALTER TABLE team MODIFY thirdLastJoinDate BIGINT DEFAULT NULL")
 # cursor.execute("ALTER TABLE by_league DROP PRIMARY KEY")
 # cursor.execute("ALTER TABLE by_league ADD CONSTRAINT id_queue PRIMARY KEY (`playerOrTeamId`, `queue`)")

@@ -4,6 +4,7 @@ import riotwatcher
 import urllib2
 import json
 import requests
+import time
 
 from utils import todict
 import mysql.connector
@@ -49,7 +50,7 @@ key = keys[0]
         
 def  get_master(queue="RANKED_TEAM_5x5"):
   url = "https://na.api.pvp.net/api/lol/na/v2.5/league/master?type=%s&api_key=%s" % (queue, key)
-  print "Calling: %s" % url
+#   print "Calling: %s" % url
   return json.loads(urllib2.urlopen(url).read())
 
 
@@ -381,7 +382,14 @@ def new_key (t):
 
 
 
-def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, create=False, teamIds=False, matchIds=False, checkTeams= False, hangwait=False):
+def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, create=False, teamIds=False, matchIds=False, checkTeams= False, hangwait=False, feedback="all", suppress_duplicates = False):
+ feedback = feedback.lower()
+ if feedback != "all" and feedback != "quiet" and feedback != "silent":
+  print "Invalid value for 'Feedback' option, reverting to default. All feedback will be shown."
+  feedback = "all"
+ if feedback == "quiet" or feedback == "silent":
+  suppress_duplicates = True
+  
  key = keys[0]
  new_key(key)
 
@@ -394,17 +402,37 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
                "VALUES (%(isFreshBlood)s, %(division)s, %(isVeteran)s, %(wins)s, %(losses)s, %(playerOrTeamId)s, %(playerOrTeamName)s, %(isInactive)s, %(isHotStreak)s, %(leaguePoints)s, %(league)s, %(team)s, %(queue)s)")
 
   challenger = w.get_challenger(queue=queue)
- 
+
+  s = []
   for x in todict(challenger)['entries']:
    x['league'] = "challenger"
    x['team'] = (True if queue!="RANKED_SOLO_5x5" else False)
    x['queue'] = queue
-   try:
-    cursor.execute(add_challenger, x)
-   except mysql.connector.Error as err:
-    print "%s, Team: %s" % (err.msg, x['playerOrTeamId'])
+   s.append(x)
+   
+  try:
+   cursor.executemany(add_challenger, s)
+
+
+  except mysql.connector.Error as err:
+  ##error 1062 is duplicate entry error for mysql
+   if err.errno == 1062:
+    if feedback == "all" and suppress_duplicates == False :
+     print "Error %s" % (err.errno)
    else:
+    if feedback != "silent":
+     print "Error %s" % (err.errno)
+         
+
+    
+  else:
+   if feedback != "silent" :
     print "Updated Challenger"
+  
+  if err.errno == 1062 and feedback != "silent":
+   print "Finished Challenger"
+   
+  
   
   
  if table=="master":
@@ -415,18 +443,34 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
 #   master = w.get_master(queue=queue)
   ## TEMPORARILY CREATED MY OWN "Get_Master" Function
   master = get_master(queue=queue)
+
+  s = []
   for x in todict(master)['entries']:
    x['league'] = "master"
    x['team'] = (True if queue!="RANKED_SOLO_5x5" else False)
    x['queue'] = queue
-   try:
-    cursor.execute(add_master, x)
-   except mysql.connector.Error as err:
-    print "%s, Team: %s" % (err.msg, x['playerOrTeamId'])
+   s.append(x)
+   
+  try:
+     cursor.executemany(add_master, s)
+   
+  except mysql.connector.Error as err:
+  ##error 1062 is duplicate entry error for mysql
+   if err.errno == 1062:
+    if feedback == "all" and suppress_duplicates == False:
+     print "Error %s" % (err.errno)
    else:
+    if feedback != "silent":
+     print "Error %s" % (err.errno)
+    
+    
+  else:
+   if feedback != "silent" :
     print "Updated Master"
+
     
-    
+  if err.errno == 1062 and feedback != "silent":
+   print "Finished Master"  
     
  if table=="checkteams":
    add_league = ("INSERT INTO by_league "
@@ -466,7 +510,8 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
 #         or str(err) == "Internal server error"
 #          print "%s, using new key" % ("Unauthorized" if str(err) == "Unauthorized" else "Server Error")
 
-        print "Unauthorized, using new key" 
+        if feedback == "all":
+         print "Unauthorized, using new key" 
  # This to ensure that you only try one new key for unauthorized, just switch truth value
        
         unauthorized_key= (True if unauthorized_key == False else False)
@@ -477,6 +522,7 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
  #        print "New Key"
 
  # Make sure to reset 'unauthorized_key' because this new key was due to rate-limit
+        
         unauthorized_key=False
 
 
@@ -486,31 +532,37 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
          if len(keys)>1:
           key = key = keys[keys.index(key)+1]
          else:
-          print "Too many requests, not enough keys."
+          if feedback == "all":
+           print "Too many requests, not enough keys."
           if hangwait == False:
-           print "Break, hangwait is off."
+           if feedback == "all":
+            print "Break, hangwait is off."
            break 
          
         if str(err) != "Unauthorized" and str(err) != "Too many requests":
-         print "Break, %s" % (str(err))
+         if feedback != "silent":
+          print "Break, %s" % (str(err))
          break 
 
 # Checks to make sure the error is not just coming from missing data     
        if str(err) == "Game data not found":
-        print "No data, skipping %s" % (team_ids if unauthorized_cycle == True else team_ids[(x*10):stop])
+        if feedback == "all":
+         print "No data, skipping %s" % (team_ids if unauthorized_cycle == True else team_ids[(x*10):stop])
         league_entries = {}
         finished = True   
 # Basically this checks to see if unauthorized_key has been used and switched back to false. This should only happen if you have two unauthorized key changes in a row
        elif unauthorized_key == True or str(err) != "Unauthorized":
 #         and str(err) != "Internal server error"
-        print "New key assigned, %s" % str(err)
+        if feedback == "all": 
+         print "New key assigned, %s" % str(err)
 #         print str(err)
         new_key(key)
        elif unauthorized_key == False and str(err) == "Unauthorized":
 #          or str(err) == "Internal server error"
         league_entries = {}
         if unauthorized_cycle== False:
-         print "Unauthorized, checking individual"
+         if feedback == "all": 
+          print "Unauthorized, checking individual"
          for s in team_ids[(x*10):stop]:
           unauthorized_key=False
 #           print s
@@ -538,7 +590,7 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
 
 
     league_entries = get_leagues()
-    
+    by_leagues = []
     for z in league_entries:
      for y in league_entries[z]:
       for v in y['entries']:
@@ -548,21 +600,40 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
 #  for right now we're just going to discard miniSeries data
        if "miniSeries" in v:
         del v['miniSeries']
-       try:
- #        print x['playerOrTeamId']
-        cursor.execute(add_league, v)
-       except mysql.connector.Error as err:
-        if err.errno != 1062:
-         print "%s, Team: %s" % (err.msg, v['playerOrTeamId']) 
+       by_leagues.append(v)
+    try:
+     cursor.executemany(add_league, by_leagues)
+    except mysql.connector.Error as err:
+     if err.errno != 1062 or suppress_duplicates == False:
+      
+      if feedback != "silent":
+       print err.errno
 
 
-       else:
-        print "Updated By-League"    
+    else:
+     if feedback != "silent":
+      print "Updated By-League"  
+       
+#        OLD METHOD
+#        try:
+#  #        print x['playerOrTeamId']
+#         cursor.execute(add_league, v)
+#        except mysql.connector.Error as err:
+#         if err.errno != 1062 or feedback == "all":
+#          if feedback != "silent":
+#           print "%s, Team: %s" % (err.msg, v['playerOrTeamId']) 
+# 
+# 
+#        else:
+#         if feedback != "silent":
+#          print "Updated By-League"    
 
     if stop==(len(team_ids)):
-     print "Finished %s of %s" % (stop, len(team_ids))
+     if feedback != "silent":
+      print "Finished %s of %s" % (stop, len(team_ids))
     else:
-     print "Finished %s of %s" % (stop+1, len(team_ids))
+     if feedback == "all":
+      print "Finished %s of %s" % (stop+1, len(team_ids))
         
         
         
@@ -581,7 +652,8 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
             "VALUES (%(inviteDate)s, %(joinDate)s, %(playerId)s, %(status)s, %(isCaptain)s, %(teamId)s)")
    
    if(teamIds==False):
-    print "No list of team ids, defaulting to search by_league"
+    if feedback == "all":
+     print "No list of team ids, defaulting to search by_league"
     cursor.execute("SELECT playerOrTeamId FROM by_league WHERE team = True" )         
    
 
@@ -594,7 +666,8 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
       team_ids.append(y)
      
    else:
-    print "Given list of team ids."
+    if feedback == "all":
+     print "Given list of team ids."
     team_ids = teamIds
  
    teams_data = []
@@ -613,32 +686,41 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
 
 #     print "%s, %s" % (x*10, stop)
     finished = False 
+    service = 0
     while finished == False:
      try: 
       teams_data = w.get_teams(team_ids[(x*10):stop])
      
      except riotwatcher.riotwatcher.LoLException as err:
-      if str(err) == "Too many requests" or str(err) == "Unauthorized":
+      if str(err) == "Too many requests" or str(err) == "Service unavailable" or str(err) == "Unauthorized":
 #         print "New Key" 
+
+        if str(err) == "Service unavailable" and service != 10:
+         if feedback == "all":
+          print "Service unavailable, using new key"
+         service += 1
         if str(err) == "Unauthorized":
-         print "Unauthorized, using new key"
+         if feedback == "all":
+          print "Unauthorized, using new key"
         if key == keys[len(keys)-1]:
          key = keys[0]
         else:
          if len(keys)>1:
           key = keys[keys.index(key)+1]
          else:
-          print "Too many requests, not enough keys."
+          if feedback == "all":
+           print "Too many requests, not enough keys."
           if hangwait == False:
            break 
         new_key(key)
         
       else:
-
-       print "%s, Team: %s" % (str(err), team_ids[(x*10):stop])
+       if feedback == "all":
+        print "%s, Teams: %s" % (str(err), team_ids[(x*10):stop])
        break
      except:
-      print "Other Error"
+      if feedback != "silent":
+       print "Other Error"
      else:
       finished = True
 
@@ -674,44 +756,69 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
       cur_team['losses5v5'] = team_stats[0]['losses']
       cur_team['wins5v5'] = team_stats[0]['wins']
      else:
-      print "error, team stats messed up"
+      if feedback != "silent":
+       print "Error, team stats messed up"
+      
      try:
       print cursor.execute(add_team, cur_team)
      except mysql.connector.Error as err:
-      if err.errno != 1062:
-       print "%s, Team: %s" % (err.msg, y)
+      if err.errno != 1062 or suppress_duplicates == False:
+       if feedback != "silent":
+        print "%s, Team: %s" % (err.errno, y)
 #       print add_team % cur_team
      else:
-      print "Updated Team"
+      if feedback == "all":
+       print "Updated Team"
      
-
-     cur_team_history = {}
+     all_teams = []
+     team_history = True
      try:
       for n in cur_team_full['matchHistory']:
+       cur_team_history = {}
        cur_team_history['fullId'] = y
        for z in ['assists', 'date', 'deaths', 'gameId', 'gameMode', 'invalid', 'kills', 'mapId', 'opposingTeamKills', 'opposingTeamName', 'win']:
-#         print n[z]
-#         print y
         cur_team_history[z] = n[z]
+       all_teams.append(cur_team_history)
 
-       try:
-#         print(add_team_history, cur_team_history)
-        cursor.execute(add_team_history, cur_team_history)
-       
-       except mysql.connector.Error as err:
-        if err.errno != 1062:
-         print "%s, Team: %s" (err.msg, y)
-      
-       else:
-        print "Updated Team-History"
+     
+#        OLD METHOD
+#        try:
+# #         print(add_team_history, cur_team_history)
+#         cursor.execute(add_team_history, cur_team_history)
+#        
+#        except mysql.connector.Error as err:
+#         if err.errno != 1062:
+#          print "%s, Team: %s" (err.msg, y)
+#       
+#        else:
+#         print "Updated Team-History"
         
      except:
-      print "No Team-History"
+      team_history = False
+      if feedback == "all":
+       print "No Team-History"
 
 
-     cur_team_roster = {}
+     if team_history == True:
+      try:
+       cursor.executemany(add_team_history, all_teams)
+ #       print test_team
+      except mysql.connector.Error as err:
+       if err.errno != 1062 or suppress_duplicates == False:
+        if feedback != "silent":
+         print "Error %s" % err.errno
+      else:
+       if feedback == "all":
+        print "Updated Team-History" 
+      
+      
+      
+
+     all_teams = []
+     team_roster = True
      try:  
       for n in cur_team_full['roster']['memberList']:
+       cur_team_roster = {}
 #        print(n)
        for z in ['inviteDate', 'joinDate', 'playerId', 'status']:
 #         print n[z]
@@ -724,25 +831,47 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
        else:
         cur_team_roster['isCaptain'] = False
        cur_team_roster['teamId'] = y
-       try:
-        cursor.execute(add_team_roster, cur_team_roster)
-       except mysql.connector.Error as err:
-        if err.errno != 1062:
-         print "%s, Team: %s" % (err.msg, y)
-       else:
-        print "Updated Team-Roster"
+       all_teams.append(cur_team_roster)
+       
+#      OLD METHOD
+#        try:
+#         cursor.execute(add_team_roster, cur_team_roster)
+#        except mysql.connector.Error as err:
+#         if err.errno != 1062:
+#          print "%s, Team: %s" % (err.msg, y)
+#        else:
+#         print "Updated Team-Roster"
      except:
-      if (cur_team_full['status']=="DISBANDED"):
-       print "No Team-Roster -- Team Disbanded"
+      team_roster = False
+      if feedback == "all":
+       if (cur_team_full['status']=="DISBANDED"):
+        print "No Team-Roster -- Team Disbanded"
+       else:
+        print "No Team-Roster"
+     
+     
+     if team_roster == True:
+      try:
+       cursor.executemany(add_team_roster, all_teams)
+ #       print test_team
+      except mysql.connector.Error as err:
+       if err.errno != 1062 or suppress_duplicates == False:
+        if feedback != "silent":
+         print "Error %s" % err.errno
       else:
-       print "No Team-Roster"
+       if feedback == "all":
+        print "Updated Team-History" 
     
 
-    print "Finished %s of %s" % (stop, len(team_ids))
+    if feedback == "all":
+     print "Finished %s of %s" % (stop, len(team_ids))
+    if feedback == "quiet" and stop == len(team_ids):
+     print "Finished %s of %s" % (stop, len(team_ids))
         
    if checkTeams==True:
-    print "Checking Teams"
-    update_table("checkteams")
+    if feedback != "silent":
+     print "Checking Teams"
+    update_table("checkteams", feedback=feedback, suppress_duplicates = suppress_duplicates)
     
 
  if table=="iterate":
@@ -802,13 +931,13 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
 #         print v
      print "Finished %s of %s, %s teams found." % (int(stop-iteratestart), int(iterate), len(team_ids)) 
     print "Updating Team Table"
-    update_table("team", teamIds = team_ids, checkTeams = checkTeams)  
+    update_table("team", teamIds = team_ids, checkTeams = checkTeams, feedback=feedback, suppress_duplicates = suppress_duplicates)  
  
  
  if table=="all":
-  update_table("challenger")
-  update_table("master")
-  update_table("team", checkTeams =True)
+  update_table("challenger", feedback=feedback, suppress_duplicates = suppress_duplicates)
+  update_table("master", feedback=feedback, suppress_duplicates = suppress_duplicates)
+  update_table("team", checkTeams =True, feedback=feedback, suppress_duplicates = suppress_duplicates)
   
  if table=="match":
    add_match = ("INSERT INTO matches "
@@ -833,7 +962,7 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
 																
    add_match_teams = ("INSERT INTO match_teams "
                "(matchId, teamId, baronKills, dominionVictoryScore, dragonKills, firstBaron, firstBlood, firstDragon, firstInhibitor, firstRiftHerald, firstTower, inhibitorKills, riftHeraldKills, towerKills, vilemawKills, winner) " 
-               "VALUES (%(matchId)s, %( teamId)s, %( baronKills)s, %( dominionVictoryScore)s, %( dragonKills)s, %( firstBaron)s, %( firstBlood)s, %( firstDragon)s, %( firstInhibitor)s, %( firstRiftHerald)s, %( firstTower)s, %( inhibitorKills)s, %( riftHeraldKills)s, %( towerKills)s, %( vilemawKills)s, %( winner)s	)")
+               "VALUES (%(matchId)s, %(teamId)s, %(baronKills)s, %(dominionVictoryScore)s, %(dragonKills)s, %(firstBaron)s, %(firstBlood)s, %(firstDragon)s, %(firstInhibitor)s, %(firstRiftHerald)s, %(firstTower)s, %(inhibitorKills)s, %(riftHeraldKills)s, %(towerKills)s, %(vilemawKills)s, %(winner)s	)")
    
    add_match_bans = ("INSERT INTO match_team_bans "
                "(matchId, teamId, pickTurn, championId) " 
@@ -841,7 +970,8 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
    
    
    if(matchIds==False):
-    print "No list of match ids, defaulting to search team_history"
+    if feedback == "all":
+     print "No list of match ids, defaulting to search team_history"
     cursor.execute("SELECT gameId FROM team_history" )         
    
 
@@ -854,7 +984,8 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
       match_ids.append(y)
      
    else:
-    print "Given list of match ids."
+    if feedback == "all":
+     print "Given list of match ids."
     match_ids = matchIds
  
 #    print match_ids
@@ -871,21 +1002,23 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
       if str(err) == "Too many requests" or str(err) == "Unauthorized":
 #         print "New Key" 
         if str(err) == "Unauthorized":
-         print "Unauthorized, using new key"
+         if feedback == "all":
+          print "Unauthorized, using new key"
         if key == keys[len(keys)-1]:
          key = keys[0]
         else:
          if len(keys)>1:
           key = keys[keys.index(key)+1]
          else:
-          print "Too many requests, not enough keys."
+          if feedback == "all":
+           print "Too many requests, not enough keys."
           if hangwait == False:
            break 
         new_key(key)
         
       else:
-
-       print "%s, Match: %s" % (str(err), x)
+       if feedback != "silent":
+        print "%s, Match: %s -- Request" % (str(err), x)
        break
 #      except:
 #       print "Other Error"
@@ -907,23 +1040,77 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
      cursor.execute(add_match, cur_match)
     except mysql.connector.Error as err:
 
-      if err.errno != 1062:
-       print "%s, Match: %s" % (err.msg, x)
+      if err.errno != 1062 or suppress_duplicates == False:
+       if feedback != "silent":
+        print "%s, Match: %s -- Match" % (err.errno, x)
 #       print add_team % cur_team
     else:
-      print "Updated Match"
+      if feedback == "all":
+       print "Updated Match"
     
     cur_match_participants_raw = cur_match_raw["participants"]
     cur_match_pi = {}
     for y in cur_match_raw["participantIdentities"]:
      cur_match_pi[y["participantId"]] = y["player"]
-     
     
-#     print cur_match_pi
+    
+
+    all_match_teams = []
+    all_match_bans = []
+    
+#     print cur_match_raw['teams']
+    for y in cur_match_raw['teams']:
+     cur_match_teams = {}
+     cur_match_bans = {}
+#      print y
+     for z in y:
+      if z == "bans":
+       for s in y['bans']:
+        for t in s:
+         cur_match_bans[t] = s[t]
+        cur_match_bans['matchId'] = x
+        cur_match_bans['teamId'] = y['teamId']
+        all_match_bans.append(cur_match_bans)
+
+     
+      else:
+       cur_match_teams[z] = y[z]
+     
+     cur_match_teams['matchId'] = x
+     all_match_teams.append(cur_match_teams)
+      
+      
+    try:
+     cursor.executemany(add_match_teams, all_match_teams)
+    except mysql.connector.Error as err:
+     if err.errno != 1062 or suppress_duplicates == False:
+      if feedback != "silent":
+       print "%s, Match: %s -- Teams" % (err.errno, x)
+    else:
+     if feedback == "all":
+      print "Updated Match-Teams" 
+   
+     
+     
+    try:
+     cursor.executemany(add_match_bans, all_match_bans)
+    except mysql.connector.Error as err:
+     if err.errno != 1062 or suppress_duplicates == False:
+      if feedback != "silent":
+       print "%s, Match: %s -- Bans" % (err.errno, x)
+    else:
+     if feedback == "all":
+      print "Updated Match-Bans" 
+      
+       
+
 
     for y in cur_match_participants_raw:
      cur_match_participant = {}
+#      print y
+#      break
      for z in cur_match_pi[y["participantId"]]:
+      
       cur_match_participant[z] = cur_match_pi[y["participantId"]][z]
 #       print cur_match_participant
      cur_match_participant["matchId"] = x
@@ -942,11 +1129,13 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
          try:
           cursor.execute(add_match_participant_rune, cur_rune)
          except mysql.connector.Error as err:
-          if err.errno != 1062:
-           print "%s, Match: %s, Player %s" % (err.msg, x, cur_match_pi[y["participantId"]]["summonerId"])
+          if err.errno != 1062 or suppress_duplicates == False:
+           if feedback != "silent":
+            print "%s, Match: %s, Player: %s -- Rune" % (err.errno, x, cur_match_pi[y["participantId"]]["summonerId"])
  #          print add_team % cur_team
          else:
-          print "Updated Rune"
+          if feedback == "all":
+           print "Updated Rune"
          
          
        elif z == "masteries": 
@@ -960,11 +1149,13 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
          try:
           cursor.execute(add_match_participant_mastery, cur_mastery)
          except mysql.connector.Error as err:
-          if err.errno != 1062:
-           print "%s, Match: %s, Player: %s" % (err.msg, x, cur_match_pi[y["participantId"]]["summonerId"])
+          if err.errno != 1062 or suppress_duplicates == False:
+           if feedback != "silent":
+            print "%s, Match: %s, Player: %s -- Mastery" % (err.errno, x, cur_match_pi[y["participantId"]]["summonerId"])
  #          print add_team % cur_team
          else:
-          print "Updated Mastery"        
+          if feedback == "all":
+           print "Updated Mastery"        
        
        elif z == "stats": 
         for r in ["assists", "champLevel", "combatPlayerScore", "deaths", "doubleKills", "firstBloodAssist", "firstBloodKill", "firstInhibitorAssist", "firstInhibitorKill", "firstTowerAssist", "firstTowerKill", "goldEarned", "goldSpent", "inhibitorKills", "item0", "item1", "item2", "item3", "item4", "item5", "item6", "killingSprees", "kills", "largestCriticalStrike", "largestKillingSpree", "largestMultiKill", "magicDamageDealt", "magicDamageDealtToChampions", "magicDamageTaken", "minionsKilled", "neutralMinionsKilled", "neutralMinionsKilledEnemyJungle", "neutralMinionsKilledTeamJungle", "nodeCapture", "nodeCaptureAssist", "nodeNeutralize", "nodeNeutralizeAssist", "objectivePlayerScore", "pentaKills", "physicalDamageDealt", "physicalDamageDealtToChampions", "physicalDamageTaken", "quadrakills", "sightWardsBoughtInGame", "teamObjective", "totalDamageDealt", "totalDamageDealtToChampions", "totalDamageTaken", "totalHeal", "totalPlayerScore", "totalScoreRank", "totalTimeCrowdControlDealt", "totalUnitsHealed", "towerKills", "tripleKills", "trueDamageDealt", "trueDamageDealtToChampions", "trueDamageTaken", "unrealKills", "visionWardsBoughtInGame", "wardsKilled", "wardsPlaced", "winner"]:
@@ -987,31 +1178,42 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
            try:
             cursor.execute(add_match_participant_delta, cur_delta)
            except mysql.connector.Error as err:
-            if err.errno != 1062:
-             print "%s, Match: %s, Player: %s" % (err.msg, x, cur_match_pi[y["participantId"]]["summonerId"])
+            if err.errno != 1062 or suppress_duplicates == False:
+             if feedback != "silent": 
+              print "%s, Match: %s, Player: %s -- Delta" % (err.errno, x, cur_match_pi[y["participantId"]]["summonerId"])
    #          print add_team % cur_team
            else:
-            print "Updated Mastery"  
+            if feedback == "all":
+             print "Updated Participant Deltas"  
        
        else:
-        print z
+        if feedback != "silent":
+         print "Words: %s" % z
        
        
       else:
        cur_match_participant[z] = y[z]
      
 #      print cur_match_participant_raw     
-     print cur_match_participant["nodeCapture"]
+#      if feedback == "all":
+#       print cur_match_participant["nodeCapture"]
      try: 
       cursor.execute(add_match_participants, cur_match_participant)
 #       print "Try"
      
      except mysql.connector.Error as err:
-      if err.errno != 1062:
-       print "%s, Match: %s" % (err.msg, x)
+      if err.errno != 1062 or suppress_duplicates == False:
+       if feedback != "silent":
+        print "%s, Match: %s, Player: %s -- Participant" % (err.errno, x, cur_match_pi[y["participantId"]]["summonerId"])
 #       print add_team % cur_team
      else:
-      print "Updated Match-Participant"
+      if feedback == "all":
+       print "Updated Match-Participant"
+       
+    
+
+       
+     
 
 
 
@@ -1074,8 +1276,11 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
 # update_table("match", matchIds=[], create=False)
 # this function will import all non-timeline data from a given list of matchIds. if no matchIds are supplied, it will automatically search through the list of matchIds in 'team-history'
 
-
-
+## FOR ANY FUNCTION
+# setting feedback="all" will print all errors, print a completion statement when a step is finished, and print updates
+# setting feedback="quiet" will print only uncommon problem errors (duplicate entry errors are silenced), and will print completion statements when long steps are finished
+# setting feedback="silent" will suppress all printing
+# setting suppress_duplicates=True will suppress printing of duplicate entry errors. this only effects feedback="all" as the script overrides this setting for quiet and silent modes
 
 
 
@@ -1083,10 +1288,10 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
 
 ## functions for actual use:
 # update_table("iterate",iteratestart=300, iterate=700, checkTeams=True)
-# update_table("match", matchIds=[2044253864], create=False)
-
-update_table("all")
-
+# start_time = time.time()
+# update_table("match", matchIds=[2044253864], suppress_duplicates=True)
+# update_table("all", feedback="all", suppress_duplicates=True)
+# print "Took", time.time() - start_time, "to run"
 
 
 

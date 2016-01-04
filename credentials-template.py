@@ -5,6 +5,7 @@ from sshtunnel import SSHTunnelForwarder
 ##anything with a double asterisk in front of the variable name is something you should change, 
 ##obviously remove the asterisks as well and keep things inside quotes, inside the quotes
 ##you only need to fill out the information for the method you plan to use (ssh tunneling or just regular database connection)
+##for us at RPI, make sure your VPN is open before you try either method. 
 def config(ssh=False, port=3306):
  if ssh==True:
   global server

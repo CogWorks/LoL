@@ -1075,16 +1075,21 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
 
 
 
+
+
+
+
+
 ## functions for actual use:
 # update_table("iterate",iteratestart=300, iterate=700, checkTeams=True)
-
-
-
 # update_table("match", matchIds=[2044253864], create=False)
 
+update_table("all")
 
 
 
+
+### MAKE SURE ALL SCRIPT EXECUTIONS OCCUR BEFORE THE NEXT 4 LINES
 cursor.close()
 cnx.close()
 if ssh == True:
@@ -1092,7 +1097,11 @@ if ssh == True:
 
 
 
-##For personal reference, just to keep track of alterations i've made after table creation
+
+
+
+
+##For personal reference, just to keep track of alterations i've made after table creation, all are reflected in the table creation now though. 
 # cursor.execute("ALTER TABLE team_roster MODIFY joinDate BIGINT DEFAULT NULL")
 
 # cursor.execute("ALTER TABLE team MODIFY thirdLastJoinDate BIGINT DEFAULT NULL")

@@ -1074,6 +1074,8 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
 # this function will import all non-timeline data from a given list of matchIds. if no matchIds are supplied, it will automatically search through the list of matchIds in 'team-history'
 
 
+
+## functions for actual use:
 # update_table("iterate",iteratestart=300, iterate=700, checkTeams=True)
 
 

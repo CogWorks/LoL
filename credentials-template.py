@@ -2,32 +2,37 @@
 from sshtunnel import SSHTunnelForwarder
 
 
-
+##anything with a double asterisk in front of the variable name is something you should change, 
+##obviously remove the asterisks as well and keep things inside quotes, inside the quotes
+##you only need to fill out the information for the method you plan to use (ssh tunneling or just regular database connection)
 def config(ssh=False, port=3306):
  if ssh==True:
+  global server
   server = SSHTunnelForwarder(
-      ('ssh-address', 22),
-      ssh_username="username",
-      ssh_password="password",
-      remote_bind_address=('127.0.0.1', 3306))
+      ('**ssh-address', 22),
+      ssh_username="**username",
+      ssh_password="**password",
+      remote_bind_address=('127.0.0.1', 3306))  
   server.start()
   port = server.local_bind_port
   return({ 
-    'user': 'sql-database-username',
-    'port': '%s' % port,
-    'password': 'sql-database-pass',
-    'host': 'localhost',
-    'database': 'database-name',
-    'raise_on_warnings': True
+    'user': '**sql-database-username',
+    'port': '%s' % port,   
+    'password': '**sql-database-pass',
+    'host': 'localhost',  
+    'database': '**database-name',
+    'raise_on_warnings': True   
     })
  else:
+  ##in order to use this, you must change mysql/my.cnf bind-address from 127.0.0.1 to 0.0.0.0 
+  ##which is not necessarily the most secure thing. changes to iptables may also be required. 
   return({
-     'user': 'sql-database-username',
-     'password': 'sql-database-pass',
-     'host': 'ip-or-web-address',
-     'database': 'database-name',
+     'user': '**sql-database-username',
+     'password': '**sql-database-pass',
+     'host': '**ip-or-web-address',
+     'database': '**database-name',
      'raise_on_warnings': True
      })
  
-  
-keys = ['api-key1','api-key2','...etc']
+##please try to use at least 2 codes as the scripts function better that way.   
+keys = ['**api-key1','**api-key2','**...etc']

@@ -10,7 +10,8 @@ def config(ssh=False, port=3306):
       ssh_username="username",
       ssh_password="password",
       remote_bind_address=('127.0.0.1', 3306))
-    
+  server.start()
+  port = server.local_bind_port
   return({ 
     'user': 'sql-database-username',
     'port': '%s' % port,

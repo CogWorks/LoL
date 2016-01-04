@@ -18,6 +18,7 @@ ssh = True
 
 # using SSH Tunnel because to connect directly to MySQL on server we need to comment out 
 # 'skip-networking' in /etc/mysql/my.cnf which allows non-local connections and is generally less secure
+# and additionally we'd have to change bind-address from 127.0.0.1 to 0.0.0.0
 
 # server = credentials.server
 # server.start()

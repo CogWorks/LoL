@@ -372,7 +372,98 @@ def create_tables():
 
  
  
+def get_leagues(team_ids=None,x=None, stop=None, key=None, unauthorized_cycle=False, team=True):
+ finished = False
+ unauthorized_key = False
+ while finished == False:
+  err = []
+  try:
+   if team==True:
+    league_entries = w.get_league_entry(team_ids=team_ids[(x*10):stop]) if unauthorized_cycle==False else w.get_league_entry(team_ids=team_ids)
+   else:
+    league_entries = w.get_league_entry(summoner_ids=team_ids[(x*10):stop]) if unauthorized_cycle==False else w.get_league_entry(summoner_ids=team_ids)
 
+  except riotwatcher.riotwatcher.LoLException as err:
+   if str(err) == "Unauthorized" :
+#         or str(err) == "Internal server error"
+#          print "%s, using new key" % ("Unauthorized" if str(err) == "Unauthorized" else "Server Error")
+
+    if feedback == "all":
+     print "Unauthorized, using new key" 
+# This to ensure that you only try one new key for unauthorized, just switch truth value
+   
+    unauthorized_key= (True if unauthorized_key == False else False)
+#         print unauthorized_key
+
+#       print str(err)
+   if str(err) == "Too many requests":
+#        print "New Key"
+
+# Make sure to reset 'unauthorized_key' because this new key was due to rate-limit
+    
+    unauthorized_key=False
+
+
+    if key == keys[len(keys)-1]:
+     key = keys[0]
+    else:
+     if len(keys)>1:
+      key = key = keys[keys.index(key)+1]
+     else:
+      if feedback == "all":
+       print "Too many requests, not enough keys."
+      if hangwait == False:
+       if feedback == "all":
+        print "Break, hangwait is off."
+       break 
+     
+    if str(err) != "Unauthorized" and str(err) != "Too many requests":
+     if feedback != "silent":
+      print "Break, %s" % (str(err))
+     break 
+
+# Checks to make sure the error is not just coming from missing data     
+   if str(err) == "Game data not found":
+    if feedback == "all":
+     print "No data, skipping %s" % (team_ids if unauthorized_cycle == True else team_ids[(x*10):stop])
+    league_entries = {}
+    finished = True   
+# Basically this checks to see if unauthorized_key has been used and switched back to false. This should only happen if you have two unauthorized key changes in a row
+   elif unauthorized_key == True or str(err) != "Unauthorized":
+#         and str(err) != "Internal server error"
+    if feedback == "all": 
+     print "New key assigned, %s" % str(err)
+#         print str(err)
+    new_key(key)
+   elif unauthorized_key == False and str(err) == "Unauthorized":
+#          or str(err) == "Internal server error"
+    league_entries = {}
+    if unauthorized_cycle== False:
+     if feedback == "all": 
+      print "Unauthorized, checking individual"
+     for s in team_ids[(x*10):stop]:
+      unauthorized_key=False
+#           print s
+      cur_entry = get_leagues(team_ids=[s], x=x, stop=stop, key=key, unauthorized_cycle=True, team=team)
+      if cur_entry != {}:
+       league_entries[s] = cur_entry[s]
+      else:
+#            print "No entry for %s" % s
+       continue
+
+      finished = True
+    else:         
+#          print "skipping %s" % team_ids
+     league_entries = {}
+     finished = True
+   
+
+  else: 
+#        print "Success"
+#        print league_entries
+   finished = True
+ 
+ return league_entries
 
 
 def new_key (t):
@@ -497,99 +588,11 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
   
 #     print "%s, %s" % ((x*10), stop)
 
-    def get_leagues(team_ids=team_ids,x=x, stop=stop, key=key, unauthorized_cycle=False):
-     finished = False
-     unauthorized_key = False
-     while finished == False:
-      err = []
-      try:
-
-       league_entries = w.get_league_entry(team_ids=team_ids[(x*10):stop]) if unauthorized_cycle==False else w.get_league_entry(team_ids=team_ids)
-      except riotwatcher.riotwatcher.LoLException as err:
-       if str(err) == "Unauthorized" :
-#         or str(err) == "Internal server error"
-#          print "%s, using new key" % ("Unauthorized" if str(err) == "Unauthorized" else "Server Error")
-
-        if feedback == "all":
-         print "Unauthorized, using new key" 
- # This to ensure that you only try one new key for unauthorized, just switch truth value
-       
-        unauthorized_key= (True if unauthorized_key == False else False)
-#         print unauthorized_key
-
- #       print str(err)
-       if str(err) == "Too many requests":
- #        print "New Key"
-
- # Make sure to reset 'unauthorized_key' because this new key was due to rate-limit
-        
-        unauthorized_key=False
-
-
-        if key == keys[len(keys)-1]:
-         key = keys[0]
-        else:
-         if len(keys)>1:
-          key = key = keys[keys.index(key)+1]
-         else:
-          if feedback == "all":
-           print "Too many requests, not enough keys."
-          if hangwait == False:
-           if feedback == "all":
-            print "Break, hangwait is off."
-           break 
-         
-        if str(err) != "Unauthorized" and str(err) != "Too many requests":
-         if feedback != "silent":
-          print "Break, %s" % (str(err))
-         break 
-
-# Checks to make sure the error is not just coming from missing data     
-       if str(err) == "Game data not found":
-        if feedback == "all":
-         print "No data, skipping %s" % (team_ids if unauthorized_cycle == True else team_ids[(x*10):stop])
-        league_entries = {}
-        finished = True   
-# Basically this checks to see if unauthorized_key has been used and switched back to false. This should only happen if you have two unauthorized key changes in a row
-       elif unauthorized_key == True or str(err) != "Unauthorized":
-#         and str(err) != "Internal server error"
-        if feedback == "all": 
-         print "New key assigned, %s" % str(err)
-#         print str(err)
-        new_key(key)
-       elif unauthorized_key == False and str(err) == "Unauthorized":
-#          or str(err) == "Internal server error"
-        league_entries = {}
-        if unauthorized_cycle== False:
-         if feedback == "all": 
-          print "Unauthorized, checking individual"
-         for s in team_ids[(x*10):stop]:
-          unauthorized_key=False
-#           print s
-          cur_entry = get_leagues(team_ids=[s], unauthorized_cycle=True)
-          if cur_entry != {}:
-           league_entries[s] = cur_entry[s]
-          else:
-#            print "No entry for %s" % s
-           continue
-
-          finished = True
-        else:         
-#          print "skipping %s" % team_ids
-         league_entries = {}
-         finished = True
-       
- 
-      else: 
-#        print "Success"
-#        print league_entries
-       finished = True
-     
-     return league_entries
 
 
 
-    league_entries = get_leagues()
+
+    league_entries = get_leagues(team_ids=team_ids,x=x, stop=stop, key=key, unauthorized_cycle=False, team=True)
     by_leagues = []
     for z in league_entries:
      for y in league_entries[z]:
@@ -635,7 +638,66 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
      if feedback == "all":
       print "Finished %s of %s" % (stop+1, len(team_ids))
         
-        
+ if table=="membertiers":
+   add_league = ("INSERT INTO by_league "
+               "(isFreshBlood, division, isVeteran, wins, losses, playerOrTeamId, playerOrTeamName, isInactive, isHotStreak, leaguePoints, league, team, queue) "
+               "VALUES (%(isFreshBlood)s, %(division)s, %(isVeteran)s, %(wins)s, %(losses)s, %(playerOrTeamId)s, %(playerOrTeamName)s, %(isInactive)s, %(isHotStreak)s, %(leaguePoints)s, %(league)s, %(team)s, %(queue)s)")
+   summoner_ids_raw = [] 
+   for x in matchIds:
+#     cursor.execute("SELECT summonerId, teamId FROM match_participants where matchId = %s" % x)
+
+    cursor.execute("SELECT summonerId FROM match_participants where matchId = %s" % x)
+    summoner_ids_raw.append(cursor.fetchall())
+    
+   summoner_ids = [] 
+  
+   for x in summoner_ids_raw:
+    for y in x:
+     for z in y:
+      summoner_ids.append(z)
+   
+
+   
+   for x in xrange(0,(int(len(summoner_ids)/10)+1)):
+    stop = ((x+1)*10)
+
+    if x == int(len(summoner_ids)/10):
+     stop = (len(summoner_ids))
+    if stop == x*10:
+     continue
+    
+    league_entries = get_leagues(team_ids=summoner_ids,x=x, stop=stop, key=key, unauthorized_cycle=False, team=False)
+    by_leagues = []
+    for z in league_entries:
+     for y in league_entries[z]:
+      for v in y['entries']:
+       v['league'] = y['tier']
+       v['team'] = (True if y['queue']!="RANKED_SOLO_5x5" else False)
+       v['queue'] = y['queue']
+#  for right now we're just going to discard miniSeries data
+       if "miniSeries" in v:
+        del v['miniSeries']
+       by_leagues.append(v)
+    try:
+     cursor.executemany(add_league, by_leagues)
+    except mysql.connector.Error as err:
+     if err.errno != 1062 or suppress_duplicates == False:
+      
+      if feedback != "silent":
+       print err.errno
+
+
+    else:
+     if feedback != "silent":
+      print "Updated Member-Tiers"  
+    
+
+    if stop==(len(summoner_ids)):
+     if feedback != "silent":
+      print "Finished %s of %s" % (stop, len(summoner_ids))
+    else:
+     if feedback == "all":
+      print "Finished %s of %s" % (stop+1, len(summoner_ids))       
         
  if table=="team":
    
@@ -1276,6 +1338,16 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
 # update_table("match", matchIds=[], create=False)
 # this function will import all non-timeline data from a given list of matchIds. if no matchIds are supplied, it will automatically search through the list of matchIds in 'team-history'
 
+# update_table("membertiers", matchIds=[], create=False)
+# this function is essentially the same as the 'checkteams' functionality however this will search a given match and scrape the league data for all the players in that match
+# if you want to just do all the matches in the database, you can do it this way:
+#      cursor.execute("SELECT matchId FROM matches")
+#      matches= cursor.fetchall()
+#      update_table("membertiers", matchIds=matches, suppress_duplicates=True)
+
+
+
+
 ## FOR ANY FUNCTION
 # setting feedback="all" will print all errors, print a completion statement when a step is finished, and print updates
 # setting feedback="quiet" will print only uncommon problem errors (duplicate entry errors are silenced), and will print completion statements when long steps are finished
@@ -1289,8 +1361,10 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
 ## functions for actual use:
 # update_table("iterate",iteratestart=300, iterate=700, checkTeams=True)
 # start_time = time.time()
-# update_table("match", matchIds=[2044253864], suppress_duplicates=True)
-# update_table("all", feedback="all", suppress_duplicates=True)
+
+# update_table("match", matchIds=[1976289359], suppress_duplicates=True)
+# update_table("membertiers", matchIds=[2044253864,1976289359], suppress_duplicates=True)
+# update_table("checkteams", feedback="all", suppress_duplicates=True)
 # print "Took", time.time() - start_time, "to run"
 
 

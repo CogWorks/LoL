@@ -396,7 +396,7 @@ def create_tables():
      
  TABLES['match_timeline_events_assist'] = (
      "CREATE TABLE `match_timeline_events_assist` ("
-     " `eventId` bigint NOT NULL,"
+     " `eventId` varchar(10) NOT NULL,"
      " `matchId` varchar(20) NOT NULL,"
      " `assistId` varchar(20) NOT NULL,"
      "CONSTRAINT event_assist PRIMARY KEY (`eventId`, `assistId`)"
@@ -1305,15 +1305,16 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
         
        
         if s=="assistingParticipants":
-         if "assistingParticipants" in [z]:
+         if "assistingParticipantIds" in z:
           cur_timeline_event["assistingParticipants"]=True
-          print "WOOO"
-          for t in z["assistingParticipants"]:
+          for t in z["assistingParticipantIds"]:
            cur_assists = {}
-           cur_assists["eventId"] = "%s - %s" % (cur_match_timeline_raw["frames"].index(y) + y["events"].index(z))
+           cur_assists["eventId"] = "%s - %s" % (cur_match_timeline_raw["frames"].index(y),  y["events"].index(z))
            cur_assists["matchId"] = x
            cur_assists["assistId"] = cur_match_pi[t]["summonerId"]
            assists.append(cur_assists)
+
+          
           
          else:
           cur_timeline_event["assistingParticipants"]=False
@@ -1359,16 +1360,26 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
 #        print cur_timeline_event
 
 #       print timeline_events 
+
       if assists != []:
-       print assists
-      
+       try:
+#         print assists
+        cursor.executemany(add_match_timeline_event_assist, assists)
+
+       except mysql.connector.Error as err:
+        if err.errno != 1062 or suppress_duplicates == False:
+         if feedback != "silent":
+          print "%s, Match: %s, Timeframe: %s-- Timeline-Events" % (err.msg, x, cur_match_timeline_raw["frames"].index(y))
+       else:
+        if feedback == "all":
+         print "Updated Timeline-Assists" 
       try:
        cursor.executemany(add_match_timeline_event, timeline_events)
 
       except mysql.connector.Error as err:
        if err.errno != 1062 or suppress_duplicates == False:
         if feedback != "silent":
-         print "%s, Match: %s, Timeframe: %s-- Timeline-Events" % (err.msg, x, cur_match_timeline_raw["frames"].index(y))
+         print "%s, Match: %s, Timeframe: %s-- Timeline-Events" % (err.errno, x, cur_match_timeline_raw["frames"].index(y))
       else:
        if feedback == "all":
         print "Updated Timeline-Events" 
@@ -1613,13 +1624,13 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
 cursor.execute("SELECT gameId FROM team_history")
 matches= strip_to_list(cursor.fetchall()[0:100])
 
-matches = matches[0:100]
+# matches = matches[0:1]
 # cursor.execute("DROP TABLE match_timeline_events")
-# cursor.execute("ALTER TABLE match_timeline_events MODIFY teamId smallint DEFAULT NULL")
+# cursor.execute("DROP TABLE match_timeline_events_assist")
 
 # matches = [1775792998]
 
-update_table("match", matchIds=matches, timeline=True, suppress_duplicates=False)
+update_table("match", matchIds=matches, timeline=True, create=False, suppress_duplicates=True)
 update_table("membertiers", matchIds=matches, suppress_duplicates=False)
 
 

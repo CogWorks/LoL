@@ -54,7 +54,12 @@ def  get_master(queue="RANKED_TEAM_5x5"):
   return json.loads(urllib2.urlopen(url).read())
 
 
-
+def strip_to_list (data_raw):
+ data = []
+ for x in data_raw:
+  for y in x:
+   data.append(y)
+ return data
 
 
 def create_tables():
@@ -334,7 +339,70 @@ def create_tables():
      ") CHARACTER SET utf8 ENGINE=InnoDB")
 
 
-# match_timeline
+ TABLES['match_timeline'] = (
+     "CREATE TABLE `match_timeline` ("
+     " `matchId` varchar(20) NOT NULL,"
+     " `summonerId` varchar(20) NOT NULL,"
+     " `timestamp` mediumint NOT NULL,"
+     " `currentGold` mediumint DEFAULT NULL,"
+     " `positionX` smallint DEFAULT NULL,"
+     " `positionY` smallint DEFAULT NULL,"
+     " `minionsKilled` smallint DEFAULT NULL,"
+     " `level` tinyint DEFAULT NULL,"
+     " `jungleMinionsKilled` smallint DEFAULT NULL,"
+     " `totalGold` mediumint DEFAULT NULL,"
+     " `dominionScore` mediumint DEFAULT NULL,"
+     " `participantId` tinyint DEFAULT NULL,"
+     " `xp` int DEFAULT NULL,"
+     " `teamScore` mediumint DEFAULT NULL,"
+     " `timelineInterval` int NOT NULL,"
+     "CONSTRAINT match_summoner_time PRIMARY KEY (`matchId`, `summonerId`, `timestamp`)"
+     ") CHARACTER SET utf8 ENGINE=InnoDB")
+     
+ TABLES['match_timeline_events'] = (
+     "CREATE TABLE `match_timeline_events` ("
+     " `eventId` varchar(10) NOT NULL,"
+     " `matchId` varchar(20) NOT NULL,"
+     " `summonerId` varchar(20) DEFAULT NULL,"
+     " `timelineTimestamp` mediumint NOT NULL,"
+     " `eventTimestamp` mediumint NOT NULL,"
+     " `ascendedType` varchar(25) DEFAULT NULL,"
+     " `assistingParticipants` bool DEFAULT NULL,"
+     " `buildingType` varchar(25) DEFAULT NULL,"
+     " `creatorId` varchar(20) DEFAULT NULL,"
+     " `eventType` varchar(25) NOT NULL,"
+     " `itemAfter` smallint DEFAULT NULL,"
+     " `itemBefore` smallint DEFAULT NULL,"
+     " `itemId` smallint DEFAULT NULL,"
+     " `killerId` varchar(20) DEFAULT NULL,"
+     " `laneType` varchar(10) DEFAULT NULL,"
+     " `levelUpType` varchar(8) DEFAULT NULL,"
+     " `monsterType` varchar(15) DEFAULT NULL,"
+     " `pointCaptured` varchar(8) DEFAULT NULL,"
+     " `positionX` smallint DEFAULT NULL,"
+     " `positionY` smallint DEFAULT NULL,"
+     " `skillSlot` smallint DEFAULT NULL,"
+     " `teamId` smallint DEFAULT NULL,"
+     " `towerType` varchar(20) DEFAULT NULL,"
+     " `victimId` varchar(20) DEFAULT NULL,"
+     " `wardType` varchar(25) DEFAULT NULL,"
+     "CONSTRAINT match_event PRIMARY KEY (`matchId`, `eventId`)"
+     ") CHARACTER SET utf8 ENGINE=InnoDB")
+     
+     
+     
+     
+    
+     
+ TABLES['match_timeline_events_assist'] = (
+     "CREATE TABLE `match_timeline_events_assist` ("
+     " `eventId` bigint NOT NULL,"
+     " `matchId` varchar(20) NOT NULL,"
+     " `assistId` varchar(20) NOT NULL,"
+     "CONSTRAINT event_assist PRIMARY KEY (`eventId`, `assistId`)"
+     ") CHARACTER SET utf8 ENGINE=InnoDB")
+
+     
 
 
       
@@ -473,7 +541,7 @@ def new_key (t):
 
 
 
-def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, create=False, teamIds=False, matchIds=False, checkTeams= False, hangwait=False, feedback="all", suppress_duplicates = False):
+def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, create=False, teamIds=False, matchIds=False, checkTeams= False, hangwait=False, feedback="all", suppress_duplicates = False, timeline = False):
  feedback = feedback.lower()
  if feedback != "all" and feedback != "quiet" and feedback != "silent":
   print "Invalid value for 'Feedback' option, reverting to default. All feedback will be shown."
@@ -684,7 +752,7 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
      if err.errno != 1062 or suppress_duplicates == False:
       
       if feedback != "silent":
-       print err.errno
+       print "%s - Member-Tiers" % err.errno
 
 
     else:
@@ -1029,6 +1097,23 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
    add_match_bans = ("INSERT INTO match_team_bans "
                "(matchId, teamId, pickTurn, championId) " 
                "VALUES (%(matchId)s, %(teamId)s, %(pickTurn)s, %(championId)s)")
+               
+   add_match_timeline = ("INSERT INTO match_timeline "
+               "(matchId, summonerId, timestamp, currentGold, positionX, positionY, minionsKilled, level, jungleMinionsKilled, totalGold, dominionScore, participantId, xp, teamScore, timelineInterval) "
+               "VALUES (%(matchId)s, %(summonerId)s, %(timestamp)s, %(currentGold)s, %(positionX)s, %(positionY)s, %(minionsKilled)s, %(level)s, %(jungleMinionsKilled)s, %(totalGold)s, %(dominionScore)s, %(participantId)s, %(xp)s, %(teamScore)s, %(timelineInterval)s )")
+   
+   add_match_timeline_event =  ("INSERT INTO match_timeline_events "
+               "(eventId, matchId, summonerId, timelineTimestamp, eventTimestamp, ascendedType, assistingParticipants, buildingType, creatorId, eventType, itemAfter, itemBefore, itemId, killerId, laneType, levelUpType, monsterType, pointCaptured, positionX, positionY, skillSlot, teamId, towerType, victimId, wardType) "
+               "VALUES (%(eventId)s, %(matchId)s, %(summonerId)s, %(timelineTimestamp)s, %(eventTimestamp)s, %(ascendedType)s, %(assistingParticipants)s, %(buildingType)s, %(creatorId)s, %(eventType)s, %(itemAfter)s, %(itemBefore)s, %(itemId)s, %(killerId`)s, %(laneType)s, %(levelUpType)s, %(monsterType)s, %(pointCaptured)s, %(positionX)s, %(positionY)s, %(skillSlot)s, %(teamId)s, %(towerType)s, %(victimId)s, %(wardType)s )")
+  
+   add_match_timeline_event_assist = ("INSERT INTO match_timeline_events_assist "
+               "(eventId, matchId, assistId)"
+               "VALUES (%(eventId)s, %(matchId)s, %(assistId)s)")
+
+     
+
+  
+   
    
    
    if(matchIds==False):
@@ -1054,11 +1139,10 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
    teams_data = []
    
    for x in match_ids:
-#     print x
     finished = False 
     while finished == False:
      try: 
-      cur_match_raw = w.get_match( x, region=None, include_timeline=False)
+      cur_match_raw = w.get_match( x, region=None, include_timeline=timeline)
      
      except riotwatcher.riotwatcher.LoLException as err:
       if str(err) == "Too many requests" or str(err) == "Unauthorized":
@@ -1093,6 +1177,7 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
     for y in ["mapId", "matchCreation", "matchDuration", "matchId", "matchMode", "matchType", "matchVersion", "platformId", "queueType", "region", "season"]:
      try:
       cur_match[y] = cur_match_raw[y]
+
      except:
       cur_match[y] = None
     
@@ -1109,25 +1194,16 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
     else:
       if feedback == "all":
        print "Updated Match"
-    
-    cur_match_participants_raw = cur_match_raw["participants"]
-    cur_match_pi = {}
-    for y in cur_match_raw["participantIdentities"]:
-     cur_match_pi[y["participantId"]] = y["player"]
-    
-    
-
     all_match_teams = []
     all_match_bans = []
     
 #     print cur_match_raw['teams']
     for y in cur_match_raw['teams']:
      cur_match_teams = {}
-     cur_match_bans = {}
-#      print y
-     for z in y:
+     for z in ("bans", "matchId", "teamId", "baronKills", "dominionVictoryScore", "dragonKills", "firstBaron", "firstBlood", "firstDragon", "firstInhibitor", "firstRiftHerald", "firstTower", "inhibitorKills", "riftHeraldKills", "towerKills", "vilemawKills", "winner"):
       if z == "bans":
        for s in y['bans']:
+        cur_match_bans = {}
         for t in s:
          cur_match_bans[t] = s[t]
         cur_match_bans['matchId'] = x
@@ -1136,11 +1212,13 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
 
      
       else:
-       cur_match_teams[z] = y[z]
+       try:
+        cur_match_teams[z] = y[z]
+       except:
+        cur_match_teams[z] = None
      
      cur_match_teams['matchId'] = x
      all_match_teams.append(cur_match_teams)
-      
       
     try:
      cursor.executemany(add_match_teams, all_match_teams)
@@ -1152,8 +1230,7 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
      if feedback == "all":
       print "Updated Match-Teams" 
    
-     
-     
+
     try:
      cursor.executemany(add_match_bans, all_match_bans)
     except mysql.connector.Error as err:
@@ -1165,8 +1242,158 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
       print "Updated Match-Bans" 
       
        
+           
+#     print cur_match_raw
+    cur_match_participants_raw = cur_match_raw["participants"]
+    cur_match_pi = {}
+    for y in cur_match_raw["participantIdentities"]:
+     cur_match_pi[y["participantId"]] = y["player"]
+    
+      
+      
+      
+      
+      
+      
+    cur_match_timeline_raw = cur_match_raw["timeline"]   
+    intervals = cur_match_timeline_raw["frameInterval"]
+    
+    for y in cur_match_timeline_raw["frames"]:
+
+     cur_timeline = []
 
 
+#      print cur_time
+#      print y
+     for z in y["participantFrames"]:
+      cur_participant_timeline = {}
+      
+#       print "z %s" % z
+      for s in ["currentGold", "position", "minionsKilled", "level", "jungleMinionsKilled", "totalGold", "dominionScore", "participantId", "xp", "teamScore", "timelineInterval"]:
+       if s != "position":
+        try:
+         cur_participant_timeline[s] = y["participantFrames"][z][s]
+        except:
+         cur_participant_timeline[s] = None
+       else:
+        try:
+         cur_participant_timeline['positionX'] = y["participantFrames"][z][s]["x"]
+        except:
+         cur_participant_timeline['positionX'] = None
+        try:
+         cur_participant_timeline['positionY'] = y["participantFrames"][z][s]["y"]
+        except:
+         cur_participant_timeline['positionY'] = None
+        
+      cur_participant_timeline['matchId'] = x
+      cur_participant_timeline['summonerId'] = cur_match_pi[int(z)]["summonerId"]
+      cur_participant_timeline['timestamp'] = y["timestamp"]
+      cur_participant_timeline['timelineInterval'] = intervals
+      cur_timeline.append(cur_participant_timeline)
+      
+     
+#      timeline_events = []
+     if "events" in y:
+      timeline_events = []
+      assists = []
+
+      for z in y["events"]:
+       cur_timeline_event = {}
+#        print z
+
+       for s in ["ascendedType", "assistingParticipants", "buildingType", "creatorId", "eventType", "itemAfter", "itemBefore", "itemId", "killerId`", "laneType", "levelUpType", "monsterType", "pointCaptured", "positionX", "positionY", "skillSlot", "teamId", "towerType", "victimId", "wardType"]:
+        
+       
+        if s=="assistingParticipants":
+         if "assistingParticipants" in [z]:
+          cur_timeline_event["assistingParticipants"]=True
+          print "WOOO"
+          for t in z["assistingParticipants"]:
+           cur_assists = {}
+           cur_assists["eventId"] = "%s - %s" % (cur_match_timeline_raw["frames"].index(y) + y["events"].index(z))
+           cur_assists["matchId"] = x
+           cur_assists["assistId"] = cur_match_pi[t]["summonerId"]
+           assists.append(cur_assists)
+          
+         else:
+          cur_timeline_event["assistingParticipants"]=False
+        elif s=="creatorId" or s=="killerId" or s=="victimId":
+         try: 
+          z[s]
+         except:
+          cur_timeline_event[s] = None
+         else:
+          if s == "killerId" and z[s] == 0:
+           cur_timeline_event[s] = "minion"
+          else:
+           cur_timeline_event[s] = cur_match_pi[z[s]]["summonerId"]
+        elif s == "position":
+         try:
+          cur_timeline_event['positionX'] = z[s]["x"]
+         except:
+          cur_timeline_event['positionX'] = None
+         try:
+          cur_timeline_event['positionY'] = z[s]["y"]
+         except:
+          cur_timeline_event['positionY'] = None
+        else:
+         try:
+          z[s]
+         except:
+          cur_timeline_event[s] = None
+         else:
+          cur_timeline_event[s] = z[s]
+       cur_timeline_event["eventId"] = "%s - %s" % (cur_match_timeline_raw["frames"].index(y),  y["events"].index(z))
+       cur_timeline_event["matchId"] = x
+       if "participantId" in z:
+        if z["participantId"] != 0:
+         cur_timeline_event["summonerId"] =  cur_match_pi[z["participantId"]]["summonerId"]
+        else:
+         cur_timeline_event["summonerId"] = "minion"
+       else:
+        cur_timeline_event["summonerId"] = None
+       cur_timeline_event["timelineTimestamp"] = y["timestamp"]
+       cur_timeline_event["eventTimestamp"] = z["timestamp"]
+       timeline_events.append(cur_timeline_event)
+       
+#        print cur_timeline_event
+
+#       print timeline_events 
+      if assists != []:
+       print assists
+      
+      try:
+       cursor.executemany(add_match_timeline_event, timeline_events)
+
+      except mysql.connector.Error as err:
+       if err.errno != 1062 or suppress_duplicates == False:
+        if feedback != "silent":
+         print "%s, Match: %s, Timeframe: %s-- Timeline-Events" % (err.msg, x, cur_match_timeline_raw["frames"].index(y))
+      else:
+       if feedback == "all":
+        print "Updated Timeline-Events" 
+ #       stop
+       
+        
+     try:
+      cursor.executemany(add_match_timeline, cur_timeline)
+     except mysql.connector.Error as err:
+      if err.errno != 1062 or suppress_duplicates == False:
+       if feedback != "silent":
+        print "%s, Match: %s, Timeframe: %s-- Timeline" % (err.errno, x, cur_match_timeline_raw["frames"].index(y))
+     else:
+      if feedback == "all":
+       print "Updated Timeline" 
+      
+      
+      
+      
+#       if killerid == 0, Minion
+
+    if feedback == "all":
+     print "Finished Timeline"
+    
+    
     for y in cur_match_participants_raw:
      cur_match_participant = {}
 #      print y
@@ -1271,6 +1498,17 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
      else:
       if feedback == "all":
        print "Updated Match-Participant"
+
+     
+     
+     
+    
+       
+    if feedback != "silent":
+     print "Finished %s of %s; %s" % (match_ids.index(x)+1,len(match_ids),x)
+     
+    
+    
        
     
 
@@ -1335,15 +1573,19 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
 # update_table("all")
 # this function will cycle from updating challenger -> master -> team -> checkteam, will not do iterate
 
-# update_table("match", matchIds=[], create=False)
+# update_table("match", matchIds=[], timeline=False, create=False)
 # this function will import all non-timeline data from a given list of matchIds. if no matchIds are supplied, it will automatically search through the list of matchIds in 'team-history'
+# timeline=TRUE will now import timeline data too
+
+
 
 # update_table("membertiers", matchIds=[], create=False)
 # this function is essentially the same as the 'checkteams' functionality however this will search a given match and scrape the league data for all the players in that match
 # if you want to just do all the matches in the database, you can do it this way:
-#      cursor.execute("SELECT matchId FROM matches")
-#      matches= cursor.fetchall()
-#      update_table("membertiers", matchIds=matches, suppress_duplicates=True)
+#         cursor.execute("SELECT matchId FROM matches")
+#         matches= strip_to_list(cursor.fetchall())
+#         matches= matches[1:100]
+#         update_table("membertiers", matchIds=matches, suppress_duplicates=True)
 
 
 
@@ -1366,6 +1608,20 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
 # update_table("membertiers", matchIds=[2044253864,1976289359], suppress_duplicates=True)
 # update_table("checkteams", feedback="all", suppress_duplicates=True)
 # print "Took", time.time() - start_time, "to run"
+
+
+cursor.execute("SELECT gameId FROM team_history")
+matches= strip_to_list(cursor.fetchall()[0:100])
+
+matches = matches[0:100]
+# cursor.execute("DROP TABLE match_timeline_events")
+# cursor.execute("ALTER TABLE match_timeline_events MODIFY teamId smallint DEFAULT NULL")
+
+# matches = [1775792998]
+
+update_table("match", matchIds=matches, timeline=True, suppress_duplicates=False)
+update_table("membertiers", matchIds=matches, suppress_duplicates=False)
+
 
 
 

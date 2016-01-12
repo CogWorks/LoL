@@ -438,9 +438,30 @@ def create_tables():
          print("OK")
 
 
+
+def new_key (t=None):
+ global w
+ global key
+#  print key
+ if t:
+  key = t
+ 
+ if key == keys[len(keys)-1]:
+  key = keys[0]
+ else:
+  if len(keys)>1:
+   key = keys[keys.index(key)+1]
+  else:
+   print "Only one key."
+   key = keys[0]
+    
+
+
+#  print key   
+ w = riotwatcher.RiotWatcher(key)
  
  
-def get_leagues(team_ids=None,x=None, stop=None, key=None, unauthorized_cycle=False, team=True):
+def get_leagues(team_ids=None,x=None, stop=None, key=None, unauthorized_cycle=False, team=True, feedback="all"):
  finished = False
  unauthorized_key = False
  while finished == False:
@@ -450,6 +471,7 @@ def get_leagues(team_ids=None,x=None, stop=None, key=None, unauthorized_cycle=Fa
     league_entries = w.get_league_entry(team_ids=team_ids[(x*10):stop]) if unauthorized_cycle==False else w.get_league_entry(team_ids=team_ids)
    else:
     league_entries = w.get_league_entry(summoner_ids=team_ids[(x*10):stop]) if unauthorized_cycle==False else w.get_league_entry(summoner_ids=team_ids)
+
 
   except riotwatcher.riotwatcher.LoLException as err:
    if str(err) == "Unauthorized" :
@@ -470,20 +492,6 @@ def get_leagues(team_ids=None,x=None, stop=None, key=None, unauthorized_cycle=Fa
 # Make sure to reset 'unauthorized_key' because this new key was due to rate-limit
     
     unauthorized_key=False
-
-
-    if key == keys[len(keys)-1]:
-     key = keys[0]
-    else:
-     if len(keys)>1:
-      key = key = keys[keys.index(key)+1]
-     else:
-      if feedback == "all":
-       print "Too many requests, not enough keys."
-      if hangwait == False:
-       if feedback == "all":
-        print "Break, hangwait is off."
-       break 
      
     if str(err) != "Unauthorized" and str(err) != "Too many requests":
      if feedback != "silent":
@@ -502,7 +510,7 @@ def get_leagues(team_ids=None,x=None, stop=None, key=None, unauthorized_cycle=Fa
     if feedback == "all": 
      print "New key assigned, %s" % str(err)
 #         print str(err)
-    new_key(key)
+    new_key()
    elif unauthorized_key == False and str(err) == "Unauthorized":
 #          or str(err) == "Internal server error"
     league_entries = {}
@@ -510,9 +518,14 @@ def get_leagues(team_ids=None,x=None, stop=None, key=None, unauthorized_cycle=Fa
      if feedback == "all": 
       print "Unauthorized, checking individual"
      for s in team_ids[(x*10):stop]:
+      if team == False:
+       time.sleep(5)
       unauthorized_key=False
-#           print s
+      print s
+      print key
+#       print team
       cur_entry = get_leagues(team_ids=[s], x=x, stop=stop, key=key, unauthorized_cycle=True, team=team)
+      print cur_entry 
       if cur_entry != {}:
        league_entries[s] = cur_entry[s]
       else:
@@ -532,13 +545,7 @@ def get_leagues(team_ids=None,x=None, stop=None, key=None, unauthorized_cycle=Fa
    finished = True
  
  return league_entries
-
-
-def new_key (t):
- global w
- w = riotwatcher.RiotWatcher(t)
-
-
+ 
 
 
 def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, create=False, teamIds=False, matchIds=False, checkTeams= False, hangwait=False, feedback="all", suppress_duplicates = False, timeline = False):
@@ -550,13 +557,13 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
   suppress_duplicates = True
   
  key = keys[0]
- new_key(key)
+ new_key()
 
  if create== True:
   create_tables()
 
  if table=="challenger":
-  add_challenger = ("INSERT INTO by_league "
+  add_challenger = ("INSERT IGNORE INTO by_league "
                "(isFreshBlood, division, isVeteran, wins, losses, playerOrTeamId, playerOrTeamName, isInactive, isHotStreak, leaguePoints, league, team, queue) "
                "VALUES (%(isFreshBlood)s, %(division)s, %(isVeteran)s, %(wins)s, %(losses)s, %(playerOrTeamId)s, %(playerOrTeamName)s, %(isInactive)s, %(isHotStreak)s, %(leaguePoints)s, %(league)s, %(team)s, %(queue)s)")
 
@@ -595,7 +602,7 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
   
   
  if table=="master":
-  add_master = ("INSERT INTO by_league "
+  add_master = ("INSERT IGNORE INTO by_league "
                "(isFreshBlood, division, isVeteran, wins, losses, playerOrTeamId, playerOrTeamName, isInactive, isHotStreak, leaguePoints, league, team, queue) "
                "VALUES (%(isFreshBlood)s, %(division)s, %(isVeteran)s, %(wins)s, %(losses)s, %(playerOrTeamId)s, %(playerOrTeamName)s, %(isInactive)s, %(isHotStreak)s, %(leaguePoints)s, %(league)s, %(team)s, %(queue)s)")
 
@@ -632,7 +639,7 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
    print "Finished Master"  
     
  if table=="checkteams":
-   add_league = ("INSERT INTO by_league "
+   add_league = ("INSERT IGNORE INTO by_league "
                "(isFreshBlood, division, isVeteran, wins, losses, playerOrTeamId, playerOrTeamName, isInactive, isHotStreak, leaguePoints, league, team, queue) "
                "VALUES (%(isFreshBlood)s, %(division)s, %(isVeteran)s, %(wins)s, %(losses)s, %(playerOrTeamId)s, %(playerOrTeamName)s, %(isInactive)s, %(isHotStreak)s, %(leaguePoints)s, %(league)s, %(team)s, %(queue)s)")
 
@@ -660,7 +667,7 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
 
 
 
-    league_entries = get_leagues(team_ids=team_ids,x=x, stop=stop, key=key, unauthorized_cycle=False, team=True)
+    league_entries = get_leagues(team_ids=team_ids,x=x, stop=stop, key=key, unauthorized_cycle=False, team=True, feedback=feedback)
     by_leagues = []
     for z in league_entries:
      for y in league_entries[z]:
@@ -707,10 +714,15 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
       print "Finished %s of %s" % (stop+1, len(team_ids))
         
  if table=="membertiers":
-   add_league = ("INSERT INTO by_league "
+   add_league = ("INSERT IGNORE INTO by_league "
                "(isFreshBlood, division, isVeteran, wins, losses, playerOrTeamId, playerOrTeamName, isInactive, isHotStreak, leaguePoints, league, team, queue) "
                "VALUES (%(isFreshBlood)s, %(division)s, %(isVeteran)s, %(wins)s, %(losses)s, %(playerOrTeamId)s, %(playerOrTeamName)s, %(isInactive)s, %(isHotStreak)s, %(leaguePoints)s, %(league)s, %(team)s, %(queue)s)")
    summoner_ids_raw = [] 
+   if matchIds == []:
+    if feedback != "silent":
+     print "No matches given, using all."
+    cursor.execute("SELECT matchId FROM matches")
+    matchIds= strip_to_list(cursor.fetchall())
    for x in matchIds:
 #     cursor.execute("SELECT summonerId, teamId FROM match_participants where matchId = %s" % x)
 
@@ -734,7 +746,10 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
     if stop == x*10:
      continue
     
-    league_entries = get_leagues(team_ids=summoner_ids,x=x, stop=stop, key=key, unauthorized_cycle=False, team=False)
+#     print summoner_ids[(x*10):stop]
+    
+    league_entries = get_leagues(team_ids=summoner_ids,x=x, stop=stop, key=key, unauthorized_cycle=False, team=False, feedback=feedback)
+
     by_leagues = []
     for z in league_entries:
      for y in league_entries[z]:
@@ -746,20 +761,21 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
        if "miniSeries" in v:
         del v['miniSeries']
        by_leagues.append(v)
+
+    
     try:
      cursor.executemany(add_league, by_leagues)
     except mysql.connector.Error as err:
      if err.errno != 1062 or suppress_duplicates == False:
       
       if feedback != "silent":
-       print "%s - Member-Tiers" % err.errno
-
+       print "%s - Member-Tiers" % err.msg
 
     else:
      if feedback != "silent":
       print "Updated Member-Tiers"  
     
-
+    cnx.commit()
     if stop==(len(summoner_ids)):
      if feedback != "silent":
       print "Finished %s of %s" % (stop, len(summoner_ids))
@@ -769,15 +785,15 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
         
  if table=="team":
    
-   add_team = ("INSERT INTO team "
+   add_team = ("INSERT IGNORE INTO team "
                "(createDate, fullId, lastGameDate, lastJoinDate, lastJoinedRankedTeamQueueDate, modifyDate, name, secondLastJoinDate, status, tag, thirdLastJoinDate, averageGamesPlayed3v3, losses3v3, wins3v3, averageGamesPlayed5v5, losses5v5, wins5v5) " 
                "VALUES (%(createDate)s, %(fullId)s, %(lastGameDate)s, %(lastJoinDate)s, %(lastJoinedRankedTeamQueueDate)s, %(modifyDate)s, %(name)s, %(secondLastJoinDate)s, %(status)s, %(tag)s, %(thirdLastJoinDate)s, %(averageGamesPlayed3v3)s, %(losses3v3)s, %(wins3v3)s, %(averageGamesPlayed5v5)s, %(losses5v5)s, %(wins5v5)s) " )
  
-   add_team_history = ("INSERT INTO team_history "
+   add_team_history = ("INSERT IGNORE INTO team_history "
             "(fullId, assists, date, deaths, gameId, gameMode, invalid, kills, mapId, opposingTeamKills, opposingTeamName, win)" 
             "VALUES (%(fullId)s, %(assists)s, %(date)s, %(deaths)s, %(gameId)s, %(gameMode)s, %(invalid)s, %(kills)s, %(mapId)s, %(opposingTeamKills)s, %(opposingTeamName)s, %(win)s)" )
    
-   add_team_roster = ("INSERT INTO team_roster "
+   add_team_roster = ("INSERT IGNORE INTO team_roster "
             "(inviteDate, joinDate, playerId, status, isCaptain, teamId)"
             "VALUES (%(inviteDate)s, %(joinDate)s, %(playerId)s, %(status)s, %(isCaptain)s, %(teamId)s)")
    
@@ -832,17 +848,14 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
         if str(err) == "Unauthorized":
          if feedback == "all":
           print "Unauthorized, using new key"
-        if key == keys[len(keys)-1]:
-         key = keys[0]
-        else:
-         if len(keys)>1:
-          key = keys[keys.index(key)+1]
+        if len(keys)==1:
+         if feedback == "all":
+          print "Too many requests, not enough keys."
+         if hangwait == False:
+          break 
          else:
-          if feedback == "all":
-           print "Too many requests, not enough keys."
-          if hangwait == False:
-           break 
-        new_key(key)
+          time.sleep(5)
+        new_key()
         
       else:
        if feedback == "all":
@@ -890,7 +903,7 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
        print "Error, team stats messed up"
       
      try:
-      print cursor.execute(add_team, cur_team)
+      cursor.execute(add_team, cur_team)
      except mysql.connector.Error as err:
       if err.errno != 1062 or suppress_duplicates == False:
        if feedback != "silent":
@@ -990,13 +1003,15 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
          print "Error %s" % err.errno
       else:
        if feedback == "all":
-        print "Updated Team-History" 
+        print "Updated Team-Roster" 
     
 
     if feedback == "all":
      print "Finished %s of %s" % (stop, len(team_ids))
     if feedback == "quiet" and stop == len(team_ids):
      print "Finished %s of %s" % (stop, len(team_ids))
+    
+    cnx.commit()
         
    if checkTeams==True:
     if feedback != "silent":
@@ -1032,16 +1047,13 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
 #         print "New Key" 
         if str(err) == "Unauthorized":
          print "Unauthorized, using new key"
-        if key == keys[len(keys)-1]:
-         key = keys[0]
-        else:
-         if len(keys)>1:
-          key = keys[keys.index(key)+1]
+        if len(keys)==1:
+         print "Too many requests, not enough keys."
+         if hangwait == False:
+          break 
          else:
-          print "Too many requests, not enough keys."
-          if hangwait == False:
-           break 
-        new_key(key)
+          time.sleep(5)
+        new_key()
         
        else:
 
@@ -1070,43 +1082,43 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
   update_table("team", checkTeams =True, feedback=feedback, suppress_duplicates = suppress_duplicates)
   
  if table=="match":
-   add_match = ("INSERT INTO matches "
+   add_match = ("INSERT IGNORE INTO matches "
               "(mapId, matchCreation, matchDuration, matchId, matchMode, matchType, matchVersion, platformId, queueType, region, season) " 
               "VALUES (%(mapId)s, %(matchCreation)s, %(matchDuration)s, %(matchId)s, %(matchMode)s, %(matchType)s, %(matchVersion)s, %(platformId)s, %(queueType)s, %(region)s, %(season)s)")
 
-   add_match_participants = ("INSERT INTO match_participants "
+   add_match_participants = ("INSERT IGNORE INTO match_participants "
               "(matchId, championId, highestAchievedSeasonTier, participantId, profileIcon, matchHistoryUri, summonerName, summonerId, spell1Id, spell2Id, assists, champLevel, combatPlayerScore, deaths, doubleKills, firstBloodAssist, firstBloodKill, firstInhibitorAssist, firstInhibitorKill, firstTowerAssist, firstTowerKill, goldEarned, goldSpent, inhibitorKills, item0, item1, item2, item3, item4, item5, item6, killingSprees, kills, largestCriticalStrike, largestKillingSpree, largestMultiKill, magicDamageDealt, magicDamageDealtToChampions, magicDamageTaken, minionsKilled, neutralMinionsKilled, neutralMinionsKilledEnemyJungle, neutralMinionsKilledTeamJungle, nodeCapture, nodeCaptureAssist, nodeNeutralize, nodeNeutralizeAssist, objectivePlayerScore, pentaKills, physicalDamageDealt, physicalDamageDealtToChampions, physicalDamageTaken, quadrakills, sightWardsBoughtInGame, teamObjective, totalDamageDealt, totalDamageDealtToChampions, totalDamageTaken, totalHeal, totalPlayerScore, totalScoreRank, totalTimeCrowdControlDealt, totalUnitsHealed, towerKills, tripleKills, trueDamageDealt, trueDamageDealtToChampions, trueDamageTaken, unrealKills, visionWardsBoughtInGame, wardsKilled, wardsPlaced, winner, teamId, lane, role) " 
               "VALUES (%(matchId)s, %(championId)s, %(highestAchievedSeasonTier)s,  %(participantId)s, %(profileIcon)s, %(matchHistoryUri)s, %(summonerName)s, %(summonerId)s, %(spell1Id)s, %(spell2Id)s, %(assists)s, %(champLevel)s, %(combatPlayerScore)s, %(deaths)s, %(doubleKills)s, %(firstBloodAssist)s, %(firstBloodKill)s, %(firstInhibitorAssist)s, %(firstInhibitorKill)s, %(firstTowerAssist)s, %(firstTowerKill)s, %(goldEarned)s, %(goldSpent)s, %(inhibitorKills)s, %(item0)s, %(item1)s, %(item2)s, %(item3)s, %(item4)s, %(item5)s, %(item6)s, %(killingSprees)s, %(kills)s, %(largestCriticalStrike)s, %(largestKillingSpree)s, %(largestMultiKill)s, %(magicDamageDealt)s, %(magicDamageDealtToChampions)s, %(magicDamageTaken)s, %(minionsKilled)s, %(neutralMinionsKilled)s, %(neutralMinionsKilledEnemyJungle)s, %(neutralMinionsKilledTeamJungle)s, %(nodeCapture)s, %(nodeCaptureAssist)s, %(nodeNeutralize)s, %(nodeNeutralizeAssist)s, %(objectivePlayerScore)s, %(pentaKills)s, %(physicalDamageDealt)s, %(physicalDamageDealtToChampions)s, %(physicalDamageTaken)s, %(quadrakills)s, %(sightWardsBoughtInGame)s, %(teamObjective)s, %(totalDamageDealt)s, %(totalDamageDealtToChampions)s, %(totalDamageTaken)s, %(totalHeal)s, %(totalPlayerScore)s, %(totalScoreRank)s, %(totalTimeCrowdControlDealt)s, %(totalUnitsHealed)s, %(towerKills)s, %(tripleKills)s, %(trueDamageDealt)s, %(trueDamageDealtToChampions)s, %(trueDamageTaken)s, %(unrealKills)s, %(visionWardsBoughtInGame)s, %(wardsKilled)s, %(wardsPlaced)s, %(winner)s, %(teamId)s, %(lane)s, %(role)s)")
 
-   add_match_participant_rune = ("INSERT INTO match_participant_runes "
+   add_match_participant_rune = ("INSERT IGNORE INTO match_participant_runes "
               "(matchId, summonerId, rank, runeId)"
               "VALUES (%(matchId)s, %(summonerId)s, %(rank)s, %(runeId)s)")
               
-   add_match_participant_mastery = ("INSERT INTO match_participant_masteries "
+   add_match_participant_mastery = ("INSERT IGNORE INTO match_participant_masteries "
               "(matchId, summonerId, rank, masteryId)"
               "VALUES (%(matchId)s, %(summonerId)s, %(rank)s, %(masteryId)s)")
 
-   add_match_participant_delta = ("INSERT INTO match_participant_deltas "
+   add_match_participant_delta = ("INSERT IGNORE INTO match_participant_deltas "
               "(matchId, summonerId, deltaName, deltaTimeframe, value)"
               "VALUES (%(matchId)s, %(summonerId)s, %(deltaName)s, %(deltaTimeframe)s, %(value)s)")
 																
-   add_match_teams = ("INSERT INTO match_teams "
+   add_match_teams = ("INSERT IGNORE INTO match_teams "
                "(matchId, teamId, baronKills, dominionVictoryScore, dragonKills, firstBaron, firstBlood, firstDragon, firstInhibitor, firstRiftHerald, firstTower, inhibitorKills, riftHeraldKills, towerKills, vilemawKills, winner) " 
                "VALUES (%(matchId)s, %(teamId)s, %(baronKills)s, %(dominionVictoryScore)s, %(dragonKills)s, %(firstBaron)s, %(firstBlood)s, %(firstDragon)s, %(firstInhibitor)s, %(firstRiftHerald)s, %(firstTower)s, %(inhibitorKills)s, %(riftHeraldKills)s, %(towerKills)s, %(vilemawKills)s, %(winner)s	)")
    
-   add_match_bans = ("INSERT INTO match_team_bans "
+   add_match_bans = ("INSERT IGNORE INTO match_team_bans "
                "(matchId, teamId, pickTurn, championId) " 
                "VALUES (%(matchId)s, %(teamId)s, %(pickTurn)s, %(championId)s)")
                
-   add_match_timeline = ("INSERT INTO match_timeline "
+   add_match_timeline = ("INSERT IGNORE INTO match_timeline "
                "(matchId, summonerId, timestamp, currentGold, positionX, positionY, minionsKilled, level, jungleMinionsKilled, totalGold, dominionScore, participantId, xp, teamScore, timelineInterval) "
                "VALUES (%(matchId)s, %(summonerId)s, %(timestamp)s, %(currentGold)s, %(positionX)s, %(positionY)s, %(minionsKilled)s, %(level)s, %(jungleMinionsKilled)s, %(totalGold)s, %(dominionScore)s, %(participantId)s, %(xp)s, %(teamScore)s, %(timelineInterval)s )")
    
-   add_match_timeline_event =  ("INSERT INTO match_timeline_events "
+   add_match_timeline_event =  ("INSERT IGNORE INTO match_timeline_events "
                "(eventId, matchId, summonerId, timelineTimestamp, eventTimestamp, ascendedType, assistingParticipants, buildingType, creatorId, eventType, itemAfter, itemBefore, itemId, killerId, laneType, levelUpType, monsterType, pointCaptured, positionX, positionY, skillSlot, teamId, towerType, victimId, wardType) "
                "VALUES (%(eventId)s, %(matchId)s, %(summonerId)s, %(timelineTimestamp)s, %(eventTimestamp)s, %(ascendedType)s, %(assistingParticipants)s, %(buildingType)s, %(creatorId)s, %(eventType)s, %(itemAfter)s, %(itemBefore)s, %(itemId)s, %(killerId`)s, %(laneType)s, %(levelUpType)s, %(monsterType)s, %(pointCaptured)s, %(positionX)s, %(positionY)s, %(skillSlot)s, %(teamId)s, %(towerType)s, %(victimId)s, %(wardType)s )")
   
-   add_match_timeline_event_assist = ("INSERT INTO match_timeline_events_assist "
+   add_match_timeline_event_assist = ("INSERT IGNORE INTO match_timeline_events_assist "
                "(eventId, matchId, assistId)"
                "VALUES (%(eventId)s, %(matchId)s, %(assistId)s)")
 
@@ -1114,7 +1126,18 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
 
   
    
-   
+   cursor.execute("SELECT matchId FROM matches")
+   existing_matches_raw = cursor.fetchall()
+   existing_matches = []
+   for x in existing_matches_raw:
+    for y in x:
+     existing_matches.append(y)
+   cursor.execute("SELECT matchId FROM match_timeline")
+   existing_timelines_raw = cursor.fetchall()
+   existing_timelines = []
+   for x in existing_timelines_raw:
+    for y in x:
+     existing_timelines.append(y)
    
    if(matchIds==False):
     if feedback == "all":
@@ -1140,6 +1163,8 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
    
    for x in match_ids:
     finished = False 
+    cur_match_raw = []
+
     while finished == False:
      try: 
       cur_match_raw = w.get_match( x, region=None, include_timeline=timeline)
@@ -1150,17 +1175,14 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
         if str(err) == "Unauthorized":
          if feedback == "all":
           print "Unauthorized, using new key"
-        if key == keys[len(keys)-1]:
-         key = keys[0]
-        else:
-         if len(keys)>1:
-          key = keys[keys.index(key)+1]
+        if len(keys)==1:
+         if feedback == "all":
+          print "Too many requests, not enough keys."
+         if hangwait == False:
+          break 
          else:
-          if feedback == "all":
-           print "Too many requests, not enough keys."
-          if hangwait == False:
-           break 
-        new_key(key)
+          time.sleep(5)
+        new_key()
         
       else:
        if feedback != "silent":
@@ -1171,344 +1193,369 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
       
      else:
       finished = True
+    
+#     print existing_matches
+#     print x
+    
+#     print "1370082408" not in existing_matches
+#     print "1370082408" in existing_matches
+#     
+    
+    if unicode(x) not in existing_matches and cur_match_raw:
+     
       
-    cur_match = {}
+     cur_match = {}
       
-    for y in ["mapId", "matchCreation", "matchDuration", "matchId", "matchMode", "matchType", "matchVersion", "platformId", "queueType", "region", "season"]:
+     for y in ["mapId", "matchCreation", "matchDuration", "matchId", "matchMode", "matchType", "matchVersion", "platformId", "queueType", "region", "season"]:
+      try:
+       cur_match[y] = cur_match_raw[y]
+
+      except:
+       cur_match[y] = None
+    
+ #     print cur_match
+    
      try:
-      cur_match[y] = cur_match_raw[y]
+      cursor.execute(add_match, cur_match)
+     except mysql.connector.Error as err:
 
-     except:
-      cur_match[y] = None
+       if err.errno != 1062 or suppress_duplicates == False:
+        if feedback != "silent":
+         print "%s, Match: %s -- Match" % (err.errno, x)
+ #       print add_team % cur_team
+     else:
+       if feedback == "all":
+        print "Updated Match"
+     all_match_teams = []
+     all_match_bans = []
     
-#     print cur_match
-    
-    try:
-     cursor.execute(add_match, cur_match)
-    except mysql.connector.Error as err:
+ #     print cur_match_raw['teams']
+     for y in cur_match_raw['teams']:
+      cur_match_teams = {}
+      for z in ("bans", "matchId", "teamId", "baronKills", "dominionVictoryScore", "dragonKills", "firstBaron", "firstBlood", "firstDragon", "firstInhibitor", "firstRiftHerald", "firstTower", "inhibitorKills", "riftHeraldKills", "towerKills", "vilemawKills", "winner"):
+       if z == "bans":
+        for s in y['bans']:
+         cur_match_bans = {}
+         for t in s:
+          cur_match_bans[t] = s[t]
+         cur_match_bans['matchId'] = x
+         cur_match_bans['teamId'] = y['teamId']
+         all_match_bans.append(cur_match_bans)
 
+     
+       else:
+        try:
+         cur_match_teams[z] = y[z]
+        except:
+         cur_match_teams[z] = None
+     
+      cur_match_teams['matchId'] = x
+      all_match_teams.append(cur_match_teams)
+      
+     try:
+      cursor.executemany(add_match_teams, all_match_teams)
+     except mysql.connector.Error as err:
       if err.errno != 1062 or suppress_duplicates == False:
        if feedback != "silent":
-        print "%s, Match: %s -- Match" % (err.errno, x)
-#       print add_team % cur_team
-    else:
+        print "%s, Match: %s -- Teams" % (err.errno, x)
+     else:
       if feedback == "all":
-       print "Updated Match"
-    all_match_teams = []
-    all_match_bans = []
-    
-#     print cur_match_raw['teams']
-    for y in cur_match_raw['teams']:
-     cur_match_teams = {}
-     for z in ("bans", "matchId", "teamId", "baronKills", "dominionVictoryScore", "dragonKills", "firstBaron", "firstBlood", "firstDragon", "firstInhibitor", "firstRiftHerald", "firstTower", "inhibitorKills", "riftHeraldKills", "towerKills", "vilemawKills", "winner"):
-      if z == "bans":
-       for s in y['bans']:
-        cur_match_bans = {}
-        for t in s:
-         cur_match_bans[t] = s[t]
-        cur_match_bans['matchId'] = x
-        cur_match_bans['teamId'] = y['teamId']
-        all_match_bans.append(cur_match_bans)
-
-     
-      else:
-       try:
-        cur_match_teams[z] = y[z]
-       except:
-        cur_match_teams[z] = None
-     
-     cur_match_teams['matchId'] = x
-     all_match_teams.append(cur_match_teams)
-      
-    try:
-     cursor.executemany(add_match_teams, all_match_teams)
-    except mysql.connector.Error as err:
-     if err.errno != 1062 or suppress_duplicates == False:
-      if feedback != "silent":
-       print "%s, Match: %s -- Teams" % (err.errno, x)
-    else:
-     if feedback == "all":
-      print "Updated Match-Teams" 
+       print "Updated Match-Teams" 
    
 
-    try:
-     cursor.executemany(add_match_bans, all_match_bans)
-    except mysql.connector.Error as err:
-     if err.errno != 1062 or suppress_duplicates == False:
-      if feedback != "silent":
-       print "%s, Match: %s -- Bans" % (err.errno, x)
-    else:
-     if feedback == "all":
-      print "Updated Match-Bans" 
+     try:
+      cursor.executemany(add_match_bans, all_match_bans)
+     except mysql.connector.Error as err:
+      if err.errno != 1062 or suppress_duplicates == False:
+       if feedback != "silent":
+        print "%s, Match: %s -- Bans" % (err.errno, x)
+     else:
+      if feedback == "all":
+       print "Updated Match-Bans" 
       
        
            
-#     print cur_match_raw
-    cur_match_participants_raw = cur_match_raw["participants"]
-    cur_match_pi = {}
-    for y in cur_match_raw["participantIdentities"]:
-     cur_match_pi[y["participantId"]] = y["player"]
+ #     print cur_match_raw
+     cur_match_participants_raw = cur_match_raw["participants"]
+     cur_match_pi = {}
+     for y in cur_match_raw["participantIdentities"]:
+      cur_match_pi[y["participantId"]] = y["player"]
+    
     
       
       
       
       
       
-      
-    cur_match_timeline_raw = cur_match_raw["timeline"]   
-    intervals = cur_match_timeline_raw["frameInterval"]
+    if timeline == True and unicode(x) not in existing_timelines and cur_match_raw:  
+     if "timeline" in cur_match_raw:
+      cur_match_timeline_raw = cur_match_raw["timeline"]   
+      intervals = cur_match_timeline_raw["frameInterval"]
     
-    for y in cur_match_timeline_raw["frames"]:
+      for y in cur_match_timeline_raw["frames"]:
 
-     cur_timeline = []
+       cur_timeline = []
 
 
-#      print cur_time
-#      print y
-     for z in y["participantFrames"]:
-      cur_participant_timeline = {}
+  #      print cur_time
+  #      print y
+       for z in y["participantFrames"]:
+        cur_participant_timeline = {}
       
-#       print "z %s" % z
-      for s in ["currentGold", "position", "minionsKilled", "level", "jungleMinionsKilled", "totalGold", "dominionScore", "participantId", "xp", "teamScore", "timelineInterval"]:
-       if s != "position":
-        try:
-         cur_participant_timeline[s] = y["participantFrames"][z][s]
-        except:
-         cur_participant_timeline[s] = None
-       else:
-        try:
-         cur_participant_timeline['positionX'] = y["participantFrames"][z][s]["x"]
-        except:
-         cur_participant_timeline['positionX'] = None
-        try:
-         cur_participant_timeline['positionY'] = y["participantFrames"][z][s]["y"]
-        except:
-         cur_participant_timeline['positionY'] = None
+  #       print "z %s" % z
+        for s in ["currentGold", "position", "minionsKilled", "level", "jungleMinionsKilled", "totalGold", "dominionScore", "participantId", "xp", "teamScore", "timelineInterval"]:
+         if s != "position":
+          try:
+           cur_participant_timeline[s] = y["participantFrames"][z][s]
+          except:
+           cur_participant_timeline[s] = None
+         else:
+          try:
+           cur_participant_timeline['positionX'] = y["participantFrames"][z][s]["x"]
+          except:
+           cur_participant_timeline['positionX'] = None
+          try:
+           cur_participant_timeline['positionY'] = y["participantFrames"][z][s]["y"]
+          except:
+           cur_participant_timeline['positionY'] = None
         
-      cur_participant_timeline['matchId'] = x
-      cur_participant_timeline['summonerId'] = cur_match_pi[int(z)]["summonerId"]
-      cur_participant_timeline['timestamp'] = y["timestamp"]
-      cur_participant_timeline['timelineInterval'] = intervals
-      cur_timeline.append(cur_participant_timeline)
+        cur_participant_timeline['matchId'] = x
+        cur_participant_timeline['summonerId'] = cur_match_pi[int(z)]["summonerId"]
+        cur_participant_timeline['timestamp'] = y["timestamp"]
+        cur_participant_timeline['timelineInterval'] = intervals
+        cur_timeline.append(cur_participant_timeline)
       
      
-#      timeline_events = []
-     if "events" in y:
-      timeline_events = []
-      assists = []
+  #      timeline_events = []
+ #       print x
+       if "events" in y:
+        timeline_events = []
+        assists = []
 
-      for z in y["events"]:
-       cur_timeline_event = {}
-#        print z
+        for z in y["events"]:
+         cur_timeline_event = {}
+  #        print z
 
-       for s in ["ascendedType", "assistingParticipants", "buildingType", "creatorId", "eventType", "itemAfter", "itemBefore", "itemId", "killerId`", "laneType", "levelUpType", "monsterType", "pointCaptured", "positionX", "positionY", "skillSlot", "teamId", "towerType", "victimId", "wardType"]:
+         for s in ["ascendedType", "assistingParticipants", "buildingType", "creatorId", "eventType", "itemAfter", "itemBefore", "itemId", "killerId`", "laneType", "levelUpType", "monsterType", "pointCaptured", "positionX", "positionY", "skillSlot", "teamId", "towerType", "victimId", "wardType"]:
         
        
-        if s=="assistingParticipants":
-         if "assistingParticipantIds" in z:
-          cur_timeline_event["assistingParticipants"]=True
-          for t in z["assistingParticipantIds"]:
-           cur_assists = {}
-           cur_assists["eventId"] = "%s - %s" % (cur_match_timeline_raw["frames"].index(y),  y["events"].index(z))
-           cur_assists["matchId"] = x
-           cur_assists["assistId"] = cur_match_pi[t]["summonerId"]
-           assists.append(cur_assists)
+          if s=="assistingParticipants":
+        
+           if "assistingParticipantIds" in z:
+            cur_timeline_event["assistingParticipants"]=True
+            for t in z["assistingParticipantIds"]:
+             cur_assists = {}
+             cur_assists["eventId"] = "%s - %s" % (cur_match_timeline_raw["frames"].index(y),  y["events"].index(z))
+             cur_assists["matchId"] = x
+             cur_assists["assistId"] = cur_match_pi[t]["summonerId"]
+             assists.append(cur_assists)
 
           
           
-         else:
-          cur_timeline_event["assistingParticipants"]=False
-        elif s=="creatorId" or s=="killerId" or s=="victimId":
-         try: 
-          z[s]
-         except:
-          cur_timeline_event[s] = None
-         else:
-          if s == "killerId" and z[s] == 0:
-           cur_timeline_event[s] = "minion"
+           else:
+            cur_timeline_event["assistingParticipants"]=False
+          elif s=="creatorId" or s=="killerId" or s=="victimId":
+           try: 
+            z[s]
+           except:
+            cur_timeline_event[s] = None
+           else:
+            if z[s] == 0:
+             if s == "killerId":
+              cur_timeline_event[s] = "minion"
+             if s == "creatorId":
+ #              we're not sure why creatorId would be set to 0, and no one online is 100% sure either. 
+              cur_timeline_event[s] = "undefined"
+            else:
+ #             print z
+             cur_timeline_event[s] = cur_match_pi[z[s]]["summonerId"]
+          elif s == "position":
+           try:
+            cur_timeline_event['positionX'] = z[s]["x"]
+           except:
+            cur_timeline_event['positionX'] = None
+           try:
+            cur_timeline_event['positionY'] = z[s]["y"]
+           except:
+            cur_timeline_event['positionY'] = None
           else:
-           cur_timeline_event[s] = cur_match_pi[z[s]]["summonerId"]
-        elif s == "position":
-         try:
-          cur_timeline_event['positionX'] = z[s]["x"]
-         except:
-          cur_timeline_event['positionX'] = None
-         try:
-          cur_timeline_event['positionY'] = z[s]["y"]
-         except:
-          cur_timeline_event['positionY'] = None
-        else:
-         try:
-          z[s]
-         except:
-          cur_timeline_event[s] = None
+           try:
+            z[s]
+           except:
+            cur_timeline_event[s] = None
+           else:
+            cur_timeline_event[s] = z[s]
+         cur_timeline_event["eventId"] = "%s - %s" % (cur_match_timeline_raw["frames"].index(y),  y["events"].index(z))
+         cur_timeline_event["matchId"] = x
+         if "participantId" in z:
+          if z["participantId"] != 0:
+           cur_timeline_event["summonerId"] =  cur_match_pi[z["participantId"]]["summonerId"]
+          else:
+           cur_timeline_event["summonerId"] = None
          else:
-          cur_timeline_event[s] = z[s]
-       cur_timeline_event["eventId"] = "%s - %s" % (cur_match_timeline_raw["frames"].index(y),  y["events"].index(z))
-       cur_timeline_event["matchId"] = x
-       if "participantId" in z:
-        if z["participantId"] != 0:
-         cur_timeline_event["summonerId"] =  cur_match_pi[z["participantId"]]["summonerId"]
-        else:
-         cur_timeline_event["summonerId"] = "minion"
-       else:
-        cur_timeline_event["summonerId"] = None
-       cur_timeline_event["timelineTimestamp"] = y["timestamp"]
-       cur_timeline_event["eventTimestamp"] = z["timestamp"]
-       timeline_events.append(cur_timeline_event)
+          cur_timeline_event["summonerId"] = None
+         cur_timeline_event["timelineTimestamp"] = y["timestamp"]
+         cur_timeline_event["eventTimestamp"] = z["timestamp"]
+         timeline_events.append(cur_timeline_event)
        
-#        print cur_timeline_event
+  #        print cur_timeline_event
 
-#       print timeline_events 
+  #       print timeline_events 
 
-      if assists != []:
+        if assists != []:
+         try:
+  #         print assists
+          cursor.executemany(add_match_timeline_event_assist, assists)
+
+         except mysql.connector.Error as err:
+          if err.errno != 1062 or suppress_duplicates == False:
+           if feedback != "silent":
+            print "%s, Match: %s, Timeframe: %s-- Timeline-Events" % (err.errno, x, cur_match_timeline_raw["frames"].index(y))
+         else:
+          if feedback == "all":
+           print "Updated Timeline-Assists" 
+        try:
+         cursor.executemany(add_match_timeline_event, timeline_events)
+
+        except mysql.connector.Error as err:
+         if err.errno != 1062 or suppress_duplicates == False:
+          if feedback != "silent":
+           print "%s, Match: %s, Timeframe: %s-- Timeline-Events" % (err.errno, x, cur_match_timeline_raw["frames"].index(y))
+        else:
+         if feedback == "all":
+          print "Updated Timeline-Events" 
+   #       stop
+       
+        
        try:
-#         print assists
-        cursor.executemany(add_match_timeline_event_assist, assists)
-
+        cursor.executemany(add_match_timeline, cur_timeline)
        except mysql.connector.Error as err:
         if err.errno != 1062 or suppress_duplicates == False:
          if feedback != "silent":
-          print "%s, Match: %s, Timeframe: %s-- Timeline-Events" % (err.msg, x, cur_match_timeline_raw["frames"].index(y))
+          print "%s, Match: %s, Timeframe: %s-- Timeline" % (err.errno, x, cur_match_timeline_raw["frames"].index(y))
        else:
         if feedback == "all":
-         print "Updated Timeline-Assists" 
-      try:
-       cursor.executemany(add_match_timeline_event, timeline_events)
+         print "Updated Timeline" 
+      
+      
+      
+      
+  #       if killerid == 0, Minion
 
+      if feedback == "all":
+       print "Finished Timeline"
+     else:
+      if feedback == "all":
+       print "No Timeline Data; %s" % (x)
+    
+    if unicode(x) not in existing_matches and cur_match_raw:
+     for y in cur_match_participants_raw:
+      cur_match_participant = {}
+ #      print y
+ #      break
+      for z in cur_match_pi[y["participantId"]]:
+      
+       cur_match_participant[z] = cur_match_pi[y["participantId"]][z]
+ #       print cur_match_participant
+      cur_match_participant["matchId"] = x
+      for z in y:
+ #       print z
+       if isinstance(y[z], list) or isinstance(y[z], dict):
+       
+        if z == "runes":
+         cur_rune = {}
+         cur_rune["matchId"] = x
+         cur_rune["summonerId"] = cur_match_pi[y["participantId"]]["summonerId"]
+         for r in y[z]:
+          for r2 in r:
+           cur_rune[r2] = r[r2]
+          
+          try:
+           cursor.execute(add_match_participant_rune, cur_rune)
+          except mysql.connector.Error as err:
+           if err.errno != 1062 or suppress_duplicates == False:
+            if feedback != "silent":
+             print "%s, Match: %s, Player: %s -- Rune" % (err.errno, x, cur_match_pi[y["participantId"]]["summonerId"])
+  #          print add_team % cur_team
+          else:
+           if feedback == "all":
+            print "Updated Rune"
+         
+         
+        elif z == "masteries": 
+         cur_mastery = {}  
+         cur_mastery["matchId"] = x
+         cur_mastery["summonerId"] = cur_match_pi[y["participantId"]]["summonerId"]
+         for r in y[z]:
+          for r2 in r:
+           cur_mastery[r2] = r[r2]
+          
+          try:
+           cursor.execute(add_match_participant_mastery, cur_mastery)
+          except mysql.connector.Error as err:
+           if err.errno != 1062 or suppress_duplicates == False:
+            if feedback != "silent":
+             print "%s, Match: %s, Player: %s -- Mastery" % (err.errno, x, cur_match_pi[y["participantId"]]["summonerId"])
+  #          print add_team % cur_team
+          else:
+           if feedback == "all":
+            print "Updated Mastery"        
+       
+        elif z == "stats": 
+         for r in ["assists", "champLevel", "combatPlayerScore", "deaths", "doubleKills", "firstBloodAssist", "firstBloodKill", "firstInhibitorAssist", "firstInhibitorKill", "firstTowerAssist", "firstTowerKill", "goldEarned", "goldSpent", "inhibitorKills", "item0", "item1", "item2", "item3", "item4", "item5", "item6", "killingSprees", "kills", "largestCriticalStrike", "largestKillingSpree", "largestMultiKill", "magicDamageDealt", "magicDamageDealtToChampions", "magicDamageTaken", "minionsKilled", "neutralMinionsKilled", "neutralMinionsKilledEnemyJungle", "neutralMinionsKilledTeamJungle", "nodeCapture", "nodeCaptureAssist", "nodeNeutralize", "nodeNeutralizeAssist", "objectivePlayerScore", "pentaKills", "physicalDamageDealt", "physicalDamageDealtToChampions", "physicalDamageTaken", "quadrakills", "sightWardsBoughtInGame", "teamObjective", "totalDamageDealt", "totalDamageDealtToChampions", "totalDamageTaken", "totalHeal", "totalPlayerScore", "totalScoreRank", "totalTimeCrowdControlDealt", "totalUnitsHealed", "towerKills", "tripleKills", "trueDamageDealt", "trueDamageDealtToChampions", "trueDamageTaken", "unrealKills", "visionWardsBoughtInGame", "wardsKilled", "wardsPlaced", "winner"]:
+          try:
+           cur_match_participant[r] = y[z][r]
+          except:
+           cur_match_participant[r] = None
+        elif z == "timeline":
+         for r in y[z]:
+          if r=="role" or r=="lane":
+           cur_match_participant[r] = y[z][r]
+          else:
+           cur_delta = {}
+           for r2 in y[z][r]:
+            cur_delta["matchId"] = x
+            cur_delta["summonerId"] = cur_match_pi[y["participantId"]]["summonerId"]
+            cur_delta["deltaName"] = r
+            cur_delta["deltaTimeframe"] = r2
+            cur_delta["value"] = y[z][r][r2]
+            try:
+             cursor.execute(add_match_participant_delta, cur_delta)
+            except mysql.connector.Error as err:
+             if err.errno != 1062 or suppress_duplicates == False:
+              if feedback != "silent": 
+               print "%s, Match: %s, Player: %s -- Delta" % (err.errno, x, cur_match_pi[y["participantId"]]["summonerId"])
+    #          print add_team % cur_team
+            else:
+             if feedback == "all":
+              print "Updated Participant Deltas"  
+       
+        else:
+         if feedback != "silent":
+          print "Words: %s" % z
+       
+       
+       else:
+        cur_match_participant[z] = y[z]
+     
+ #      print cur_match_participant_raw     
+ #      if feedback == "all":
+ #       print cur_match_participant["nodeCapture"]
+      try: 
+       cursor.execute(add_match_participants, cur_match_participant)
+ #       print "Try"
+     
       except mysql.connector.Error as err:
        if err.errno != 1062 or suppress_duplicates == False:
         if feedback != "silent":
-         print "%s, Match: %s, Timeframe: %s-- Timeline-Events" % (err.errno, x, cur_match_timeline_raw["frames"].index(y))
+         print "%s, Match: %s, Player: %s -- Participant" % (err.errno, x, cur_match_pi[y["participantId"]]["summonerId"])
+ #       print add_team % cur_team
       else:
        if feedback == "all":
-        print "Updated Timeline-Events" 
- #       stop
-       
-        
-     try:
-      cursor.executemany(add_match_timeline, cur_timeline)
-     except mysql.connector.Error as err:
-      if err.errno != 1062 or suppress_duplicates == False:
-       if feedback != "silent":
-        print "%s, Match: %s, Timeframe: %s-- Timeline" % (err.errno, x, cur_match_timeline_raw["frames"].index(y))
-     else:
-      if feedback == "all":
-       print "Updated Timeline" 
-      
-      
-      
-      
-#       if killerid == 0, Minion
-
-    if feedback == "all":
-     print "Finished Timeline"
-    
-    
-    for y in cur_match_participants_raw:
-     cur_match_participant = {}
-#      print y
-#      break
-     for z in cur_match_pi[y["participantId"]]:
-      
-      cur_match_participant[z] = cur_match_pi[y["participantId"]][z]
-#       print cur_match_participant
-     cur_match_participant["matchId"] = x
-     for z in y:
-#       print z
-      if isinstance(y[z], list) or isinstance(y[z], dict):
-       
-       if z == "runes":
-        cur_rune = {}
-        cur_rune["matchId"] = x
-        cur_rune["summonerId"] = cur_match_pi[y["participantId"]]["summonerId"]
-        for r in y[z]:
-         for r2 in r:
-          cur_rune[r2] = r[r2]
-          
-         try:
-          cursor.execute(add_match_participant_rune, cur_rune)
-         except mysql.connector.Error as err:
-          if err.errno != 1062 or suppress_duplicates == False:
-           if feedback != "silent":
-            print "%s, Match: %s, Player: %s -- Rune" % (err.errno, x, cur_match_pi[y["participantId"]]["summonerId"])
- #          print add_team % cur_team
-         else:
-          if feedback == "all":
-           print "Updated Rune"
-         
-         
-       elif z == "masteries": 
-        cur_mastery = {}  
-        cur_mastery["matchId"] = x
-        cur_mastery["summonerId"] = cur_match_pi[y["participantId"]]["summonerId"]
-        for r in y[z]:
-         for r2 in r:
-          cur_mastery[r2] = r[r2]
-          
-         try:
-          cursor.execute(add_match_participant_mastery, cur_mastery)
-         except mysql.connector.Error as err:
-          if err.errno != 1062 or suppress_duplicates == False:
-           if feedback != "silent":
-            print "%s, Match: %s, Player: %s -- Mastery" % (err.errno, x, cur_match_pi[y["participantId"]]["summonerId"])
- #          print add_team % cur_team
-         else:
-          if feedback == "all":
-           print "Updated Mastery"        
-       
-       elif z == "stats": 
-        for r in ["assists", "champLevel", "combatPlayerScore", "deaths", "doubleKills", "firstBloodAssist", "firstBloodKill", "firstInhibitorAssist", "firstInhibitorKill", "firstTowerAssist", "firstTowerKill", "goldEarned", "goldSpent", "inhibitorKills", "item0", "item1", "item2", "item3", "item4", "item5", "item6", "killingSprees", "kills", "largestCriticalStrike", "largestKillingSpree", "largestMultiKill", "magicDamageDealt", "magicDamageDealtToChampions", "magicDamageTaken", "minionsKilled", "neutralMinionsKilled", "neutralMinionsKilledEnemyJungle", "neutralMinionsKilledTeamJungle", "nodeCapture", "nodeCaptureAssist", "nodeNeutralize", "nodeNeutralizeAssist", "objectivePlayerScore", "pentaKills", "physicalDamageDealt", "physicalDamageDealtToChampions", "physicalDamageTaken", "quadrakills", "sightWardsBoughtInGame", "teamObjective", "totalDamageDealt", "totalDamageDealtToChampions", "totalDamageTaken", "totalHeal", "totalPlayerScore", "totalScoreRank", "totalTimeCrowdControlDealt", "totalUnitsHealed", "towerKills", "tripleKills", "trueDamageDealt", "trueDamageDealtToChampions", "trueDamageTaken", "unrealKills", "visionWardsBoughtInGame", "wardsKilled", "wardsPlaced", "winner"]:
-         try:
-          cur_match_participant[r] = y[z][r]
-         except:
-          cur_match_participant[r] = None
-       elif z == "timeline":
-        for r in y[z]:
-         if r=="role" or r=="lane":
-          cur_match_participant[r] = y[z][r]
-         else:
-          cur_delta = {}
-          for r2 in y[z][r]:
-           cur_delta["matchId"] = x
-           cur_delta["summonerId"] = cur_match_pi[y["participantId"]]["summonerId"]
-           cur_delta["deltaName"] = r
-           cur_delta["deltaTimeframe"] = r2
-           cur_delta["value"] = y[z][r][r2]
-           try:
-            cursor.execute(add_match_participant_delta, cur_delta)
-           except mysql.connector.Error as err:
-            if err.errno != 1062 or suppress_duplicates == False:
-             if feedback != "silent": 
-              print "%s, Match: %s, Player: %s -- Delta" % (err.errno, x, cur_match_pi[y["participantId"]]["summonerId"])
-   #          print add_team % cur_team
-           else:
-            if feedback == "all":
-             print "Updated Participant Deltas"  
-       
-       else:
-        if feedback != "silent":
-         print "Words: %s" % z
-       
-       
-      else:
-       cur_match_participant[z] = y[z]
-     
-#      print cur_match_participant_raw     
-#      if feedback == "all":
-#       print cur_match_participant["nodeCapture"]
-     try: 
-      cursor.execute(add_match_participants, cur_match_participant)
-#       print "Try"
-     
-     except mysql.connector.Error as err:
-      if err.errno != 1062 or suppress_duplicates == False:
-       if feedback != "silent":
-        print "%s, Match: %s, Player: %s -- Participant" % (err.errno, x, cur_match_pi[y["participantId"]]["summonerId"])
-#       print add_team % cur_team
-     else:
-      if feedback == "all":
-       print "Updated Match-Participant"
+        print "Updated Match-Participant"
+    else:
+     if feedback == "all" and suppress_duplicates == False:
+      print "Duplicate Match; %s" % (x)
 
      
      
@@ -1517,25 +1564,14 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
        
     if feedback != "silent":
      print "Finished %s of %s; %s" % (match_ids.index(x)+1,len(match_ids),x)
+    cnx.commit()
      
     
     
        
     
 
-       
-     
-
-
-
-
- 
- 
-																																																																																																					
-																																																																																																					
-																																																																																																					
-																																																																																											
-																																																																																																					
+  																																																												
 
 
  cnx.commit()
@@ -1592,12 +1628,7 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
 
 # update_table("membertiers", matchIds=[], create=False)
 # this function is essentially the same as the 'checkteams' functionality however this will search a given match and scrape the league data for all the players in that match
-# if you want to just do all the matches in the database, you can do it this way:
-#         cursor.execute("SELECT matchId FROM matches")
-#         matches= strip_to_list(cursor.fetchall())
-#         matches= matches[1:100]
-#         update_table("membertiers", matchIds=matches, suppress_duplicates=True)
-
+# if you want to just do all the matches in the database (match table), don't set matchIds to anything.
 
 
 
@@ -1620,18 +1651,15 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
 # update_table("checkteams", feedback="all", suppress_duplicates=True)
 # print "Took", time.time() - start_time, "to run"
 
+# update_table("team", checkTeams=True, feedback="all", suppress_duplicates=False)
 
 cursor.execute("SELECT gameId FROM team_history")
-matches= strip_to_list(cursor.fetchall()[0:100])
-
-# matches = matches[0:1]
-# cursor.execute("DROP TABLE match_timeline_events")
-# cursor.execute("DROP TABLE match_timeline_events_assist")
-
-# matches = [1775792998]
+matches= strip_to_list(cursor.fetchall())
+# matches = matches[matches.index(1361102373)+1]
 
 update_table("match", matchIds=matches, timeline=True, create=False, suppress_duplicates=True)
-update_table("membertiers", matchIds=matches, suppress_duplicates=False)
+# update_table("membertiers", suppress_duplicates=False)
+
 
 
 

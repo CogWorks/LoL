@@ -5,6 +5,7 @@ import urllib2
 import json
 import requests
 import time
+import csv
 
 from utils import todict
 import mysql.connector
@@ -718,11 +719,12 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
                "(isFreshBlood, division, isVeteran, wins, losses, playerOrTeamId, playerOrTeamName, isInactive, isHotStreak, leaguePoints, league, team, queue) "
                "VALUES (%(isFreshBlood)s, %(division)s, %(isVeteran)s, %(wins)s, %(losses)s, %(playerOrTeamId)s, %(playerOrTeamName)s, %(isInactive)s, %(isHotStreak)s, %(leaguePoints)s, %(league)s, %(team)s, %(queue)s)")
    summoner_ids_raw = [] 
-   if matchIds == []:
+   if matchIds == False:
     if feedback != "silent":
      print "No matches given, using all."
     cursor.execute("SELECT matchId FROM matches")
     matchIds= strip_to_list(cursor.fetchall())
+
    for x in matchIds:
 #     cursor.execute("SELECT summonerId, teamId FROM match_participants where matchId = %s" % x)
 
@@ -1277,6 +1279,9 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
            
  #     print cur_match_raw
      cur_match_participants_raw = cur_match_raw["participants"]
+    
+    
+    if (cur_match_raw and unicode(x) not in existing_matches) or (timeline == True and unicode(x) not in existing_timelines and cur_match_raw):
      cur_match_pi = {}
      for y in cur_match_raw["participantIdentities"]:
       cur_match_pi[y["participantId"]] = y["player"]
@@ -1655,11 +1660,10 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
 
 cursor.execute("SELECT gameId FROM team_history")
 matches= strip_to_list(cursor.fetchall())
-# matches = matches[matches.index(1361102373)+1]
+
 
 update_table("match", matchIds=matches, timeline=True, create=False, suppress_duplicates=True)
 # update_table("membertiers", suppress_duplicates=False)
-
 
 
 
@@ -1693,3 +1697,36 @@ if ssh == True:
      
 # cursor.execute("ALTER TABLE by_league MODIFY division varchar(5) NOT NULL")
 # cursor.execute("DROP TABLE IF EXISTS by_league")
+
+
+
+
+#### FOR ANALYSIS
+# cursor.execute("SELECT summonerId, matchId, teamId, winner, highestAchievedSeasonTier FROM match_participants")
+# all_raw = cursor.fetchall()
+# cursor.execute("SELECT t1.summonerId, t2.division, t2.league FROM match_participants AS t1 INNER JOIN by_league AS t2 ON t1.summonerId = t2.playerOrTeamId")
+# people_raw = cursor.fetchall()
+# 
+# # people = {}
+# people = []
+# for x in people_raw:
+#  people.append(x[0])
+# 
+# all = []
+# for x in all_raw:
+#  if x[0] in people:
+#   all.append([x[1], x[2], x[3], people_raw[people.index(x[0])][1], people_raw[people.index(x[0])][2]])
+#  else:
+#   all.append([x[1], x[2], x[3], 0, x[4]])
+#  
+# 
+# 
+# 
+# with open('/Users/Matthew/Documents/League of Legends/testfile.csv', 'wb+') as csvfile:
+#     swriter = csv.writer(csvfile, delimiter=' ',
+#                             quotechar='|', quoting=csv.QUOTE_MINIMAL)
+#     swriter.writerow(["matchId"] + ["teamId"] + ["winner"] + ["division"] + ["league"])
+#     for x in all:
+#      swriter.writerow(x)
+
+

@@ -20,7 +20,7 @@ from time import sleep
 
 import credentials
 
-ssh = True
+ssh = False
 
 # using SSH Tunnel because to connect directly to MySQL on server we need to comment out 
 # 'skip-networking' in /etc/mysql/my.cnf which allows non-local connections and is generally less secure
@@ -759,14 +759,15 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
     by_leagues = []
     for z in league_entries:
      for y in league_entries[z]:
-      for v in y['entries']:
-       v['league'] = y['tier']
-       v['team'] = (True if y['queue']!="RANKED_SOLO_5x5" else False)
-       v['queue'] = y['queue']
-#  for right now we're just going to discard miniSeries data
-       if "miniSeries" in v:
-        del v['miniSeries']
-       by_leagues.append(v)
+      if "entries" in y:
+       for v in y['entries']:
+        v['league'] = y['tier']
+        v['team'] = (True if y['queue']!="RANKED_SOLO_5x5" else False)
+        v['queue'] = y['queue']
+ #  for right now we're just going to discard miniSeries data
+        if "miniSeries" in v:
+         del v['miniSeries']
+        by_leagues.append(v)
 
     
     try:
@@ -1666,8 +1667,8 @@ cursor.execute("SELECT gameId FROM team_history")
 matches= strip_to_list(cursor.fetchall())
 
 
-update_table("match", matchIds=matches, timeline=True, create=False, suppress_duplicates=True)
-# update_table("membertiers", suppress_duplicates=False)
+# update_table("match", matchIds=matches, timeline=True, create=False, suppress_duplicates=True)
+update_table("membertiers", suppress_duplicates=False)
 
 
 

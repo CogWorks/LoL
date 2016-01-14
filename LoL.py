@@ -1,3 +1,7 @@
+## MUST INSTALL:
+## SSHTUNNEL
+## RIOTWATCHER
+## mysql-connector-python
 
 import ssl
 import riotwatcher
@@ -1235,7 +1239,7 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
      for y in cur_match_raw['teams']:
       cur_match_teams = {}
       for z in ("bans", "matchId", "teamId", "baronKills", "dominionVictoryScore", "dragonKills", "firstBaron", "firstBlood", "firstDragon", "firstInhibitor", "firstRiftHerald", "firstTower", "inhibitorKills", "riftHeraldKills", "towerKills", "vilemawKills", "winner"):
-       if z == "bans":
+       if z == "bans" and "bans" in y:
         for s in y['bans']:
          cur_match_bans = {}
          for t in s:

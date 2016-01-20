@@ -845,14 +845,14 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
       teams_data = w.get_teams(team_ids[(x*10):stop])
      
      except riotwatcher.riotwatcher.LoLException as err:
-      if str(err) == "Too many requests" or str(err) == "Service unavailable" or str(err) == "Unauthorized":
+      if str(err) == "Too many requests" or str(err) == "Service unavailable" or str(err) == "Unauthorized" or str(err) == "Internal server error":
 #         print "New Key" 
 
         if str(err) == "Service unavailable" and service != 10:
          if feedback == "all":
           print "Service unavailable, using new key"
          service += 1
-        if str(err) == "Unauthorized":
+        if str(err) == "Unauthorized" or "Internal server error":
          if feedback == "all":
           print "Unauthorized, using new key"
         if len(keys)==1:

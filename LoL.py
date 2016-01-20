@@ -889,36 +889,37 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
 
 #      print cur_team      
 #      averageGamesPlayed3v3, losses3v3, wins3v3, averageGamesPlayed5v5, losses5v5, wins5v5
-     team_stats =  cur_team_full['teamStatDetails']
+     if "teamStatDetails" in cur_team_full:
+      team_stats =  cur_team_full['teamStatDetails']
      
-     if team_stats[0]['teamStatType'] == "RANKED_TEAM_3x3":
-      cur_team['averageGamesPlayed3v3'] = team_stats[0]['averageGamesPlayed']
-      cur_team['losses3v3'] = team_stats[0]['losses']
-      cur_team['wins3v3'] = team_stats[0]['wins']
-      cur_team['averageGamesPlayed5v5'] = team_stats[1]['averageGamesPlayed']      
-      cur_team['losses5v5'] = team_stats[1]['losses']
-      cur_team['wins5v5'] = team_stats[1]['wins']
-     elif team_stats[0]['teamStatType'] == "RANKED_TEAM_5x5":
-      cur_team['averageGamesPlayed3v3'] = team_stats[1]['averageGamesPlayed']
-      cur_team['losses3v3'] = team_stats[1]['losses']
-      cur_team['wins3v3'] = team_stats[1]['wins']
-      cur_team['averageGamesPlayed5v5'] = team_stats[0]['averageGamesPlayed']      
-      cur_team['losses5v5'] = team_stats[0]['losses']
-      cur_team['wins5v5'] = team_stats[0]['wins']
-     else:
-      if feedback != "silent":
-       print "Error, team stats messed up"
-      
-     try:
-      cursor.execute(add_team, cur_team)
-     except mysql.connector.Error as err:
-      if err.errno != 1062 or suppress_duplicates == False:
+      if team_stats[0]['teamStatType'] == "RANKED_TEAM_3x3":
+       cur_team['averageGamesPlayed3v3'] = team_stats[0]['averageGamesPlayed']
+       cur_team['losses3v3'] = team_stats[0]['losses']
+       cur_team['wins3v3'] = team_stats[0]['wins']
+       cur_team['averageGamesPlayed5v5'] = team_stats[1]['averageGamesPlayed']      
+       cur_team['losses5v5'] = team_stats[1]['losses']
+       cur_team['wins5v5'] = team_stats[1]['wins']
+      elif team_stats[0]['teamStatType'] == "RANKED_TEAM_5x5":
+       cur_team['averageGamesPlayed3v3'] = team_stats[1]['averageGamesPlayed']
+       cur_team['losses3v3'] = team_stats[1]['losses']
+       cur_team['wins3v3'] = team_stats[1]['wins']
+       cur_team['averageGamesPlayed5v5'] = team_stats[0]['averageGamesPlayed']      
+       cur_team['losses5v5'] = team_stats[0]['losses']
+       cur_team['wins5v5'] = team_stats[0]['wins']
+      else:
        if feedback != "silent":
-        print "%s, Team: %s" % (err.errno, y)
-#       print add_team % cur_team
-     else:
-      if feedback == "all":
-       print "Updated Team"
+        print "Error, team stats messed up"
+      
+      try:
+       cursor.execute(add_team, cur_team)
+      except mysql.connector.Error as err:
+       if err.errno != 1062 or suppress_duplicates == False:
+        if feedback != "silent":
+         print "%s, Team: %s" % (err.errno, y)
+ #       print add_team % cur_team
+      else:
+       if feedback == "all":
+        print "Updated Team"
      
      all_teams = []
      team_history = True

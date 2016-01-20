@@ -1654,7 +1654,7 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
 
 
 ## functions for actual use:
-update_table("iterate",iteratestart=0, iterate=200000, checkTeams=True, suppress_duplicates=True)
+update_table("iterate",iteratestart=0, iterate=10000, checkTeams=True, suppress_duplicates=True)
 # start_time = time.time()
 
 # update_table("match", matchIds=[1976289359], suppress_duplicates=True)

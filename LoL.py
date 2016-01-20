@@ -1653,7 +1653,7 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
 
 
 ## functions for actual use:
-# update_table("iterate",iteratestart=300, iterate=700, checkTeams=True)
+update_table("iterate",iteratestart=300, iterate=10000, checkTeams=True, suppress_duplicates=True)
 # start_time = time.time()
 
 # update_table("match", matchIds=[1976289359], suppress_duplicates=True)
@@ -1661,14 +1661,17 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
 # update_table("checkteams", feedback="all", suppress_duplicates=True)
 # print "Took", time.time() - start_time, "to run"
 
-# update_table("team", checkTeams=True, feedback="all", suppress_duplicates=False)
+update_table("team", checkTeams=True, feedback="all", suppress_duplicates=True)
 
-cursor.execute("SELECT gameId FROM team_history")
+# cursor.execute("SELECT gameId FROM team_history")
 matches= strip_to_list(cursor.fetchall())
 
 
-# update_table("match", matchIds=matches, timeline=True, create=False, suppress_duplicates=True)
-update_table("membertiers", suppress_duplicates=False)
+update_table("match", matchIds=matches, timeline=True, create=False, suppress_duplicates=True)
+update_table("membertiers", suppress_duplicates=True)
+
+
+
 
 
 
@@ -1734,4 +1737,34 @@ if ssh == True:
 #     for x in all:
 #      swriter.writerow(x)
 
+
+
+
+
+# cursor.execute("SELECT summonerId, matchId, teamId, winner, highestAchievedSeasonTier, kills FROM match_participants")
+# all_raw = cursor.fetchall()
+# cursor.execute("SELECT t1.summonerId, t2.division, t2.league FROM match_participants AS t1 INNER JOIN by_league AS t2 ON t1.summonerId = t2.playerOrTeamId")
+# people_raw = cursor.fetchall()
+# 
+# # people = {}
+# people = []
+# for x in people_raw:
+#  people.append(x[0])
+# 
+# all = []
+# for x in all_raw:
+#  if x[0] in people:
+#   all.append([x[1], x[2], x[3], x[5], people_raw[people.index(x[0])][1], people_raw[people.index(x[0])][2]])
+#  else:
+#   all.append([x[1], x[2], x[3], x[5], 0, x[4]])
+#  
+# 
+# 
+# 
+# with open('/Users/Matthew/Documents/League of Legends/testfile.csv', 'wb+') as csvfile:
+#     swriter = csv.writer(csvfile, delimiter=' ',
+#                             quotechar='|', quoting=csv.QUOTE_MINIMAL)
+#     swriter.writerow(["matchId"] + ["teamId"] + ["winner"] + ["kills"] + ["division"] + ["league"])
+#     for x in all:
+#      swriter.writerow(x)
 

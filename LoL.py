@@ -889,129 +889,135 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
 
 #      print cur_team      
 #      averageGamesPlayed3v3, losses3v3, wins3v3, averageGamesPlayed5v5, losses5v5, wins5v5
-     if "teamStatDetails" in cur_team_full:
-      team_stats =  cur_team_full['teamStatDetails']
-     
-      if team_stats[0]['teamStatType'] == "RANKED_TEAM_3x3":
-       cur_team['averageGamesPlayed3v3'] = team_stats[0]['averageGamesPlayed']
-       cur_team['losses3v3'] = team_stats[0]['losses']
-       cur_team['wins3v3'] = team_stats[0]['wins']
-       cur_team['averageGamesPlayed5v5'] = team_stats[1]['averageGamesPlayed']      
-       cur_team['losses5v5'] = team_stats[1]['losses']
-       cur_team['wins5v5'] = team_stats[1]['wins']
-      elif team_stats[0]['teamStatType'] == "RANKED_TEAM_5x5":
-       cur_team['averageGamesPlayed3v3'] = team_stats[1]['averageGamesPlayed']
-       cur_team['losses3v3'] = team_stats[1]['losses']
-       cur_team['wins3v3'] = team_stats[1]['wins']
-       cur_team['averageGamesPlayed5v5'] = team_stats[0]['averageGamesPlayed']      
-       cur_team['losses5v5'] = team_stats[0]['losses']
-       cur_team['wins5v5'] = team_stats[0]['wins']
-      else:
-       if feedback != "silent":
-        print "Error, team stats messed up"
-      
-      try:
-       cursor.execute(add_team, cur_team)
-      except mysql.connector.Error as err:
-       if err.errno != 1062 or suppress_duplicates == False:
-        if feedback != "silent":
-         print "%s, Team: %s" % (err.errno, y)
- #       print add_team % cur_team
-      else:
-       if feedback == "all":
-        print "Updated Team"
-     
-     all_teams = []
-     team_history = True
+
      try:
-      for n in cur_team_full['matchHistory']:
-       cur_team_history = {}
-       cur_team_history['fullId'] = y
-       for z in ['assists', 'date', 'deaths', 'gameId', 'gameMode', 'invalid', 'kills', 'mapId', 'opposingTeamKills', 'opposingTeamName', 'win']:
-        cur_team_history[z] = n[z]
-       all_teams.append(cur_team_history)
+      if "teamStatDetails" in cur_team_full:
+       team_stats =  cur_team_full['teamStatDetails']
+     
+       if team_stats[0]['teamStatType'] == "RANKED_TEAM_3x3":
+        cur_team['averageGamesPlayed3v3'] = team_stats[0]['averageGamesPlayed']
+        cur_team['losses3v3'] = team_stats[0]['losses']
+        cur_team['wins3v3'] = team_stats[0]['wins']
+        cur_team['averageGamesPlayed5v5'] = team_stats[1]['averageGamesPlayed']      
+        cur_team['losses5v5'] = team_stats[1]['losses']
+        cur_team['wins5v5'] = team_stats[1]['wins']
+       elif team_stats[0]['teamStatType'] == "RANKED_TEAM_5x5":
+        cur_team['averageGamesPlayed3v3'] = team_stats[1]['averageGamesPlayed']
+        cur_team['losses3v3'] = team_stats[1]['losses']
+        cur_team['wins3v3'] = team_stats[1]['wins']
+        cur_team['averageGamesPlayed5v5'] = team_stats[0]['averageGamesPlayed']      
+        cur_team['losses5v5'] = team_stats[0]['losses']
+        cur_team['wins5v5'] = team_stats[0]['wins']
+       else:
+        if feedback != "silent":
+         print "Error, team stats messed up"
+      
+       try:
+        cursor.execute(add_team, cur_team)
+       except mysql.connector.Error as err:
+        if err.errno != 1062 or suppress_duplicates == False:
+         if feedback != "silent":
+          print "%s, Team: %s" % (err.errno, y)
+  #       print add_team % cur_team
+       else:
+        if feedback == "all":
+         print "Updated Team"
 
      
-#        OLD METHOD
-#        try:
-# #         print(add_team_history, cur_team_history)
-#         cursor.execute(add_team_history, cur_team_history)
-#        
-#        except mysql.connector.Error as err:
-#         if err.errno != 1062:
-#          print "%s, Team: %s" (err.msg, y)
-#       
-#        else:
-#         print "Updated Team-History"
+      all_teams = []
+      team_history = True
+      try:
+       for n in cur_team_full['matchHistory']:
+        cur_team_history = {}
+        cur_team_history['fullId'] = y
+        for z in ['assists', 'date', 'deaths', 'gameId', 'gameMode', 'invalid', 'kills', 'mapId', 'opposingTeamKills', 'opposingTeamName', 'win']:
+         cur_team_history[z] = n[z]
+        all_teams.append(cur_team_history)
+
+     
+ #        OLD METHOD
+ #        try:
+ # #         print(add_team_history, cur_team_history)
+ #         cursor.execute(add_team_history, cur_team_history)
+ #        
+ #        except mysql.connector.Error as err:
+ #         if err.errno != 1062:
+ #          print "%s, Team: %s" (err.msg, y)
+ #       
+ #        else:
+ #         print "Updated Team-History"
         
-     except:
-      team_history = False
-      if feedback == "all":
-       print "No Team-History"
-
-
-     if team_history == True:
-      try:
-       cursor.executemany(add_team_history, all_teams)
- #       print test_team
-      except mysql.connector.Error as err:
-       if err.errno != 1062 or suppress_duplicates == False:
-        if feedback != "silent":
-         print "Error %s" % err.errno
-      else:
+      except:
+       team_history = False
        if feedback == "all":
-        print "Updated Team-History" 
+        print "No Team-History"
+
+
+      if team_history == True:
+       try:
+        cursor.executemany(add_team_history, all_teams)
+  #       print test_team
+       except mysql.connector.Error as err:
+        if err.errno != 1062 or suppress_duplicates == False:
+         if feedback != "silent":
+          print "Error %s" % err.errno
+       else:
+        if feedback == "all":
+         print "Updated Team-History" 
       
       
       
 
-     all_teams = []
-     team_roster = True
-     try:  
-      for n in cur_team_full['roster']['memberList']:
-       cur_team_roster = {}
-#        print(n)
-       for z in ['inviteDate', 'joinDate', 'playerId', 'status']:
-#         print n[z]
-        try:
-         cur_team_roster[z] = n[z]
-        except:
-         cur_team_roster[z] = None
-       if cur_team_full['roster']['ownerId'] == n['playerId']:
-        cur_team_roster['isCaptain'] = True
-       else:
-        cur_team_roster['isCaptain'] = False
-       cur_team_roster['teamId'] = y
-       all_teams.append(cur_team_roster)
+      all_teams = []
+      team_roster = True
+      try:  
+       for n in cur_team_full['roster']['memberList']:
+        cur_team_roster = {}
+ #        print(n)
+        for z in ['inviteDate', 'joinDate', 'playerId', 'status']:
+ #         print n[z]
+         try:
+          cur_team_roster[z] = n[z]
+         except:
+          cur_team_roster[z] = None
+        if cur_team_full['roster']['ownerId'] == n['playerId']:
+         cur_team_roster['isCaptain'] = True
+        else:
+         cur_team_roster['isCaptain'] = False
+        cur_team_roster['teamId'] = y
+        all_teams.append(cur_team_roster)
        
-#      OLD METHOD
-#        try:
-#         cursor.execute(add_team_roster, cur_team_roster)
-#        except mysql.connector.Error as err:
-#         if err.errno != 1062:
-#          print "%s, Team: %s" % (err.msg, y)
-#        else:
-#         print "Updated Team-Roster"
-     except:
-      team_roster = False
-      if feedback == "all":
-       if (cur_team_full['status']=="DISBANDED"):
-        print "No Team-Roster -- Team Disbanded"
-       else:
-        print "No Team-Roster"
-     
-     
-     if team_roster == True:
-      try:
-       cursor.executemany(add_team_roster, all_teams)
- #       print test_team
-      except mysql.connector.Error as err:
-       if err.errno != 1062 or suppress_duplicates == False:
-        if feedback != "silent":
-         print "Error %s" % err.errno
-      else:
+ #      OLD METHOD
+ #        try:
+ #         cursor.execute(add_team_roster, cur_team_roster)
+ #        except mysql.connector.Error as err:
+ #         if err.errno != 1062:
+ #          print "%s, Team: %s" % (err.msg, y)
+ #        else:
+ #         print "Updated Team-Roster"
+      except:
+       team_roster = False
        if feedback == "all":
-        print "Updated Team-Roster" 
+        if (cur_team_full['status']=="DISBANDED"):
+         print "No Team-Roster -- Team Disbanded"
+        else:
+         print "No Team-Roster"
+     
+     
+      if team_roster == True:
+       try:
+        cursor.executemany(add_team_roster, all_teams)
+  #       print test_team
+       except mysql.connector.Error as err:
+        if err.errno != 1062 or suppress_duplicates == False:
+         if feedback != "silent":
+          print "Error %s" % err.errno
+       else:
+        if feedback == "all":
+         print "Updated Team-Roster"
+     
+     except:
+      print "Error, no team information; %s" % (y) 
     
 
     if feedback == "all":

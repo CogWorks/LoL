@@ -1680,23 +1680,23 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
 
 # 
 # ## functions for actual use:
-# update_table("iterate",iteratestart=0, iterate=10000, checkTeams=True, suppress_duplicates=True)
+update_table("iterate",iteratestart=10000, iterate=10000, checkTeams=True, suppress_duplicates=True)
 # # start_time = time.time()
 # 
 # # update_table("match", matchIds=[1976289359], suppress_duplicates=True)
 # # update_table("membertiers", matchIds=[2044253864,1976289359], suppress_duplicates=True)
-# update_table("checkteams", feedback="all", suppress_duplicates=True)
+update_table("checkteams", feedback="all", suppress_duplicates=True)
 # # print "Took", time.time() - start_time, "to run"
-# 
-# update_table("team", checkTeams=True, feedback="all", suppress_duplicates=True)
-# 
-# cursor.execute("SELECT gameId FROM team_history")
-# matches= strip_to_list(cursor.fetchall())
-# 
-# 
-# update_table("match", matchIds=matches, timeline=True, create=False, suppress_duplicates=True)
-# update_table("membertiers", suppress_duplicates=True)
-# 
+
+update_table("team", checkTeams=True, feedback="all", suppress_duplicates=True)
+
+cursor.execute("SELECT gameId FROM team_history")
+matches= strip_to_list(cursor.fetchall())
+
+
+update_table("match", matchIds=matches, timeline=True, create=False, suppress_duplicates=True)
+update_table("membertiers", suppress_duplicates=True)
+
 
 
 # update_table("checkteams", teamIds = ["TEAM-f8aac4c0-16de-11e5-87b6-c81f66dd45c9"])

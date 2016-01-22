@@ -693,7 +693,7 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
     for z in league_entries:
      for y in league_entries[z]:
       for v in y['entries']:
-       if allow_updates == True or ( (y['playerOrTeamId'], y['queue']) not in existing_entries):
+       if allow_updates == True or ( (v['playerOrTeamId'], y['queue']) not in existing_entries):
         v['league'] = y['tier']
         v['team'] = (True if y['queue']!="RANKED_SOLO_5x5" else False)
         v['queue'] = y['queue']

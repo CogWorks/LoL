@@ -117,7 +117,8 @@ def create_tables():
     "  `league` varchar(25) NOT NULL,"
     "  `team` bool NOT NULL,"
     "  `queue` varchar(25) NOT NULL,"
-    "  CONSTRAINT id_queue PRIMARY KEY (`playerOrTeamId`, `queue`)"
+    "  `retrieved` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
+    "  CONSTRAINT id_queue PRIMARY KEY (`playerOrTeamId`, `queue`, `retrieved`)"
     ") CHARACTER SET utf8 ENGINE=InnoDB") 
     
     
@@ -553,7 +554,7 @@ def get_leagues(team_ids=None,x=None, stop=None, key=None, unauthorized_cycle=Fa
  
 
 
-def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, create=False, teamIds=False, matchIds=False, checkTeams= False, hangwait=False, feedback="all", suppress_duplicates = False, timeline = False):
+def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, create=False, teamIds=False, matchIds=False, checkTeams= False, hangwait=False, feedback="all", suppress_duplicates = False, timeline = False, allow_updates=False):
  feedback = feedback.lower()
  if feedback != "all" and feedback != "quiet" and feedback != "silent":
   print "Invalid value for 'Feedback' option, reverting to default. All feedback will be shown."
@@ -648,15 +649,30 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
                "(isFreshBlood, division, isVeteran, wins, losses, playerOrTeamId, playerOrTeamName, isInactive, isHotStreak, leaguePoints, league, team, queue) "
                "VALUES (%(isFreshBlood)s, %(division)s, %(isVeteran)s, %(wins)s, %(losses)s, %(playerOrTeamId)s, %(playerOrTeamName)s, %(isInactive)s, %(isHotStreak)s, %(leaguePoints)s, %(league)s, %(team)s, %(queue)s)")
 
-   cursor.execute("SELECT fullId FROM team" )  
 
-   team_ids_raw = []   
-   team_ids_raw = cursor.fetchall()
-   team_ids = [] 
-  
-   for x in team_ids_raw:
-    for y in x:
-     team_ids.append(y)
+   cursor.execute("SELECT playerOrTeamID, queue FROM by_league")
+   existing_entries = cursor.fetchall()
+   
+   if(teamIds==False):
+    if feedback == "all":
+     print "No list of team ids, defaulting to search by_league"
+    cursor.execute("SELECT fullId FROM team" )    
+   
+
+    team_ids_raw = [] 
+    team_ids_raw = cursor.fetchall()
+   
+    team_ids = [] 
+   
+    for x in team_ids_raw:
+     for y in x:
+      team_ids.append(y)
+     
+   else:
+    if feedback == "all":
+     print "Given list of team ids."
+    team_ids = teamIds
+ 
    
    for x in xrange(0,(int(len(team_ids)/10)+1)):
     stop = ((x+1)*10)
@@ -677,13 +693,14 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
     for z in league_entries:
      for y in league_entries[z]:
       for v in y['entries']:
-       v['league'] = y['tier']
-       v['team'] = (True if y['queue']!="RANKED_SOLO_5x5" else False)
-       v['queue'] = y['queue']
-#  for right now we're just going to discard miniSeries data
-       if "miniSeries" in v:
-        del v['miniSeries']
-       by_leagues.append(v)
+       if allow_updates == True or ( (y['playerOrTeamId'], y['queue']) not in existing_entries):
+        v['league'] = y['tier']
+        v['team'] = (True if y['queue']!="RANKED_SOLO_5x5" else False)
+        v['queue'] = y['queue']
+ #  for right now we're just going to discard miniSeries data
+        if "miniSeries" in v:
+         del v['miniSeries']
+        by_leagues.append(v)
     try:
      cursor.executemany(add_league, by_leagues)
     except mysql.connector.Error as err:
@@ -1613,8 +1630,9 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
 # same as above, but for master division I
 
 
-# update_table("checkteams", hangwait=False)
+# update_table("checkteams", teamIds= False, hangwait=False)
 # this checks the team table and grabs a list of all the ids. it then gets the league information for each team. 
+# if you supply this with a list of teamIds it will just do those.
 # This is no longer the only function that will iterate through your list of keys.
 # Hangwait=True enables the function to keep attempting the call until it is allowed through with the current key. 
 # Hangwait is default false, but that only applies if there is only 1 key in your credentials file.  
@@ -1659,23 +1677,38 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
 
 
 
-## functions for actual use:
-update_table("iterate",iteratestart=0, iterate=10000, checkTeams=True, suppress_duplicates=True)
-# start_time = time.time()
 
-# update_table("match", matchIds=[1976289359], suppress_duplicates=True)
-# update_table("membertiers", matchIds=[2044253864,1976289359], suppress_duplicates=True)
+# 
+# ## functions for actual use:
+# update_table("iterate",iteratestart=0, iterate=10000, checkTeams=True, suppress_duplicates=True)
+# # start_time = time.time()
+# 
+# # update_table("match", matchIds=[1976289359], suppress_duplicates=True)
+# # update_table("membertiers", matchIds=[2044253864,1976289359], suppress_duplicates=True)
 # update_table("checkteams", feedback="all", suppress_duplicates=True)
-# print "Took", time.time() - start_time, "to run"
-
-update_table("team", checkTeams=True, feedback="all", suppress_duplicates=True)
-
+# # print "Took", time.time() - start_time, "to run"
+# 
+# update_table("team", checkTeams=True, feedback="all", suppress_duplicates=True)
+# 
 # cursor.execute("SELECT gameId FROM team_history")
-matches= strip_to_list(cursor.fetchall())
+# matches= strip_to_list(cursor.fetchall())
+# 
+# 
+# update_table("match", matchIds=matches, timeline=True, create=False, suppress_duplicates=True)
+# update_table("membertiers", suppress_duplicates=True)
+# 
 
 
-update_table("match", matchIds=matches, timeline=True, create=False, suppress_duplicates=True)
-update_table("membertiers", suppress_duplicates=True)
+# update_table("checkteams", teamIds = ["TEAM-f8aac4c0-16de-11e5-87b6-c81f66dd45c9"])
+
+
+# 
+# cursor.execute("SELECT playerOrTeamID, queue FROM by_league LIMIT 10")
+# test = cursor.fetchall()
+# print test
+
+   
+   
 
 
 
@@ -1683,7 +1716,8 @@ update_table("membertiers", suppress_duplicates=True)
 
 
 
-### MAKE SURE ALL SCRIPT EXECUTIONS OCCUR BEFORE THE NEXT 4 LINES
+### MAKE SURE ALL SCRIPT EXECUTIONS OCCUR BEFORE THE NEXT 5 LINES
+cnx.commit()
 cursor.close()
 cnx.close()
 if ssh == True:
@@ -1708,10 +1742,12 @@ if ssh == True:
 # 
 # cursor.execute("ALTER TABLE team_roster DROP PRIMARY KEY")
 # cursor.execute("ALTER TABLE team_roster ADD CONSTRAINT player_team PRIMARY KEY (`playerId`, `teamId`)")
+# cursor.execute("ALTER TABLE by_league DROP PRIMARY KEY, ADD CONSTRAINT id_queue PRIMARY KEY (`playerOrTeamId`, `queue`, `retrieved`)")
      
      
 # cursor.execute("ALTER TABLE by_league MODIFY division varchar(5) NOT NULL")
 # cursor.execute("DROP TABLE IF EXISTS by_league")
+# cursor.execute("ALTER TABLE `by_league` ADD `retrieved` DATETIME NOT NULL")
 
 
 

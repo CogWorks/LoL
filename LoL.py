@@ -20,7 +20,7 @@ from time import sleep
 
 import credentials
 
-ssh = False
+ssh = True
 
 # using SSH Tunnel because to connect directly to MySQL on server we need to comment out 
 # 'skip-networking' in /etc/mysql/my.cnf which allows non-local connections and is generally less secure
@@ -445,7 +445,7 @@ def create_tables():
 
 
 
-def new_key (t=None):
+def new_key (t=None, rate=0, drop=False):
  global w
  global key
 #  print key
@@ -453,18 +453,37 @@ def new_key (t=None):
   key = t
  
  if key == keys[len(keys)-1]:
+  if drop == True:
+   del keys[len(keys)-1]
   key = keys[0]
  else:
   if len(keys)>1:
-   key = keys[keys.index(key)+1]
+   if drop == True:
+    new_key = keys[keys.index(key)+1] 
+    del keys[keys.index(key)]
+    key = new_key
+   else:
+    key = keys[keys.index(key)+1] 
   else:
    print "Only one key."
+   if drop == True:
+    print "Can't drop only key. Breaking."
+    stop
    key = keys[0]
-    
-
-
-#  print key   
+ 
+ 
+ 
+#  if riotwatcher.RiotWatcher(key).can_make_request():
  w = riotwatcher.RiotWatcher(key)
+ 
+#  print w.can_make_request()
+#  else: 
+#   if rate == len(keys):
+#    time.sleep(3)
+#   else:
+#    print "Rate Limit Reached"
+#    rate += 1
+#    new_key(t = key, rate=rate)
  
  
 def get_leagues(team_ids=None,x=None, stop=None, key=None, unauthorized_cycle=False, team=True, feedback="all"):
@@ -480,9 +499,8 @@ def get_leagues(team_ids=None,x=None, stop=None, key=None, unauthorized_cycle=Fa
 
 
   except riotwatcher.riotwatcher.LoLException as err:
+   drop = False
    if str(err) == "Unauthorized" :
-#         or str(err) == "Internal server error"
-#          print "%s, using new key" % ("Unauthorized" if str(err) == "Unauthorized" else "Server Error")
 
     if feedback == "all":
      print "Unauthorized, using new key" 
@@ -492,18 +510,20 @@ def get_leagues(team_ids=None,x=None, stop=None, key=None, unauthorized_cycle=Fa
 #         print unauthorized_key
 
 #       print str(err)
-   if str(err) == "Too many requests":
-#        print "New Key"
-
-# Make sure to reset 'unauthorized_key' because this new key was due to rate-limit
-    
+   if str(err) == "Too many requests" or str(err) == "Blacklisted key":
+    if str(err) == "Blacklisted key":
+     if feedback == "all":
+      print "Blacklisted key, using new key, dropping current."
+     drop = True
     unauthorized_key=False
      
-    if str(err) != "Unauthorized" and str(err) != "Too many requests":
+    if str(err) != "Unauthorized" and str(err) != "Too many requests" and str(err) != "Blacklisted key":
      if feedback != "silent":
       print "Break, %s" % (str(err))
      break 
 
+
+   
 # Checks to make sure the error is not just coming from missing data     
    if str(err) == "Game data not found":
     if feedback == "all":
@@ -512,13 +532,12 @@ def get_leagues(team_ids=None,x=None, stop=None, key=None, unauthorized_cycle=Fa
     finished = True   
 # Basically this checks to see if unauthorized_key has been used and switched back to false. This should only happen if you have two unauthorized key changes in a row
    elif unauthorized_key == True or str(err) != "Unauthorized":
-#         and str(err) != "Internal server error"
     if feedback == "all": 
      print "New key assigned, %s" % str(err)
 #         print str(err)
-    new_key()
+    
+    new_key(drop = drop)
    elif unauthorized_key == False and str(err) == "Unauthorized":
-#          or str(err) == "Internal server error"
     league_entries = {}
     if unauthorized_cycle== False:
      if feedback == "all": 
@@ -612,9 +631,9 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
                "(isFreshBlood, division, isVeteran, wins, losses, playerOrTeamId, playerOrTeamName, isInactive, isHotStreak, leaguePoints, league, team, queue) "
                "VALUES (%(isFreshBlood)s, %(division)s, %(isVeteran)s, %(wins)s, %(losses)s, %(playerOrTeamId)s, %(playerOrTeamName)s, %(isInactive)s, %(isHotStreak)s, %(leaguePoints)s, %(league)s, %(team)s, %(queue)s)")
 
-#   master = w.get_master(queue=queue)
+  master = w.get_master(queue=queue)
   ## TEMPORARILY CREATED MY OWN "Get_Master" Function
-  master = get_master(queue=queue)
+#   master = get_master(queue=queue)
 
   s = []
   for x in todict(master)['entries']:
@@ -862,8 +881,13 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
       teams_data = w.get_teams(team_ids[(x*10):stop])
      
      except riotwatcher.riotwatcher.LoLException as err:
-      if str(err) == "Too many requests" or str(err) == "Service unavailable" or str(err) == "Unauthorized" or str(err) == "Internal server error":
+      if str(err) == "Too many requests" or str(err) == "Service unavailable" or str(err) == "Unauthorized" or str(err) == "Internal server error" or str(err) == "Blacklisted key":
 #         print "New Key" 
+        drop = False
+        if str(err) == "Blacklisted key":
+         if feedback == "all":
+          print "Blacklisted key, using new key, dropping current."
+         drop = True
 
         if str(err) == "Service unavailable" and service != 10:
          if feedback == "all":
@@ -879,7 +903,7 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
           break 
          else:
           time.sleep(5)
-        new_key()
+        new_key(drop = drop)
         
       else:
        if feedback == "all":
@@ -1074,8 +1098,13 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
  #       print str(err)
        if str(err) == "Game data not found":
         finished = True
-       elif str(err) == "Too many requests" or str(err) == "Unauthorized":
+       elif str(err) == "Too many requests" or str(err) == "Unauthorized" or str(err) == "Blacklisted key":
 #         print "New Key" 
+        drop = False
+        if str(err) == "Blacklisted key":
+         if feedback == "all":
+          print "Blacklisted key, using new key, dropping current."
+         drop = True
         if str(err) == "Unauthorized":
          print "Unauthorized, using new key"
         if len(keys)==1:
@@ -1084,7 +1113,7 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
           break 
          else:
           time.sleep(5)
-        new_key()
+        new_key(drop=drop)
         
        else:
 
@@ -1201,8 +1230,13 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
       cur_match_raw = w.get_match( x, region=None, include_timeline=timeline)
      
      except riotwatcher.riotwatcher.LoLException as err:
-      if str(err) == "Too many requests" or str(err) == "Unauthorized":
+      if str(err) == "Too many requests" or str(err) == "Unauthorized" or str(err) == "Blacklisted key":
 #         print "New Key" 
+        drop = False
+        if str(err) == "Blacklisted key":
+         if feedback == "all":
+          print "Blacklisted key, using new key, dropping current."
+         drop = True
         if str(err) == "Unauthorized":
          if feedback == "all":
           print "Unauthorized, using new key"
@@ -1213,7 +1247,7 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
           break 
          else:
           time.sleep(5)
-        new_key()
+        new_key(drop=drop)
         
       else:
        if feedback != "silent":
@@ -1676,17 +1710,14 @@ def update_table(table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, cr
 
 
 
-
-
-# 
-# ## functions for actual use:
+## functions for actual use:
 update_table("iterate",iteratestart=10000, iterate=10000, checkTeams=True, suppress_duplicates=True)
-# # start_time = time.time()
-# 
-# # update_table("match", matchIds=[1976289359], suppress_duplicates=True)
-# # update_table("membertiers", matchIds=[2044253864,1976289359], suppress_duplicates=True)
+# start_time = time.time()
+
+# update_table("match", matchIds=[1976289359], suppress_duplicates=True)
+# update_table("membertiers", matchIds=[2044253864,1976289359], suppress_duplicates=True)
 update_table("checkteams", feedback="all", suppress_duplicates=True)
-# # print "Took", time.time() - start_time, "to run"
+# print "Took", time.time() - start_time, "to run"
 
 update_table("team", checkTeams=True, feedback="all", suppress_duplicates=True)
 
@@ -1709,7 +1740,7 @@ update_table("membertiers", suppress_duplicates=True)
 
    
    
-
+# new_key()
 
 
 

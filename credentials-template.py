@@ -3,6 +3,7 @@ from sshtunnel import SSHTunnelForwarder
 
 ##Make sure to make a copy of this file, name it credentials.py and change the appropriate things
 
+##if you are locally running the scripts, use ssh=False
 
 ##anything with a double asterisk in front of the variable name is something you should change, 
 ##obviously remove the asterisks as well and keep things inside quotes, inside the quotes
@@ -32,6 +33,7 @@ def config(ssh=False, port=3306):
   return({
      'user': '**sql-database-username',
      'password': '**sql-database-pass',
+     ##if you're locally accessing the server, this should just be 'localhost'
      'host': '**ip-or-web-address',
      'database': '**database-name',
      'raise_on_warnings': True

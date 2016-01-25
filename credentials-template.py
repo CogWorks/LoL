@@ -1,6 +1,8 @@
 
 from sshtunnel import SSHTunnelForwarder
 
+##Make sure to make a copy of this file, name it credentials.py and change the appropriate things
+
 
 ##anything with a double asterisk in front of the variable name is something you should change, 
 ##obviously remove the asterisks as well and keep things inside quotes, inside the quotes

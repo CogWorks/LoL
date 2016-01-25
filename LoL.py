@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 ## MUST INSTALL:
 ## SSHTUNNEL
 ## RIOTWATCHER
@@ -20,7 +22,14 @@ from time import sleep
 
 import credentials
 
-ssh = True
+##making ssh option a command line option
+import sys, getopt
+
+if __name__ == '__main__':
+  ssh = True
+  parser = argparse.ArgumentParser(description="LoL Scrapper", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+  parser.add_argument("-s", dest="ssh", required=False, help="using ssh or not", metavar="ssh")
+  args = parser.parse_args()
 
 # using SSH Tunnel because to connect directly to MySQL on server we need to comment out 
 # 'skip-networking' in /etc/mysql/my.cnf which allows non-local connections and is generally less secure

@@ -25,10 +25,14 @@ import credentials
 ##making ssh option a command line option
 import sys, getopt
 import argparse
+if __name__ == __main__ :
 
-parser = argparse.ArgumentParser(description="LoL Scrapper", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument("-s", dest="ssh", required=False, help="using ssh or not", metavar="ssh")
-args = parser.parse_args()
+ parser = argparse.ArgumentParser(description="LoL Scrapper", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+ parser.add_argument("-s", dest="ssh", required=False, help="using ssh or not", metavar="ssh")
+ args = parser.parse_args()
+ ssh_o = args.ssh
+ 
+ 
 
 def strip_to_list (data_raw):
  data = []
@@ -40,13 +44,14 @@ def strip_to_list (data_raw):
 class Scrapper:
  
  
- def __init__(self, args.ssh):
+ def __init__(self, ssh_o):
   ssh = True
-  
+  if ssh_o:
+   ssh = ssh_o
 
-  if args.ssh == "True":
+  if ssh == "True":
    ssh = True
-  elif args.ssh == "False":
+  elif ssh == "False":
    ssh = False
 
 # using SSH Tunnel because to connect directly to MySQL on server we need to comment out 

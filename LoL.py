@@ -30,7 +30,7 @@ if __name__ == '__main__' :
  parser = argparse.ArgumentParser(description="LoL Scrapper", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
  parser.add_argument("-s", dest="ssh", required=False, help="using ssh or not", metavar="ssh")
  args = parser.parse_args()
- ssh_o = args.ssh
+ ssh = args.ssh
  
  
 
@@ -44,10 +44,7 @@ def strip_to_list (data_raw):
 class Scrapper:
  
  
- def __init__(self, ssh_o):
-  ssh = True
-  if ssh_o:
-   ssh = ssh_o
+ def __init__(self, ssh=True):
 
   if ssh == "True":
    ssh = True
@@ -501,7 +498,7 @@ class Scrapper:
  
  
  #  if riotwatcher.RiotWatcher(key).can_make_request():
-  self.w = riotwatcher.RiotWatcher(self.key, limits=(RateLimit(3000,10), RateLimit(180000,600),))
+  self.w = riotwatcher.RiotWatcher(self.key, limits=(riotwatcher.RateLimit(3000,10), riotwatcher.RateLimit(180000,600)))
  
  #  print self.w.can_make_request()
  #  else: 

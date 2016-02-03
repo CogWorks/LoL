@@ -1094,7 +1094,7 @@ class Scrapper:
     if checkTeams==True:
      if feedback != "silent":
       print "Checking Teams"
-     update_table("checkteams", feedback=feedback, suppress_duplicates = suppress_duplicates)
+     self.update_table("checkteams", feedback=feedback, suppress_duplicates = suppress_duplicates)
     
 
   if table=="iterate":
@@ -1156,13 +1156,13 @@ class Scrapper:
  #         print v
       print "Finished %s of %s, %s teams found." % (int(stop-iteratestart), int(iterate), len(team_ids)) 
      print "Updating Team Table"
-     update_table("team", teamIds = team_ids, checkTeams = checkTeams, feedback=feedback, suppress_duplicates = suppress_duplicates)  
+     self.update_table("team", teamIds = team_ids, checkTeams = checkTeams, feedback=feedback, suppress_duplicates = suppress_duplicates)  
  
  
   if table=="all":
-   update_table("challenger", feedback=feedback, suppress_duplicates = suppress_duplicates)
-   update_table("master", feedback=feedback, suppress_duplicates = suppress_duplicates)
-   update_table("team", checkTeams =True, feedback=feedback, suppress_duplicates = suppress_duplicates)
+   self.update_table("challenger", feedback=feedback, suppress_duplicates = suppress_duplicates)
+   self.update_table("master", feedback=feedback, suppress_duplicates = suppress_duplicates)
+   self.update_table("team", checkTeams =True, feedback=feedback, suppress_duplicates = suppress_duplicates)
   
   if table=="match":
     add_match = ("INSERT IGNORE INTO matches "

@@ -501,7 +501,7 @@ class Scrapper:
  
  
  #  if riotwatcher.RiotWatcher(key).can_make_request():
-  self.w = riotwatcher.RiotWatcher(self.key, limits=(riotwatcher.RateLimit(3000,10), riotwatcher.RateLimit(180000,600)))
+  self.w = riotwatcher.RiotWatcher(self.key, limits=(riotwatcher.RateLimit(1500,10), riotwatcher.RateLimit(90000,600)))
  
  #  print self.w.can_make_request()
  #  else: 

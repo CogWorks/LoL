@@ -25,7 +25,7 @@ import credentials
 ##making ssh option a command line option
 import sys, getopt
 import argparse
-if __name__ == __main__ :
+if __name__ == '__main__' :
 
  parser = argparse.ArgumentParser(description="LoL Scrapper", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
  parser.add_argument("-s", dest="ssh", required=False, help="using ssh or not", metavar="ssh")

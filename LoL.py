@@ -26,6 +26,10 @@ import credentials
 import sys, getopt
 import argparse
 
+parser = argparse.ArgumentParser(description="LoL Scrapper", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser.add_argument("-s", dest="ssh", required=False, help="using ssh or not", metavar="ssh")
+args = parser.parse_args()
+
 def strip_to_list (data_raw):
  data = []
  for x in data_raw:
@@ -36,11 +40,10 @@ def strip_to_list (data_raw):
 class Scrapper:
  
  
- def __init__(self):
+ def __init__(self, args.ssh):
   ssh = True
-  parser = argparse.ArgumentParser(description="LoL Scrapper", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-  parser.add_argument("-s", dest="ssh", required=False, help="using ssh or not", metavar="ssh")
-  args = parser.parse_args()
+  
+
   if args.ssh == "True":
    ssh = True
   elif args.ssh == "False":

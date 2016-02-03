@@ -507,7 +507,7 @@ class Scrapper:
  #   else:
  #    print "Rate Limit Reached"
  #    rate += 1
- #    new_key(t = key, rate=rate)
+ #    self.new_key(t = key, rate=rate)
  
  
  def get_leagues(self, team_ids=None,x=None, stop=None, key=None, unauthorized_cycle=False, team=True, feedback="all"):
@@ -560,7 +560,7 @@ class Scrapper:
       print "New key assigned, %s" % str(err)
  #         print str(err)
     
-     new_key(drop = drop)
+     self.new_key(drop = drop)
     elif unauthorized_key == False and str(err) == "Unauthorized":
      league_entries = {}
      if unauthorized_cycle== False:
@@ -926,7 +926,7 @@ class Scrapper:
            break 
           else:
            time.sleep(5)
-         new_key(drop = drop)
+         self.new_key(drop = drop)
         
        else:
         if feedback == "all":
@@ -1136,7 +1136,7 @@ class Scrapper:
            break 
           else:
            time.sleep(5)
-         new_key(drop=drop)
+         self.new_key(drop=drop)
         
         else:
 
@@ -1270,7 +1270,7 @@ class Scrapper:
            break 
           else:
            time.sleep(5)
-         new_key(drop=drop)
+         self.new_key(drop=drop)
         
        else:
         if feedback != "silent":

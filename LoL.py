@@ -734,15 +734,16 @@ class Scrapper:
      by_leagues = []
      for z in league_entries:
       for y in league_entries[z]:
-       for v in y['entries']:
-        if allow_updates == True or ( (v['playerOrTeamId'], y['queue']) not in existing_entries):
-         v['league'] = y['tier']
-         v['team'] = (True if y['queue']!="RANKED_SOLO_5x5" else False)
-         v['queue'] = y['queue']
-  #  for right now we're just going to discard miniSeries data
-         if "miniSeries" in v:
-          del v['miniSeries']
-         by_leagues.append(v)
+       if 'entries' in y:
+        for v in y['entries']:
+         if allow_updates == True or ( (v['playerOrTeamId'], y['queue']) not in existing_entries):
+          v['league'] = y['tier']
+          v['team'] = (True if y['queue']!="RANKED_SOLO_5x5" else False)
+          v['queue'] = y['queue']
+   #  for right now we're just going to discard miniSeries data
+          if "miniSeries" in v:
+           del v['miniSeries']
+          by_leagues.append(v)
      try:
       self.cursor.executemany(add_league, by_leagues)
      except mysql.connector.Error as err:

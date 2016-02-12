@@ -802,7 +802,7 @@ class Scrapper:
  #     self.cursor.execute("SELECT summonerId, teamId FROM match_participants where matchId = %s" % x)
 
      self.cursor.execute("SELECT summonerId FROM match_participants where matchId = %s" % x)
-     summoner_ids_raself.w.append(self.cursor.fetchall())
+     summoner_ids_raw = self.w.append(self.cursor.fetchall())
     
     summoner_ids = [] 
   

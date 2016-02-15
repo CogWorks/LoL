@@ -83,6 +83,7 @@ class Scrapper:
   self.skipfiler = open('skiplist.tsv', "rb+")
   self.skiplist = self.skipfiler.read()
   self.skipfiler.close()
+  self.old_count = 0
 
 
 
@@ -92,7 +93,7 @@ class Scrapper:
    for x in teams:
     skipfilew.write("%s\n" % (x))
   skipfilew.close()
-  
+ 
   
  def create_tables(self):
  
@@ -512,7 +513,7 @@ class Scrapper:
  #    rate += 1
  #    self.new_key(t = key, rate=rate)
  
- def get_membertiers(self, matchIds, feedback="all"):
+ def get_membertiers(self, matchIds, feedback="all", old_count = self.old_count):
     add_league = ("INSERT IGNORE INTO by_league "
                 "(isFreshBlood, division, isVeteran, wins, losses, playerOrTeamId, playerOrTeamName, isInactive, isHotStreak, leaguePoints, league, team, queue) "
                 "VALUES (%(isFreshBlood)s, %(division)s, %(isVeteran)s, %(wins)s, %(losses)s, %(playerOrTeamId)s, %(playerOrTeamName)s, %(isInactive)s, %(isHotStreak)s, %(leaguePoints)s, %(league)s, %(team)s, %(queue)s)")
@@ -578,10 +579,11 @@ class Scrapper:
      self.cnx.commit()
      if stop==(len(summoner_ids)):
       if feedback != "silent":
-       print "Finished %s of %s" % (stop, len(summoner_ids))
+       print "Finished %s of %s" % (stop+old_count, len(summoner_ids)+old_count)
      else:
       if feedback == "all":
-       print "Finished %s of %s" % (stop+1, len(summoner_ids)) 
+       print "Finished %s of %s" % (stop+1+old_count, len(summoner_ids)+old_count) 
+     self.old_count = len(summoner_ids) + old_count
      self.cnx.commit() 
        
          

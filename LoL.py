@@ -872,6 +872,7 @@ class Scrapper:
     self.old_count = 0 
     while len(matchIds) > 250:
      self.get_membertiers(matchIds = matchIds[:250], feedback = feedback, old_count = self.old_count)
+     del matchIds[:250]
 
     
     

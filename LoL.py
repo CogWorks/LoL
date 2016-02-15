@@ -512,7 +512,7 @@ class Scrapper:
  #    rate += 1
  #    self.new_key(t = key, rate=rate)
  
- def get_membertiers(self, matchIds, feedback=feedback):
+ def get_membertiers(self, matchIds, feedback="all"):
     summoner_ids_raw = [] 
     for x in matchIds:
  #     self.cursor.execute("SELECT summonerId, teamId FROM match_participants where matchId = %s" % x)

@@ -513,6 +513,10 @@ class Scrapper:
  #    self.new_key(t = key, rate=rate)
  
  def get_membertiers(self, matchIds, feedback="all"):
+    add_league = ("INSERT IGNORE INTO by_league "
+                "(isFreshBlood, division, isVeteran, wins, losses, playerOrTeamId, playerOrTeamName, isInactive, isHotStreak, leaguePoints, league, team, queue) "
+                "VALUES (%(isFreshBlood)s, %(division)s, %(isVeteran)s, %(wins)s, %(losses)s, %(playerOrTeamId)s, %(playerOrTeamName)s, %(isInactive)s, %(isHotStreak)s, %(leaguePoints)s, %(league)s, %(team)s, %(queue)s)")
+
     summoner_ids_raw = [] 
     if feedback == "all":
      print "Extracting participant ids from %s matches" % len(matchIds)

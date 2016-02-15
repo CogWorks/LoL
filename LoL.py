@@ -513,7 +513,7 @@ class Scrapper:
  #    rate += 1
  #    self.new_key(t = key, rate=rate)
  
- def get_membertiers(self, matchIds, feedback="all", old_count = self.old_count):
+ def get_membertiers(self, matchIds, feedback="all", old_count = 0):
     add_league = ("INSERT IGNORE INTO by_league "
                 "(isFreshBlood, division, isVeteran, wins, losses, playerOrTeamId, playerOrTeamName, isInactive, isHotStreak, leaguePoints, league, team, queue) "
                 "VALUES (%(isFreshBlood)s, %(division)s, %(isVeteran)s, %(wins)s, %(losses)s, %(playerOrTeamId)s, %(playerOrTeamName)s, %(isInactive)s, %(isHotStreak)s, %(leaguePoints)s, %(league)s, %(team)s, %(queue)s)")
@@ -868,9 +868,10 @@ class Scrapper:
      self.cursor.execute("SELECT matchId FROM matches")
      matchIds= strip_to_list(self.cursor.fetchall())
     
+    self.old_count = 0 
     while len(matchIds) > 250:
 
-     self.get_membertiers(matchIds = matchIds[:250], feedback = feedback)
+     self.get_membertiers(matchIds = matchIds[:250], feedback = feedback, old_count = self.old_count)
      del matchIds[:250]
      
     

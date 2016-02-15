@@ -521,23 +521,24 @@ class Scrapper:
     summoner_ids_raw = [] 
     if feedback == "all":
      print "Extracting participant ids from %s matches" % len(matchIds)
-    for x in matchIds:
-#      self.cursor.execute("SELECT summonerId, teamId FROM match_participants where matchId = %s" % x)
-     self.cursor.execute("SELECT summonerId FROM match_participants where matchId = %s" % x)
-#      print summoner_ids_raw
-     summoner_ids_raw.append(self.cursor.fetchall())
-    
+
+    self.cursor.execute('SELECT summonerId FROM match_participants where matchId in ({0})'.format(', '.join(str(x) for x in matchIds)))
+    summoner_ids_raw = self.cursor.fetchall()
+
+
     if feedback == "all":
      print "Finished extracting participants."
     summoner_ids = [] 
+    
+
   
     for x in summoner_ids_raw:
      for y in x:
-      for z in y:
-       summoner_ids.append(z)
-   
+      summoner_ids.append(y)
 
    
+
+
     for x in xrange(0,(int(len(summoner_ids)/10)+1)):
      stop = ((x+1)*10)
 
@@ -870,13 +871,11 @@ class Scrapper:
     
     self.old_count = 0 
     while len(matchIds) > 250:
-
      self.get_membertiers(matchIds = matchIds[:250], feedback = feedback, old_count = self.old_count)
-     del matchIds[:250]
-     
+
     
     
-    self.get_membertiers(matchIds, feedback = feedback)
+    self.get_membertiers(matchIds, feedback = feedback, old_count = self.old_count)
     
      
    

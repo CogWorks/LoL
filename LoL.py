@@ -512,7 +512,71 @@ class Scrapper:
  #    rate += 1
  #    self.new_key(t = key, rate=rate)
  
- 
+ def get_membertiers(self, matchIds, feedback=feedback):
+    summoner_ids_raw = [] 
+    for x in matchIds:
+ #     self.cursor.execute("SELECT summonerId, teamId FROM match_participants where matchId = %s" % x)
+
+     self.cursor.execute("SELECT summonerId FROM match_participants where matchId = %s" % x)
+     summoner_ids_raw.append(self.cursor.fetchall())
+    
+    summoner_ids = [] 
+  
+    for x in summoner_ids_raw:
+     for y in x:
+      for z in y:
+       summoner_ids.append(z)
+   
+
+   
+    for x in xrange(0,(int(len(summoner_ids)/10)+1)):
+     stop = ((x+1)*10)
+
+     if x == int(len(summoner_ids)/10):
+      stop = (len(summoner_ids))
+     if stop == x*10:
+      continue
+    
+ #     print summoner_ids[(x*10):stop]
+    
+     league_entries = self.get_leagues(team_ids=summoner_ids,x=x, stop=stop, key=self.key, unauthorized_cycle=False, team=False, feedback=feedback)
+
+     by_leagues = []
+     for z in league_entries:
+      for y in league_entries[z]:
+       if "entries" in y:
+        for v in y['entries']:
+         v['league'] = y['tier']
+         v['team'] = (True if y['queue']!="RANKED_SOLO_5x5" else False)
+         v['queue'] = y['queue']
+  #  for right now we're just going to discard miniSeries data
+         if "miniSeries" in v:
+          del v['miniSeries']
+         by_leagues.append(v)
+
+    
+     try:
+      self.cursor.executemany(add_league, by_leagues)
+     except mysql.connector.Error as err:
+      if err.errno != 1062 or suppress_duplicates == False:
+      
+       if feedback != "silent":
+        print "%s - Member-Tiers" % err.msg
+
+     else:
+      if feedback != "silent":
+       print "Updated Member-Tiers"  
+    
+     self.cnx.commit()
+     if stop==(len(summoner_ids)):
+      if feedback != "silent":
+       print "Finished %s of %s" % (stop, len(summoner_ids))
+     else:
+      if feedback == "all":
+       print "Finished %s of %s" % (stop+1, len(summoner_ids)) 
+     self.cnx.commit() 
+       
+         
  def get_leagues(self, team_ids=None,x=None, stop=None, key=None, unauthorized_cycle=False, team=True, feedback="all"):
   finished = False
   unauthorized_key = False
@@ -788,76 +852,20 @@ class Scrapper:
        print "Finished %s of %s" % (stop+1, len(team_ids))
         
   if table=="membertiers":
-    add_league = ("INSERT IGNORE INTO by_league "
-                "(isFreshBlood, division, isVeteran, wins, losses, playerOrTeamId, playerOrTeamName, isInactive, isHotStreak, leaguePoints, league, team, queue) "
-                "VALUES (%(isFreshBlood)s, %(division)s, %(isVeteran)s, %(wins)s, %(losses)s, %(playerOrTeamId)s, %(playerOrTeamName)s, %(isInactive)s, %(isHotStreak)s, %(leaguePoints)s, %(league)s, %(team)s, %(queue)s)")
-    summoner_ids_raw = [] 
     if matchIds == False:
      if feedback != "silent":
       print "No matches given, using all."
      self.cursor.execute("SELECT matchId FROM matches")
      matchIds= strip_to_list(self.cursor.fetchall())
-
-    for x in matchIds:
- #     self.cursor.execute("SELECT summonerId, teamId FROM match_participants where matchId = %s" % x)
-
-     self.cursor.execute("SELECT summonerId FROM match_participants where matchId = %s" % x)
-     summoner_ids_raw = self.cursor.fetchall()
     
-     summoner_ids = [] 
-  
-     for x in summoner_ids_raw:
-      for y in x:
-       for z in y:
-        summoner_ids.append(z)
+    while len(matchIds) > 1000:
+     get_membertiers(matchIds.pop(1000))
+    
+    
+    get_membertiers(matchIds)
+    
+     
    
-
-   
-     for x in xrange(0,(int(len(summoner_ids)/10)+1)):
-      stop = ((x+1)*10)
-
-      if x == int(len(summoner_ids)/10):
-       stop = (len(summoner_ids))
-      if stop == x*10:
-       continue
-    
-  #     print summoner_ids[(x*10):stop]
-    
-      league_entries = self.get_leagues(team_ids=summoner_ids,x=x, stop=stop, key=self.key, unauthorized_cycle=False, team=False, feedback=feedback)
-
-      by_leagues = []
-      for z in league_entries:
-       for y in league_entries[z]:
-        if "entries" in y:
-         for v in y['entries']:
-          v['league'] = y['tier']
-          v['team'] = (True if y['queue']!="RANKED_SOLO_5x5" else False)
-          v['queue'] = y['queue']
-   #  for right now we're just going to discard miniSeries data
-          if "miniSeries" in v:
-           del v['miniSeries']
-          by_leagues.append(v)
-
-    
-      try:
-       self.cursor.executemany(add_league, by_leagues)
-      except mysql.connector.Error as err:
-       if err.errno != 1062 or suppress_duplicates == False:
-      
-        if feedback != "silent":
-         print "%s - Member-Tiers" % err.msg
-
-      else:
-       if feedback != "silent":
-        print "Updated Member-Tiers"  
-    
-      self.cnx.commit()
-      if stop==(len(summoner_ids)):
-       if feedback != "silent":
-        print "Finished %s of %s" % (stop, len(summoner_ids))
-      else:
-       if feedback == "all":
-        print "Finished %s of %s" % (stop+1, len(summoner_ids))       
         
   if table=="team":
    

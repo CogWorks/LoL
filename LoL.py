@@ -859,10 +859,10 @@ class Scrapper:
      matchIds= strip_to_list(self.cursor.fetchall())
     
     while len(matchIds) > 1000:
-     get_membertiers(matchIds.pop(1000), feedback = feedback)
+     self.get_membertiers(matchIds.pop(1000), feedback = feedback)
     
     
-    get_membertiers(matchIds, feedback = feedback)
+    self.get_membertiers(matchIds, feedback = feedback)
     
      
    

@@ -28,7 +28,7 @@ import sys, getopt
 import argparse
 if __name__ == '__main__' :
 
- parser = argparse.ArgumentParser(description="LoL Scrapper", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+ parser = argparse.ArgumentParser(description="LoL Scraper", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
  parser.add_argument("-s", dest="ssh", required=False, help="using ssh or not", metavar="ssh")
  args = parser.parse_args()
  ssh = args.ssh
@@ -42,7 +42,7 @@ def strip_to_list (data_raw):
    data.append(y)
  return data
 
-class Scrapper:
+class Scraper:
  
  
  def __init__(self, ssh=True, use_curses=False):
@@ -1235,7 +1235,7 @@ class Scrapper:
         
     if checkTeams==True:
      self.print_stuff("Checking Teams")
-     self.update_table("checkteams", feedback=feedback, suppress_duplicates = suppress_duplicates, ignore_skiplist=ignore_skiplist)
+     self.update_table("checkteams", feedback=feedback, suppress_duplicates = suppress_duplicates, ignore_skiplist=ignore_skiplist, allow_updates=allow_updates)
     
 
   if table=="iterate":
@@ -1297,13 +1297,13 @@ class Scrapper:
  #         print v
       self.print_stuff("Finished %s of %s, %s teams found." % (int(stop-iteratestart), int(iterate), len(team_ids)), progress = True)
      self.print_stuff("Updating Team Table", header2 = True)
-     self.update_table("team", teamIds = team_ids, checkTeams = checkTeams, feedback=feedback, suppress_duplicates = suppress_duplicates)  
+     self.update_table("team", teamIds = team_ids, checkTeams = checkTeams, feedback=feedback, suppress_duplicates = suppress_duplicates, allow_updates = allow_updates, ignore_skiplist=ignore_skiplist)  
  
  
   if table=="all":
    self.update_table("challenger", feedback=feedback, queue= queue, suppress_duplicates = suppress_duplicates)
    self.update_table("master", feedback=feedback, queue = queue, suppress_duplicates = suppress_duplicates)
-   self.update_table("team", checkTeams =True, feedback=feedback, suppress_duplicates = suppress_duplicates)
+   self.update_table("team", checkTeams =True, feedback=feedback, suppress_duplicates = suppress_duplicates, allow_updates = allow_updates, ignore_skiplist=ignore_skiplist)
   
   if table=="match":
     add_match = ("INSERT IGNORE INTO matches "

@@ -12,6 +12,7 @@ import json
 import requests
 import time
 import csv
+import curses
 
 from utils import todict
 import mysql.connector
@@ -44,13 +45,25 @@ def strip_to_list (data_raw):
 class Scrapper:
  
  
- def __init__(self, ssh=True):
+ def __init__(self, ssh=True, use_curses=False):
 
   if ssh == "True":
    ssh = True
   elif ssh == "False":
    ssh = False
-
+  elif ssh != False and ssh != True:
+   print "Not a valid value for ssh, defaulting to True."
+   ssh = True
+  if use_curses == "True":
+   self.use_curses = True
+  elif use_curses == "False":
+   self.use_curses = False
+  elif use_curses != False and use_curses != True:
+   print "Not a valid value for use_curses, defaulting to False."
+   self.use_curses = False
+  elif use_curses == False or use_curses == True:
+   self.use_curses = use_curses
+  
 # using SSH Tunnel because to connect directly to MySQL on server we need to comment out 
 # 'skip-networking' in /etc/mysql/my.cnf which allows non-local connections and is generally less secure
 # and additionally we'd have to change bind-address from 127.0.0.1 to 0.0.0.0
@@ -84,6 +97,15 @@ class Scrapper:
   self.skiplist = self.skipfiler.read()
   self.skipfiler.close()
   self.old_count = 0
+  if self.use_curses == True:
+   self.stdscr = curses.initscr()
+   self.stdscr.addstr(0, 0, "League of Legends Scraper", curses.A_BOLD)
+   self.stdscr.refresh()
+   self.msgs = []
+   self.errormsg = []
+  
+  
+  
 
 
 
@@ -202,6 +224,21 @@ class Scrapper:
       "  CONSTRAINT player_team PRIMARY KEY (`playerId`, `teamId`)"
       ") CHARACTER SET utf8 ENGINE=InnoDB")
     
+   
+  TABLES['individual_history'] = (
+      "CREATE TABLE `individual_history` ("
+      "  `summonerId` int(18) NOT NULL,"
+      "		`championId`	int(4)		DEFAULT NULL	,"
+      "  `lane` varchar(8) DEFAULT NULL,"
+      "  `matchId` int(18) NOT NULL,"
+      "  `platformId` varchar(6) DEFAULT NULL,"
+      "  `queue` varchar(32) DEFAULT NULL,"
+      "  `region` varchar(6) DEFAULT NULL,"
+      "  `role` varchar(15) DEFAULT NULL,"
+      "  `season` varchar(15) DEFAULT NULL,"
+      "  `timestamp` BIGINT DEFAULT NULL,"
+      "  CONSTRAINT player_game PRIMARY KEY (`summonerId`, `matchId`)"
+      ") CHARACTER SET utf8 ENGINE=InnoDB")  
     
       
   TABLES['matches'] = ( 
@@ -471,7 +508,47 @@ class Scrapper:
       else:
           print("OK")
 
+ def print_stuff(self, msg=None, header1 = False, header2 = False, clear = False, error = False, progress = False, override = False):
+  feedback = self.feedback
+  if msg is None:
+    msg = " "
+  if self.use_curses == True:
+   if clear == True:
+    self.stdscr.erase()
+    self.stdscr.addstr(0, 0, "League of Legends Scraper", curses.A_BOLD)
+   if feedback != "silent" and header1 == True:
+    self.stdscr.erase()
+    self.stdscr.addstr(0, 0, "League of Legends Scraper", curses.A_BOLD)
+    self.stdscr.addstr(1, 1, msg) 
+   elif (feedback != "silent" and header2 == True) or progress == True:
+    if (progress == True and feedback == "all") or progress == False:
+     self.stdscr.addstr(2, 1, msg)  
+   elif feedback != "silent" and error == True:
+    self.errormsg.append(msg)
+    if len(self.errormsg) > 2:
+     del self.errormsg[1]
+    for x in self.errormsg:
+     self.stdscr.addstr(9+self.msgs.index(x),2,x)
+   if header1 == False and header2 == False and (feedback == "all" or (override == True and feedback != "silent")):
+    self.msgs.append(msg)
+    if len(self.msgs) > 5:
+     del self.msgs[1]
+    for x in self.msgs:
+     self.stdscr.addstr(4+self.msgs.index(x),3,x)
 
+   self.stdscr.refresh()
+  elif self.use_curses == False:
+   if feedback != "silent" and (header1 == True or header2 == True or error == True or override == True):
+    print msg
+   elif feedback == "all" and !(header1 == True or header2 == True or error == True or override == True):
+    print msg
+
+    
+     
+    
+   
+    
+    
 
  def new_key (self, t=None, rate=0, drop=False):
   global w
@@ -493,9 +570,9 @@ class Scrapper:
     else:
      self.key = keys[keys.index(self.key)+1] 
    else:
-    print "Only one key."
+    self.print_stuff("Only one key.")
     if drop == True:
-     print "Can't drop only key. Breaking."
+     self.print_stuff("Can't drop only key. Breaking.")
      stop
     self.key = keys[0]
  
@@ -513,21 +590,19 @@ class Scrapper:
  #    rate += 1
  #    self.new_key(t = key, rate=rate)
  
- def get_membertiers(self, matchIds, feedback="all", old_count = 0):
+ def get_membertiers(self, matchIds, old_count = 0, full_count=None):
     add_league = ("INSERT IGNORE INTO by_league "
                 "(isFreshBlood, division, isVeteran, wins, losses, playerOrTeamId, playerOrTeamName, isInactive, isHotStreak, leaguePoints, league, team, queue) "
                 "VALUES (%(isFreshBlood)s, %(division)s, %(isVeteran)s, %(wins)s, %(losses)s, %(playerOrTeamId)s, %(playerOrTeamName)s, %(isInactive)s, %(isHotStreak)s, %(leaguePoints)s, %(league)s, %(team)s, %(queue)s)")
 
     summoner_ids_raw = [] 
-    if feedback == "all":
-     print "Extracting participant ids from %s matches" % len(matchIds)
+
+    self.print_stuff("Extracting participant ids from %s matches" % len(matchIds))
 
     self.cursor.execute('SELECT summonerId FROM match_participants where matchId in ({0})'.format(', '.join(str(x) for x in matchIds)))
     summoner_ids_raw = self.cursor.fetchall()
 
-
-    if feedback == "all":
-     print "Finished extracting participants."
+    self.print_stuff("Finished extracting participants.")
     summoner_ids = [] 
     
 
@@ -549,7 +624,7 @@ class Scrapper:
     
  #     print summoner_ids[(x*10):stop]
     
-     league_entries = self.get_leagues(team_ids=summoner_ids,x=x, stop=stop, key=self.key, unauthorized_cycle=False, team=False, feedback=feedback)
+     league_entries = self.get_leagues(team_ids=summoner_ids,x=x, stop=stop, key=self.key, unauthorized_cycle=False, team=False)
 
      by_leagues = []
      for z in league_entries:
@@ -569,26 +644,21 @@ class Scrapper:
       self.cursor.executemany(add_league, by_leagues)
      except mysql.connector.Error as err:
       if err.errno != 1062 or suppress_duplicates == False:
-      
-       if feedback != "silent":
-        print "%s - Member-Tiers" % err.msg
+       self.print_stuff("%s - Member-Tiers" % err.msg, error = True)
 
      else:
-      if feedback != "silent":
-       print "Updated Member-Tiers"  
+      self.print_stuff("Updated Member-Tiers", override = True)
     
      self.cnx.commit()
      if stop==(len(summoner_ids)):
-      if feedback != "silent":
-       print "Finished %s of %s" % (stop+old_count, len(summoner_ids)+old_count)
+      self.print_stuff("Finished %s of %s" % (stop+old_count, full_count), header2 = True)
      else:
-      if feedback == "all":
-       print "Finished %s of %s" % (stop+1+old_count, len(summoner_ids)+old_count) 
+      self.print_stuff("Finished %s of %s" % (stop+1+old_count, full_count), progress = True)
      self.old_count = len(summoner_ids) + old_count
      self.cnx.commit() 
        
          
- def get_leagues(self, team_ids=None,x=None, stop=None, key=None, unauthorized_cycle=False, team=True, feedback="all"):
+ def get_leagues(self, team_ids=None,x=None, stop=None, key=None, unauthorized_cycle=False, team=True):
   finished = False
   unauthorized_key = False
   while finished == False:
@@ -604,8 +674,8 @@ class Scrapper:
     drop = False
     if str(err) == "Unauthorized" :
 
-     if feedback == "all":
-      print "Unauthorized, using new key" 
+     
+     self.print_stuff("Unauthorized, using new key") 
  # This to ensure that you only try one new key for unauthorized, just switch truth value
    
      unauthorized_key= (True if unauthorized_key == False else False)
@@ -614,22 +684,21 @@ class Scrapper:
  #       print str(err)
     if str(err) == "Too many requests" or str(err) == "Blacklisted key":
      if str(err) == "Blacklisted key":
-      if feedback == "all":
-       print "Blacklisted key, using new key, dropping current."
+      self.print_stuff("Blacklisted key, using new key, dropping current.")
       drop = True
      unauthorized_key=False
      
      if str(err) != "Unauthorized" and str(err) != "Too many requests" and str(err) != "Blacklisted key":
-      if feedback != "silent":
-       print "Break, %s" % (str(err))
+      
+      self.print_stuff("Break, %s" % (str(err)), error = True)
       break 
 
 
    
  # Checks to make sure the error is not just coming from missing data     
     if str(err) == "Game data not found":
-     if feedback == "all":
-      print "No data, skipping %s" % (team_ids if unauthorized_cycle == True else team_ids[(x*10):stop])
+     
+     self.print_stuff("No data, skipping %s" % (team_ids if unauthorized_cycle == True else team_ids[(x*10):stop]))
      league_entries = {}
      if unauthorized_cycle == True:
       self.write_to_skip(team_ids)
@@ -638,16 +707,14 @@ class Scrapper:
      finished = True   
  # Basically this checks to see if unauthorized_key has been used and switched back to false. This should only happen if you have two unauthorized key changes in a row
     elif unauthorized_key == True or str(err) != "Unauthorized":
-     if feedback == "all": 
-      print "New key assigned, %s" % str(err)
+     self.print_stuff("New key assigned, %s" % str(err))
  #         print str(err)
     
      self.new_key(drop = drop)
     elif unauthorized_key == False and str(err) == "Unauthorized":
      league_entries = {}
      if unauthorized_cycle== False:
-      if feedback == "all": 
-       print "Unauthorized, checking individual"
+      self.print_stuff("Unauthorized, checking individual")
       for s in team_ids[(x*10):stop]:
        if team == False:
         time.sleep(5)
@@ -675,28 +742,64 @@ class Scrapper:
  
   return league_entries
  
+ 
+ 
+ 
+ def get_indhistory(self, summoner_id=None):
+     add_history = ("INSERT IGNORE INTO individual_history"
+             "(summonerId, championId, lane, matchId, platformId, queue, region, role, season, timestamp)" 
+             "VALUES (%(summonerId)s, %(championId)s, %(lane)s, %(matchId)s, %(platformId)s, %(queue)s, %(region)s, %(role)s, %(season)s, %(timestamp)s)" )
+     cur_matchlist = self.w.get_match_list(summoner_id)
+     
+     ind_history = True 
+     all_history = []
+     try:
+      for n in cur_matchlist['matches']:
+       cur_history = {}
+       cur_history['summonerId'] = summoner_id
+       cur_history['championId'] = n['champion']
+       for z in ['lane', 'matchId', 'platformId', 'queue', 'region', 'role', 'season', 'timestamp']:
+        cur_history[z] = n[z]
+       all_history.append(cur_history)
+     except:
+      ind_history = False
+      self.print_stuff("No Individual History")
+     
+     if ind_history == True:
+      try:
+       self.cursor.executemany(add_history, all_history)
+ #       print test_team
+      except mysql.connector.Error as err:
+       if err.errno != 1062 or suppress_duplicates == False:
+        self.print_stuff( "Error %s" % err.errno, error = True)
+      else:
+       self.print_stuff("Updated Individual History")
+       
+        
+      
+   
+     
 
-
- def update_table(self, table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, create=False, teamIds=False, matchIds=False, checkTeams= False, hangwait=False, feedback="all", suppress_duplicates = False, timeline = False, allow_updates=False, ignore_skiplist=False):
-  
+ def update_table(self, table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, create=False, teamIds=False, matchIds=False, summonerIds=False, checkTeams= False, hangwait=False, feedback="all", suppress_duplicates = False, timeline = False, allow_updates=False, ignore_skiplist=False, just_teams = True):
   feedback = feedback.lower()
   if feedback != "all" and feedback != "quiet" and feedback != "silent":
-   print "Invalid value for 'Feedback' option, reverting to default. All feedback will be shown."
+   self.feedback="all"
+   self.print_stuff("Invalid value for 'Feedback' option, reverting to default. All feedback will be shown.")
    feedback = "all"
   if feedback == "quiet" or feedback == "silent":
    suppress_duplicates = True
-  
+  self.feedback = feedback
   self.key = keys[0]
   self.new_key()
 
   if create== True:
-   create_tables()
+   self.create_tables()
 
   if table=="challenger":
    add_challenger = ("INSERT IGNORE INTO by_league "
                 "(isFreshBlood, division, isVeteran, wins, losses, playerOrTeamId, playerOrTeamName, isInactive, isHotStreak, leaguePoints, league, team, queue) "
                 "VALUES (%(isFreshBlood)s, %(division)s, %(isVeteran)s, %(wins)s, %(losses)s, %(playerOrTeamId)s, %(playerOrTeamName)s, %(isInactive)s, %(isHotStreak)s, %(leaguePoints)s, %(league)s, %(team)s, %(queue)s)")
-
+   self.print_stuff("Checking Challenger tier League API", header1 = True)
    challenger = self.w.get_challenger(queue=queue)
 
    s = []
@@ -713,20 +816,18 @@ class Scrapper:
    except mysql.connector.Error as err:
    ##error 1062 is duplicate entry error for mysql
     if err.errno == 1062:
-     if feedback == "all" and suppress_duplicates == False :
-      print "Error %s" % (err.errno)
+     if suppress_duplicates == False :
+      self.print_stuff("Error %s" % (err.errno), error=True)
     else:
-     if feedback != "silent":
-      print "Error %s" % (err.errno)
+     self.print_stuff("Error %s" % (err.errno), error=True)
          
 
     
    else:
-    if feedback != "silent" :
-     print "Updated Challenger"
+    self.print_stuff("Updated Challenger", header2 = True)
   
-   if err.errno == 1062 and feedback != "silent":
-    print "Finished Challenger"
+   if err.errno == 1062:
+    self.print_stuff("Finished Challenger", header2 = True)
    
   
   
@@ -735,7 +836,7 @@ class Scrapper:
    add_master = ("INSERT IGNORE INTO by_league "
                 "(isFreshBlood, division, isVeteran, wins, losses, playerOrTeamId, playerOrTeamName, isInactive, isHotStreak, leaguePoints, league, team, queue) "
                 "VALUES (%(isFreshBlood)s, %(division)s, %(isVeteran)s, %(wins)s, %(losses)s, %(playerOrTeamId)s, %(playerOrTeamName)s, %(isInactive)s, %(isHotStreak)s, %(leaguePoints)s, %(league)s, %(team)s, %(queue)s)")
-
+   self.print_stuff("Checking Master tier League API", header1 = True)
    master = self.w.get_master(queue=queue)
 
 
@@ -752,33 +853,31 @@ class Scrapper:
    except mysql.connector.Error as err:
    ##error 1062 is duplicate entry error for mysql
     if err.errno == 1062:
-     if feedback == "all" and suppress_duplicates == False:
-      print "Error %s" % (err.errno)
+     if suppress_duplicates == False:
+      self.print_stuff("Error %s" % (err.errno), error = True)
     else:
-     if feedback != "silent":
-      print "Error %s" % (err.errno)
+     self.print_stuff("Error %s" % (err.errno), error = True)
     
     
    else:
-    if feedback != "silent" :
-     print "Updated Master"
+
+    self.print_stuff("Updated Master", header2 = True)
 
     
-   if err.errno == 1062 and feedback != "silent":
-    print "Finished Master"  
+   if err.errno == 1062:
+    self.print_stuff("Finished Master", header2 = True) 
     
   if table=="checkteams":
     add_league = ("INSERT IGNORE INTO by_league "
                 "(isFreshBlood, division, isVeteran, wins, losses, playerOrTeamId, playerOrTeamName, isInactive, isHotStreak, leaguePoints, league, team, queue) "
                 "VALUES (%(isFreshBlood)s, %(division)s, %(isVeteran)s, %(wins)s, %(losses)s, %(playerOrTeamId)s, %(playerOrTeamName)s, %(isInactive)s, %(isHotStreak)s, %(leaguePoints)s, %(league)s, %(team)s, %(queue)s)")
 
-
+    self.print_stuff("Checking Teams on League API", header1 = True)
     self.cursor.execute("SELECT playerOrTeamID, queue FROM by_league")
     existing_entries = self.cursor.fetchall()
    
     if(teamIds==False):
-     if feedback == "all":
-      print "No list of team ids, defaulting to search by_league"
+     self.print_stuff("No list of team ids, defaulting to search by_league")
      self.cursor.execute("SELECT fullId FROM team" )    
    
 
@@ -792,8 +891,7 @@ class Scrapper:
        team_ids.append(y)
      
     else:
-     if feedback == "all":
-      print "Given list of team ids."
+     self.print_stuff("Given list of team ids.")
      team_ids = teamIds
  
     if ignore_skiplist == False:
@@ -812,7 +910,7 @@ class Scrapper:
 
 
 
-     league_entries = self.get_leagues(team_ids=team_ids,x=x, stop=stop, key=self.key, unauthorized_cycle=False, team=True, feedback=feedback)
+     league_entries = self.get_leagues(team_ids=team_ids,x=x, stop=stop, key=self.key, unauthorized_cycle=False, team=True)
      by_leagues = []
      for z in league_entries:
       for y in league_entries[z]:
@@ -832,14 +930,11 @@ class Scrapper:
       self.cursor.executemany(add_league, by_leagues)
      except mysql.connector.Error as err:
       if err.errno != 1062 or suppress_duplicates == False:
-      
-       if feedback != "silent":
-        print err.errno
+       self.print_stuff(err.errno, error = True)
 
 
      else:
-      if feedback != "silent":
-       print "Updated By-League"  
+      self.print_stuff("Updated By-League", override = True)
        
  #        OLD METHOD
  #        try:
@@ -856,28 +951,61 @@ class Scrapper:
  #          print "Updated By-League"    
 
      if stop==(len(team_ids)):
-      if feedback != "silent":
-       print "Finished %s of %s" % (stop, len(team_ids))
+      self.print_stuff("Finished %s of %s" % (stop, len(team_ids)), header2=True)
      else:
-      if feedback == "all":
-       print "Finished %s of %s" % (stop+1, len(team_ids))
+      self.print_stuff("Finished %s of %s" % (stop+1, len(team_ids)), progress=True)
         
   if table=="membertiers":
+    self.print_stuff("Updating Member-tiers.", header1 = True)
     if matchIds == False:
-     if feedback != "silent":
-      print "No matches given, using all."
+     self.print_stuff("No matches given, using all.")
      self.cursor.execute("SELECT matchId FROM matches")
      matchIds= strip_to_list(self.cursor.fetchall())
+     
+     self.cursor.execute("SELECT count(summonerId) FROM match_participants")
+     fullcount=self.cursor.fetchall()
+    else:
+     self.cursor.execute('SELECT count(summonerId) FROM match_participants where matchId in ({0})'.format(', '.join(str(x) for x in matchIds)))
+     fullcount=self.cursor.fetchall()
     
     self.old_count = 0 
+    
+    
+    
+    
     while len(matchIds) > 250:
-     self.get_membertiers(matchIds = matchIds[:250], feedback = feedback, old_count = self.old_count)
+     self.get_membertiers(matchIds = matchIds[:250], old_count = self.old_count, full_count=fullcount)
      del matchIds[:250]
 
     
     
-    self.get_membertiers(matchIds, feedback = feedback, old_count = self.old_count)
-    
+    self.get_membertiers(matchIds, old_count = self.old_count, full_count=fullcount)
+  
+  if table=="individualhistory":
+   self.print_stuff("Updating Individual History", header1 = True)
+   if summonerIds == False:         
+    if just_teams == True:
+     self.print_stuff("No IDs supplied, searching teams.")
+     self.cursor.execute("SELECT playerId FROM team_roster")
+
+    else:
+     self.print_stuff("No IDs supplied, searching matches.")
+     self.cursor.execute("SELECT summonerId FROM match_participants")
+    summoner_ids_raw = self.cursor.fetchall()
+    summoner_ids = [] 
+    for x in summoner_ids_raw:
+     for y in x:
+      summoner_ids.append(y)
+   else:
+    self.print_stuff("IDs supplied.")
+
+    summoner_ids = summonerIds   
+   
+   
+   for x in summoner_ids:
+    self.get_indhistory(x)
+
+   
      
    
         
@@ -894,10 +1022,9 @@ class Scrapper:
     add_team_roster = ("INSERT IGNORE INTO team_roster "
              "(inviteDate, joinDate, playerId, status, isCaptain, teamId)"
              "VALUES (%(inviteDate)s, %(joinDate)s, %(playerId)s, %(status)s, %(isCaptain)s, %(teamId)s)")
-   
+    self.print_stuff("Updating Team Tables.", header1 = True)
     if(teamIds==False):
-     if feedback == "all":
-      print "No list of team ids, defaulting to search by_league"
+     self.print_stuff("No list of team ids, defaulting to search by_league")
      self.cursor.execute("SELECT playerOrTeamId FROM by_league WHERE team = True" )         
    
 
@@ -910,8 +1037,7 @@ class Scrapper:
        team_ids.append(y)
      
     else:
-     if feedback == "all":
-      print "Given list of team ids."
+     self.print_stuff("Given list of team ids.")
      team_ids = teamIds
  
     teams_data = []
@@ -940,20 +1066,16 @@ class Scrapper:
  #         print "New Key" 
          drop = False
          if str(err) == "Blacklisted key":
-          if feedback == "all":
-           print "Blacklisted key, using new key, dropping current."
+          self.print_stuff("Blacklisted key, using new key, dropping current.")
           drop = True
 
          if str(err) == "Service unavailable" and service != 10:
-          if feedback == "all":
-           print "Service unavailable, using new key"
+          self.print_stuff("Service unavailable, using new key")
           service += 1
          if str(err) == "Unauthorized" or "Internal server error":
-          if feedback == "all":
-           print "Unauthorized, using new key"
+          self.print_stuff("Unauthorized, using new key")
          if len(keys)==1:
-          if feedback == "all":
-           print "Too many requests, not enough keys."
+          self.print_stuff("Too many requests, not enough keys.")
           if hangwait == False:
            break 
           else:
@@ -961,12 +1083,10 @@ class Scrapper:
          self.new_key(drop = drop)
         
        else:
-        if feedback == "all":
-         print "%s, Teams: %s" % (str(err), team_ids[(x*10):stop])
+        self.print_stuff("%s, Teams: %s" % (str(err), team_ids[(x*10):stop]), progress= True)
         break
       except:
-       if feedback != "silent":
-        print "Other Error"
+       self.print_stuff("Other Error Requesting Teams",error=True)
       else:
        finished = True
 
@@ -1005,19 +1125,16 @@ class Scrapper:
          cur_team['losses5v5'] = team_stats[0]['losses']
          cur_team['wins5v5'] = team_stats[0]['wins']
         else:
-         if feedback != "silent":
-          print "Error, team stats messed up"
+         self.print_stuff("Error, team stats messed up", error = True)
       
         try:
          self.cursor.execute(add_team, cur_team)
         except mysql.connector.Error as err:
          if err.errno != 1062 or suppress_duplicates == False:
-          if feedback != "silent":
-           print "%s, Team: %s" % (err.errno, y)
+          self.print_stuff("%s, Team: %s" % (err.errno, y), error= True)
    #       print add_team % cur_team
         else:
-         if feedback == "all":
-          print "Updated Team"
+         self.print_stuff("Updated Team", override = True)
 
      
        all_teams = []
@@ -1045,8 +1162,7 @@ class Scrapper:
         
        except:
         team_history = False
-        if feedback == "all":
-         print "No Team-History"
+        self.print_stuff( "No Team-History")
 
 
        if team_history == True:
@@ -1055,11 +1171,9 @@ class Scrapper:
    #       print test_team
         except mysql.connector.Error as err:
          if err.errno != 1062 or suppress_duplicates == False:
-          if feedback != "silent":
-           print "Error %s" % err.errno
+          self.print_stuff("Error %s" % err.errno, error = True)
         else:
-         if feedback == "all":
-          print "Updated Team-History" 
+         self.print_stuff("Updated Team-History")
       
       
       
@@ -1093,11 +1207,10 @@ class Scrapper:
   #         print "Updated Team-Roster"
        except:
         team_roster = False
-        if feedback == "all":
-         if (cur_team_full['status']=="DISBANDED"):
-          print "No Team-Roster -- Team Disbanded"
-         else:
-          print "No Team-Roster"
+        if (cur_team_full['status']=="DISBANDED"):
+         self.print_stuff("No Team-Roster -- Team Disbanded")
+        else:
+         self.print_stuff("No Team-Roster")
      
      
        if team_roster == True:
@@ -1106,30 +1219,27 @@ class Scrapper:
    #       print test_team
         except mysql.connector.Error as err:
          if err.errno != 1062 or suppress_duplicates == False:
-          if feedback != "silent":
-           print "Error %s" % err.errno
+          self.print_stuff("Error %s" % err.errno, error = True)
         else:
-         if feedback == "all":
-          print "Updated Team-Roster"
+         self.print_stuff("Updated Team-Roster")
      
       except:
-       print "Error, no team information; %s" % (y) 
+       self.print_stuff("Error, no team information; %s" % (y), error=True)
     
 
-     if feedback == "all":
-      print "Finished %s of %s" % (stop, len(team_ids))
-     if feedback == "quiet" and stop == len(team_ids):
-      print "Finished %s of %s" % (stop, len(team_ids))
+     self.print_stuff("Finished %s of %s" % (stop, len(team_ids)), progress=True)
+     if stop == len(team_ids):
+      self.print_stuff("Finished %s of %s" % (stop, len(team_ids)),  header2=True)
     
      self.cnx.commit()
         
     if checkTeams==True:
-     if feedback != "silent":
-      print "Checking Teams"
+     self.print_stuff("Checking Teams")
      self.update_table("checkteams", feedback=feedback, suppress_duplicates = suppress_duplicates, ignore_skiplist=ignore_skiplist)
     
 
   if table=="iterate":
+     self.print_stuff("Iterating through possible summonerIds.", header1 = True)
      team_ids = []
      err = []
      for x in xrange(int(round(iteratestart, -1)/10), int((round(iteratestart+iterate, -1)/10))):
@@ -1157,13 +1267,12 @@ class Scrapper:
  #         print "New Key" 
          drop = False
          if str(err) == "Blacklisted key":
-          if feedback == "all":
-           print "Blacklisted key, using new key, dropping current."
+          self.print_stuff("Blacklisted key, using new key, dropping current.")
           drop = True
          if str(err) == "Unauthorized":
-          print "Unauthorized, using new key"
+          self.print_stuff("Unauthorized, using new key")
          if len(keys)==1:
-          print "Too many requests, not enough keys."
+          self.print_stuff("Too many requests, not enough keys.", error=True)
           if hangwait == False:
            break 
           else:
@@ -1172,7 +1281,7 @@ class Scrapper:
         
         else:
 
-         print "%s, Team: %s" % (str(err), ids)
+         self.print_stuff("%s, Team: %s" % (str(err), ids), error= True)
          break
        else:
         finished = True
@@ -1186,8 +1295,8 @@ class Scrapper:
        for z in teams[y]:
         team_ids.append(z['fullId'])
  #         print v
-      print "Finished %s of %s, %s teams found." % (int(stop-iteratestart), int(iterate), len(team_ids)) 
-     print "Updating Team Table"
+      self.print_stuff("Finished %s of %s, %s teams found." % (int(stop-iteratestart), int(iterate), len(team_ids)), progress = True)
+     self.print_stuff("Updating Team Table", header2 = True)
      self.update_table("team", teamIds = team_ids, checkTeams = checkTeams, feedback=feedback, suppress_duplicates = suppress_duplicates)  
  
  
@@ -1239,7 +1348,7 @@ class Scrapper:
 
      
 
-  
+    self.print_stuff("Updating Match Tables.", header1 = True)
    
     self.cursor.execute("SELECT matchId FROM matches")
     existing_matches_raw = self.cursor.fetchall()
@@ -1255,8 +1364,7 @@ class Scrapper:
       existing_timelines.append(y)
    
     if(matchIds==False):
-     if feedback == "all":
-      print "No list of match ids, defaulting to search team_history"
+     self.print_stuff("No list of match ids, defaulting to search team_history.")
      self.cursor.execute("SELECT gameId FROM team_history" )         
    
 
@@ -1269,8 +1377,7 @@ class Scrapper:
        match_ids.append(y)
      
     else:
-     if feedback == "all":
-      print "Given list of match ids."
+     self.print_stuff("Given list of match ids.")
      match_ids = matchIds
  
  #    print match_ids
@@ -1289,15 +1396,12 @@ class Scrapper:
  #         print "New Key" 
          drop = False
          if str(err) == "Blacklisted key":
-          if feedback == "all":
-           print "Blacklisted key, using new key, dropping current."
+          self.print_stuff("Blacklisted key, using new key, dropping current.")
           drop = True
          if str(err) == "Unauthorized":
-          if feedback == "all":
-           print "Unauthorized, using new key"
+          self.print_stuff("Unauthorized, using new key")
          if len(keys)==1:
-          if feedback == "all":
-           print "Too many requests, not enough keys."
+          self.print_stuff("Too many requests, not enough keys.", error=True)
           if hangwait == False:
            break 
           else:
@@ -1305,8 +1409,7 @@ class Scrapper:
          self.new_key(drop=drop)
         
        else:
-        if feedback != "silent":
-         print "%s, Match: %s -- Request" % (str(err), x)
+        self.print_stuff("%s, Match: %s -- Request" % (str(err), x),error=True)
         break
  #      except:
  #       print "Other Error"
@@ -1334,12 +1437,10 @@ class Scrapper:
       except mysql.connector.Error as err:
 
         if err.errno != 1062 or suppress_duplicates == False:
-         if feedback != "silent":
-          print "%s, Match: %s -- Match" % (err.errno, x)
+         self.print_stuff("%s, Match: %s -- Match" % (err.errno, x), error= True)
   #       print add_team % cur_team
       else:
-        if feedback == "all":
-         print "Updated Match"
+        self.print_stuff("Updated Match")
       all_match_teams = []
       all_match_bans = []
     
@@ -1370,22 +1471,18 @@ class Scrapper:
        self.cursor.executemany(add_match_teams, all_match_teams)
       except mysql.connector.Error as err:
        if err.errno != 1062 or suppress_duplicates == False:
-        if feedback != "silent":
-         print "%s, Match: %s -- Teams" % (err.errno, x)
+        self.print_stuff("%s, Match: %s -- Teams" % (err.errno, x), error=True)
       else:
-       if feedback == "all":
-        print "Updated Match-Teams" 
+       self.print_stuff("Updated Match-Teams")
    
 
       try:
        self.cursor.executemany(add_match_bans, all_match_bans)
       except mysql.connector.Error as err:
        if err.errno != 1062 or suppress_duplicates == False:
-        if feedback != "silent":
-         print "%s, Match: %s -- Bans" % (err.errno, x)
+        self.print_stuff("%s, Match: %s -- Bans" % (err.errno, x), error=True)
       else:
-       if feedback == "all":
-        print "Updated Match-Bans" 
+       self.print_stuff("Updated Match-Bans")
       
        
            
@@ -1526,21 +1623,17 @@ class Scrapper:
 
           except mysql.connector.Error as err:
            if err.errno != 1062 or suppress_duplicates == False:
-            if feedback != "silent":
-             print "%s, Match: %s, Timeframe: %s-- Timeline-Events" % (err.errno, x, cur_match_timeline_raw["frames"].index(y))
+            self.print_stuff("%s, Match: %s, Timeframe: %s-- Timeline-Events" % (err.errno, x, cur_match_timeline_raw["frames"].index(y)),error=True)
           else:
-           if feedback == "all":
-            print "Updated Timeline-Assists" 
+           self.print_stuff("Updated Timeline-Assists")
          try:
           self.cursor.executemany(add_match_timeline_event, timeline_events)
 
          except mysql.connector.Error as err:
           if err.errno != 1062 or suppress_duplicates == False:
-           if feedback != "silent":
-            print "%s, Match: %s, Timeframe: %s-- Timeline-Events" % (err.errno, x, cur_match_timeline_raw["frames"].index(y))
+           self.print_stuff("%s, Match: %s, Timeframe: %s-- Timeline-Events" % (err.errno, x, cur_match_timeline_raw["frames"].index(y)), error=True)
          else:
-          if feedback == "all":
-           print "Updated Timeline-Events" 
+          self.print_stuff("Updated Timeline-Events")
     #       stop
        
         
@@ -1548,22 +1641,18 @@ class Scrapper:
          self.cursor.executemany(add_match_timeline, cur_timeline)
         except mysql.connector.Error as err:
          if err.errno != 1062 or suppress_duplicates == False:
-          if feedback != "silent":
-           print "%s, Match: %s, Timeframe: %s-- Timeline" % (err.errno, x, cur_match_timeline_raw["frames"].index(y))
+          self.print_stuff("%s, Match: %s, Timeframe: %s-- Timeline" % (err.errno, x, cur_match_timeline_raw["frames"].index(y)), error=True)
         else:
-         if feedback == "all":
-          print "Updated Timeline" 
+         self.print_stuff("Updated Timeline")
       
       
       
       
    #       if killerid == 0, Minion
 
-       if feedback == "all":
-        print "Finished Timeline"
+       self.print_stuff("Finished Timeline")
       else:
-       if feedback == "all":
-        print "No Timeline Data; %s" % (x)
+       self.print_stuff("No Timeline Data; %s" % (x))
     
      if unicode(x) not in existing_matches and cur_match_raw:
       for y in cur_match_participants_raw:
@@ -1591,12 +1680,10 @@ class Scrapper:
             self.cursor.execute(add_match_participant_rune, cur_rune)
            except mysql.connector.Error as err:
             if err.errno != 1062 or suppress_duplicates == False:
-             if feedback != "silent":
-              print "%s, Match: %s, Player: %s -- Rune" % (err.errno, x, cur_match_pi[y["participantId"]]["summonerId"])
+             self.print_stuff("%s, Match: %s, Player: %s -- Rune" % (err.errno, x, cur_match_pi[y["participantId"]]["summonerId"]),error=True)
    #          print add_team % cur_team
            else:
-            if feedback == "all":
-             print "Updated Rune"
+            self.print_stuff("Updated Rune")
          
          
          elif z == "masteries": 
@@ -1611,12 +1698,10 @@ class Scrapper:
             self.cursor.execute(add_match_participant_mastery, cur_mastery)
            except mysql.connector.Error as err:
             if err.errno != 1062 or suppress_duplicates == False:
-             if feedback != "silent":
-              print "%s, Match: %s, Player: %s -- Mastery" % (err.errno, x, cur_match_pi[y["participantId"]]["summonerId"])
+             self.print_stuff("%s, Match: %s, Player: %s -- Mastery" % (err.errno, x, cur_match_pi[y["participantId"]]["summonerId"]),error=True)
    #          print add_team % cur_team
            else:
-            if feedback == "all":
-             print "Updated Mastery"        
+            self.print_stuff("Updated Mastery")     
        
          elif z == "stats": 
           for r in ["assists", "champLevel", "combatPlayerScore", "deaths", "doubleKills", "firstBloodAssist", "firstBloodKill", "firstInhibitorAssist", "firstInhibitorKill", "firstTowerAssist", "firstTowerKill", "goldEarned", "goldSpent", "inhibitorKills", "item0", "item1", "item2", "item3", "item4", "item5", "item6", "killingSprees", "kills", "largestCriticalStrike", "largestKillingSpree", "largestMultiKill", "magicDamageDealt", "magicDamageDealtToChampions", "magicDamageTaken", "minionsKilled", "neutralMinionsKilled", "neutralMinionsKilledEnemyJungle", "neutralMinionsKilledTeamJungle", "nodeCapture", "nodeCaptureAssist", "nodeNeutralize", "nodeNeutralizeAssist", "objectivePlayerScore", "pentaKills", "physicalDamageDealt", "physicalDamageDealtToChampions", "physicalDamageTaken", "quadrakills", "sightWardsBoughtInGame", "teamObjective", "totalDamageDealt", "totalDamageDealtToChampions", "totalDamageTaken", "totalHeal", "totalPlayerScore", "totalScoreRank", "totalTimeCrowdControlDealt", "totalUnitsHealed", "towerKills", "tripleKills", "trueDamageDealt", "trueDamageDealtToChampions", "trueDamageTaken", "unrealKills", "visionWardsBoughtInGame", "wardsKilled", "wardsPlaced", "winner"]:
@@ -1640,16 +1725,13 @@ class Scrapper:
               self.cursor.execute(add_match_participant_delta, cur_delta)
              except mysql.connector.Error as err:
               if err.errno != 1062 or suppress_duplicates == False:
-               if feedback != "silent": 
-                print "%s, Match: %s, Player: %s -- Delta" % (err.errno, x, cur_match_pi[y["participantId"]]["summonerId"])
+               self.print_stuff("%s, Match: %s, Player: %s -- Delta" % (err.errno, x, cur_match_pi[y["participantId"]]["summonerId"]),error=True)
      #          print add_team % cur_team
              else:
-              if feedback == "all":
-               print "Updated Participant Deltas"  
+              self.print_stuff("Updated Participant Deltas") 
        
          else:
-          if feedback != "silent":
-           print "Words: %s" % z
+          self.print_stuff("Broken: %s" % z)
        
        
         else:
@@ -1664,23 +1746,20 @@ class Scrapper:
      
        except mysql.connector.Error as err:
         if err.errno != 1062 or suppress_duplicates == False:
-         if feedback != "silent":
-          print "%s, Match: %s, Player: %s -- Participant" % (err.errno, x, cur_match_pi[y["participantId"]]["summonerId"])
+         self.print_stuff("%s, Match: %s, Player: %s -- Participant" % (err.errno, x, cur_match_pi[y["participantId"]]["summonerId"]), error=True)
   #       print add_team % cur_team
        else:
-        if feedback == "all":
-         print "Updated Match-Participant"
+        self.print_stuff("Updated Match-Participant")
      else:
-      if feedback == "all" and suppress_duplicates == False:
-       print "Duplicate Match; %s" % (x)
+      if suppress_duplicates == False:
+       self.print_stuff("Duplicate Match; %s" % (x))
 
      
      
      
     
        
-     if feedback != "silent":
-      print "Finished %s of %s; %s" % (match_ids.index(x)+1,len(match_ids),x)
+     self.print_stuff("Finished %s of %s; %s" % (match_ids.index(x)+1,len(match_ids),x), header2=True)
      self.cnx.commit()
      
      
@@ -1688,76 +1767,17 @@ class Scrapper:
      
 
   self.cnx.commit()
+  curses.endwin()
+ 
+ 
  def __exit__(self):
+  curses.endwin()
   self.cnx.commit()
   self.cursor.close()
   self.cnx.close()
   if ssh == True:
    credentials.server.stop()
 
-
-
-# HOW TO USE.
-
-# update_table(table= "create", create = False)
-# creates tables default is false, using create_tables, you can set this true while using any other pseudo-function below
-
-
-# update_table("challenger",queue = "RANKED_TEAM_5x5")
-# pulls down all members of division I of challenger in given queue, queue is defaulted to 'RANKED_TEAM_5x5' 
-# set queue to:
-# RANKED_SOLO_5x5
-# RANKED_TEAM_3x3
-# RANKED_TEAM_5x5
-
-
-# update_table("master", queue = "RANKED_TEAM_5x5")
-# same as above, but for master division I
-
-
-# update_table("checkteams", teamIds= False, hangwait=False)
-# this checks the team table and grabs a list of all the ids. it then gets the league information for each team. 
-# if you supply this with a list of teamIds it will just do those.
-# This is no longer the only function that will iterate through your list of keys.
-# Hangwait=True enables the function to keep attempting the call until it is allowed through with the current key. 
-# Hangwait is default false, but that only applies if there is only 1 key in your credentials file.  
-# setting ignore_skiplist = True will ignore the list that generates whenever the code skips an entry because of no data (this feature was added because of the RANKED_TEAM_5x5 fiasco)
-
-
-# update_table("team", teamIds=False, checkTeams=False)
-# this is the primary mechanism, it grabs all the team ids from the by-league table and gets all the information from the team api
-# it then sorts it into team, team-history, and team-roster tables.
-# Additionally, this table can be supplied with pretty much any length of team ids and it will iterate through those instead
-
-
-# update_table("iterate",iteratestart=1, iterate=100, checkTeams=False,  hangwait=False)
-# give this function a starting id and it will search for all team-ids associated with that id. 
-# it will do this [iterate] number of times. Once the list is compiled, it sends it through update_table("team")
-# optionally you can set it so that it will also automatically run update_table("checkteams") to verify [by setting checkTeams=True]. 
-# Note: if you want to start at id "1" and end at id "100" you would need to set iteratestart=1, iterate=100
-# This function will now iterate through keys in the same way check teams does, hangwait is also an option.
-
-
-# update_table("all")
-# this function will cycle from updating challenger -> master -> team -> checkteam, will not do iterate
-
-# update_table("match", matchIds=[], timeline=False, create=False)
-# this function will import all non-timeline data from a given list of matchIds. if no matchIds are supplied, it will automatically search through the list of matchIds in 'team-history'
-# timeline=TRUE will now import timeline data too
-
-
-
-# update_table("membertiers", matchIds=[], create=False)
-# this function is essentially the same as the 'checkteams' functionality however this will search a given match and scrape the league data for all the players in that match
-# if you want to just do all the matches in the database (match table), don't set matchIds to anything.
-
-
-
-## FOR ANY FUNCTION
-# setting feedback="all" will print all errors, print a completion statement when a step is finished, and print updates
-# setting feedback="quiet" will print only uncommon problem errors (duplicate entry errors are silenced), and will print completion statements when long steps are finished
-# setting feedback="silent" will suppress all printing
-# setting suppress_duplicates=True will suppress printing of duplicate entry errors. this only effects feedback="all" as the script overrides this setting for quiet and silent modes
 
 
 

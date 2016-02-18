@@ -1,5 +1,5 @@
 Make copy of credentials-template.py and rename it credentials.py
-
+create a file called skiplist.tsv
 
 python LoL.py -s [True/False]
 

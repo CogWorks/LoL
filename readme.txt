@@ -65,9 +65,11 @@ LoLS = LoL.Scraper(ssh = True)
 # timeline=TRUE will now import timeline data too
 
 
-# update_table("membertiers", matchIds=False) -- matchIds takes list ; []
+# update_table("membertiers", matchIds=False, ignore_skiplist = False, allow_updates = False) -- matchIds takes list ; []
 # this function is essentially the same as the 'checkteams' functionality however this will search a given match and scrape the league data for all the players in that match
 # if you want to just do all the matches in the database (match table), don't set matchIds to anything.
+# setting ignore_skiplist = True will ignore the list that generates whenever the code skips an entry because of no data (this feature was added because of the RANKED_TEAM_5x5 fiasco)
+# setting allow_updates = True, will allow you ignore the skiplist and will ignore the 'existing entries' and re-call every team in teamIds. This is used to add a new entry if their ranking is different than in the database. 
 
 
 

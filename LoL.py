@@ -746,10 +746,11 @@ class Scraper:
  
  
  def get_indhistory(self, summoner_id=None):
+ 
      add_history = ("INSERT IGNORE INTO individual_history"
              "(summonerId, championId, lane, matchId, platformId, queue, region, role, season, timestamp)" 
              "VALUES (%(summonerId)s, %(championId)s, %(lane)s, %(matchId)s, %(platformId)s, %(queue)s, %(region)s, %(role)s, %(season)s, %(timestamp)s)" )
-     
+     err = []
      finished = False
      while finished == False:
       try:

@@ -749,7 +749,45 @@ class Scraper:
      add_history = ("INSERT IGNORE INTO individual_history"
              "(summonerId, championId, lane, matchId, platformId, queue, region, role, season, timestamp)" 
              "VALUES (%(summonerId)s, %(championId)s, %(lane)s, %(matchId)s, %(platformId)s, %(queue)s, %(region)s, %(role)s, %(season)s, %(timestamp)s)" )
-     cur_matchlist = self.w.get_match_list(summoner_id)
+     
+     finished = False
+     while finished == False:
+      try:
+       cur_matchlist = self.w.get_match_list(summoner_id)
+          
+      
+      except riotwatcher.riotwatcher.LoLException as err:
+ #       print str(err)
+       if str(err) == "Game data not found":
+        finished = True
+       elif str(err) == "Too many requests" or str(err) == "Unauthorized" or str(err) == "Blacklisted key":
+#         print "New Key" 
+        drop = False
+        if str(err) == "Blacklisted key":
+         self.print_stuff("Blacklisted key, using new key, dropping current.")
+         drop = True
+        if str(err) == "Unauthorized":
+         self.print_stuff("Unauthorized, using new key")
+        if len(keys)==1:
+         self.print_stuff("Too many requests, not enough keys.", error=True)
+         if hangwait == False:
+          break 
+         else:
+          time.sleep(5)
+        self.new_key(drop=drop)
+       
+       else:
+
+        self.print_stuff("%s, Team: %s" % (str(err), ids), error= True)
+        break
+      else:
+       finished = True
+
+     if err == "Game data not found":
+       err = []
+       return
+     
+     
      
      ind_history = True 
      all_history = []

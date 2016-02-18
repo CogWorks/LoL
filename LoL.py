@@ -540,7 +540,7 @@ class Scraper:
   elif self.use_curses == False:
    if feedback != "silent" and (header1 == True or header2 == True or error == True or override == True):
     print msg
-   elif feedback == "all" and !(header1 == True or header2 == True or error == True or override == True):
+   elif feedback == "all" and not (header1 == True or header2 == True or error == True or override == True):
     print msg
 
     

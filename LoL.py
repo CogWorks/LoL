@@ -596,6 +596,10 @@ class Scraper:
                 "VALUES (%(isFreshBlood)s, %(division)s, %(isVeteran)s, %(wins)s, %(losses)s, %(playerOrTeamId)s, %(playerOrTeamName)s, %(isInactive)s, %(isHotStreak)s, %(leaguePoints)s, %(league)s, %(team)s, %(queue)s)")
 
     summoner_ids_raw = [] 
+    
+    
+    self.cursor.execute("SELECT DISTINCT(playerOrTeamId) from by_league where team = 0")
+    existing_entries = self.cursor.fetchall()
 
     self.print_stuff("Extracting participant ids from %s matches" % len(matchIds))
 
@@ -613,7 +617,7 @@ class Scraper:
 
    
 
-
+    summoner_ids =  list(set(summoner_ids)-set(existing_entries))
     for x in xrange(0,(int(len(summoner_ids)/10)+1)):
      stop = ((x+1)*10)
 

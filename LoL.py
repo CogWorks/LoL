@@ -596,10 +596,6 @@ class Scraper:
                 "VALUES (%(isFreshBlood)s, %(division)s, %(isVeteran)s, %(wins)s, %(losses)s, %(playerOrTeamId)s, %(playerOrTeamName)s, %(isInactive)s, %(isHotStreak)s, %(leaguePoints)s, %(league)s, %(team)s, %(queue)s)")
 
     summoner_ids_raw = [] 
-    
-    
-    self.cursor.execute("SELECT DISTINCT(playerOrTeamId) from by_league where team = 0")
-    existing_entries = self.cursor.fetchall()
 
     self.print_stuff("Extracting participant ids from %s matches" % len(matchIds))
 
@@ -609,15 +605,17 @@ class Scraper:
     self.print_stuff("Finished extracting participants.")
     summoner_ids = [] 
     
-
+    
   
     for x in summoner_ids_raw:
      for y in x:
       summoner_ids.append(y)
 
-   
 
-    summoner_ids =  list(set(summoner_ids)-set(existing_entries))
+
+    summoner_ids =  list(set(summoner_ids)-set(self.existing_entries))
+    
+    
     for x in xrange(0,(int(len(summoner_ids)/10)+1)):
      stop = ((x+1)*10)
 
@@ -950,9 +948,6 @@ class Scraper:
  #     print "%s, %s" % ((x*10), stop)
 
 
-
-
-
      league_entries = self.get_leagues(team_ids=team_ids,x=x, stop=stop, key=self.key, unauthorized_cycle=False, team=True)
      by_leagues = []
      for z in league_entries:
@@ -1007,12 +1002,26 @@ class Scraper:
      
      self.cursor.execute("SELECT count(summonerId) FROM match_participants")
      fullcount=self.cursor.fetchall()
+     fullcount=fullcount[0][0]
     else:
      self.cursor.execute('SELECT count(summonerId) FROM match_participants where matchId in ({0})'.format(', '.join(str(x) for x in matchIds)))
      fullcount=self.cursor.fetchall()
+     fullcount=fullcount[0][0]
     
     self.old_count = 0 
     
+    self.existing_entries = []
+    
+    self.cursor.execute("SELECT DISTINCT(playerOrTeamId) from by_league where team = 0")
+    existing_entries_raw = self.cursor.fetchall()
+
+    
+    if allow_updates == False:
+     for x in existing_entries_raw:
+      for y in x:
+       self.existing_entries.append(y)
+    if ignore_skiplist == False:
+     self.existing_entries.append(self.skiplist)
     
     
     

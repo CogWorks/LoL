@@ -1819,7 +1819,8 @@ class Scraper:
      
 
   self.cnx.commit()
-  curses.endwin()
+  if self.use_curses == True :
+   curses.endwin()
  
  
  def __exit__(self):

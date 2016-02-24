@@ -60,9 +60,13 @@ LoLS = LoL.Scraper(ssh = True)
 # this function will cycle from updating challenger -> master -> team -> checkteam, will not do iterate
 # this function takes all variables that challenger, master, team, and checkteam take.  with the exception of "teamIds", that uses default.
 
-# update_table("match", matchIds=False, timeline=False) -- matchIds takes list ; []
+# update_table("match", matchIds=False, timeline=False, timeline_update=False) -- matchIds takes list ; []
 # this function will import all non-timeline data from a given list of matchIds. if no matchIds are supplied, it will automatically search through the list of matchIds in 'team-history'
-# timeline=TRUE will now import timeline data too
+# timeline=True will now import timeline data too
+# timeline and regular match data are treated differently. The function makes a skiplist for existing matches, and a separate one for existing timelines. all non-timeline data will be
+#    skipped if the matchid is in the matches table. However, timeline data will still be processed if timeline is set to true. 
+# timeline_update = True will override the default 'search through team history' and only update matches that have been collected and are missing timelines. 
+
 
 
 # update_table("membertiers", matchIds=False, ignore_skiplist = False, allow_updates = False) -- matchIds takes list ; []

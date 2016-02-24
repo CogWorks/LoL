@@ -821,7 +821,7 @@ class Scraper:
    
      
 
- def update_table(self, table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, create=False, teamIds=False, matchIds=False, summonerIds=False, checkTeams= False, hangwait=False, feedback="all", suppress_duplicates = False, timeline = False, allow_updates=False, ignore_skiplist=False, just_teams = True):
+ def update_table(self, table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, create=False, teamIds=False, matchIds=False, summonerIds=False, checkTeams= False, hangwait=False, feedback="all", suppress_duplicates = False, timeline = False, allow_updates=False, ignore_skiplist=False, just_teams = True, timeline_update=False):
   feedback = feedback.lower()
   if feedback != "all" and feedback != "quiet" and feedback != "silent":
    self.feedback="all"
@@ -1406,25 +1406,30 @@ class Scraper:
      
 
     self.print_stuff("Updating Match Tables.", header1 = True)
-   
+
     self.cursor.execute("SELECT matchId FROM matches")
     existing_matches_raw = self.cursor.fetchall()
     existing_matches = []
     for x in existing_matches_raw:
      for y in x:
       existing_matches.append(y)
+
+
+
     self.cursor.execute("SELECT matchId FROM match_timeline")
     existing_timelines_raw = self.cursor.fetchall()
     existing_timelines = []
     for x in existing_timelines_raw:
      for y in x:
       existing_timelines.append(y)
-   
-    if(matchIds==False):
+      
+    if timeline_update == True:
+     self.print_stuff("Overriding matchIds, updating timelines for existing matches.")     
+     match_ids = list(set(existing_matches)-set(existing_timelines))
+     
+    elif(matchIds==False):
      self.print_stuff("No list of match ids, defaulting to search team_history.")
      self.cursor.execute("SELECT gameId FROM team_history" )         
-   
-
      match_ids_raw = self.cursor.fetchall()
    
      match_ids = [] 
@@ -1488,7 +1493,6 @@ class Scraper:
         cur_match[y] = None
     
   #     print cur_match
-    
       try:
        self.cursor.execute(add_match, cur_match)
       except mysql.connector.Error as err:

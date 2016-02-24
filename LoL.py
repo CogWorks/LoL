@@ -599,7 +599,7 @@ class Scraper:
 
     self.print_stuff("Extracting participant ids from %s matches" % len(matchIds))
 
-    self.cursor.execute('SELECT summonerId FROM match_participants where matchId in ({0})'.format(', '.join(str(x) for x in matchIds)))
+    self.cursor.execute('SELECT DISTINCT(summonerId) FROM match_participants where matchId in ({0})'.format(', '.join(str(x) for x in matchIds)))
     summoner_ids_raw = self.cursor.fetchall()
 
     self.print_stuff("Finished extracting participants.")
@@ -1038,11 +1038,11 @@ class Scraper:
    if summonerIds == False:         
     if just_teams == True:
      self.print_stuff("No IDs supplied, searching teams.")
-     self.cursor.execute("SELECT playerId FROM team_roster")
+     self.cursor.execute("SELECT DISTINCT(playerId) FROM team_roster")
 
     else:
      self.print_stuff("No IDs supplied, searching matches.")
-     self.cursor.execute("SELECT summonerId FROM match_participants")
+     self.cursor.execute("SELECT DISTINCT(summonerId) FROM match_participants")
     summoner_ids_raw = self.cursor.fetchall()
     summoner_ids = [] 
     for x in summoner_ids_raw:
@@ -1082,7 +1082,7 @@ class Scraper:
     self.print_stuff("Updating Team Tables.", header1 = True)
     if(teamIds==False):
      self.print_stuff("No list of team ids, defaulting to search by_league")
-     self.cursor.execute("SELECT playerOrTeamId FROM by_league WHERE team = True" )         
+     self.cursor.execute("SELECT DISTINCT(playerOrTeamId) FROM by_league WHERE team = True" )         
    
 
      team_ids_raw = self.cursor.fetchall()

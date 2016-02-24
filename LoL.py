@@ -781,7 +781,7 @@ class Scraper:
        
        else:
 
-        self.print_stuff("%s, Team: %s" % (str(err), ids), error= True)
+        self.print_stuff("%s, Summoner: %s" % (str(err), summoner_id), error= True)
         break
       else:
        finished = True

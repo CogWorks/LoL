@@ -1053,10 +1053,15 @@ class Scraper:
 
     summoner_ids = summonerIds   
    
-   
+   curcount = 0
    for x in summoner_ids:
+    
     self.get_indhistory(x)
-
+    if curcount.index(x) % 10 == 0:
+     self.print_stuff("Finished %s of %s" % (curcount.index(x), len(summoner_ids)), progress=True)
+    
+    
+    self.print_stuff("Finished %s of %s" % (curcount.index(x), len(summoner_ids)), header2=True)
    
      
    
@@ -1135,7 +1140,7 @@ class Scraper:
          self.new_key(drop = drop)
         
        else:
-        self.print_stuff("%s, Teams: %s" % (str(err), team_ids[(x*10):stop]), progress= True)
+        self.print_stuff("%s, Teams: %s" % (str(err), team_ids[(x*10):stop]), error= True)
         break
       except:
        self.print_stuff("Other Error Requesting Teams",error=True)

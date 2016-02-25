@@ -1003,7 +1003,7 @@ class Scraper:
     self.print_stuff("Updating Member-tiers.", header1 = True)
     if matchIds == False:
        self.print_stuff("No matches given, searching all summoners from all matches.")
-       self.cursor.execute("SELECT DISTINCT(summonerId) FROM match_participants LIMIT 1000")
+       self.cursor.execute("SELECT DISTINCT(summonerId) FROM match_participants")
        sum_id_raw = self.cursor.fetchall()
        summonerIds= [x[0] for x in sum_id_raw]
        

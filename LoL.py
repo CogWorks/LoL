@@ -590,7 +590,7 @@ class Scraper:
  #    rate += 1
  #    self.new_key(t = key, rate=rate)
  
- def get_membertiers(self, matchIds, summonerIds, old_count = 0, full_count=None):
+ def get_membertiers(self, matchIds=None, summonerIds=None, old_count = 0, full_count=None):
     add_league = ("INSERT IGNORE INTO by_league "
                 "(isFreshBlood, division, isVeteran, wins, losses, playerOrTeamId, playerOrTeamName, isInactive, isHotStreak, leaguePoints, league, team, queue) "
                 "VALUES (%(isFreshBlood)s, %(division)s, %(isVeteran)s, %(wins)s, %(losses)s, %(playerOrTeamId)s, %(playerOrTeamName)s, %(isInactive)s, %(isHotStreak)s, %(leaguePoints)s, %(league)s, %(team)s, %(queue)s)")

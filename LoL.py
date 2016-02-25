@@ -590,31 +590,37 @@ class Scraper:
  #    rate += 1
  #    self.new_key(t = key, rate=rate)
  
- def get_membertiers(self, matchIds, old_count = 0, full_count=None):
+ def get_membertiers(self, matchIds, summonerIds, old_count = 0, full_count=None):
     add_league = ("INSERT IGNORE INTO by_league "
                 "(isFreshBlood, division, isVeteran, wins, losses, playerOrTeamId, playerOrTeamName, isInactive, isHotStreak, leaguePoints, league, team, queue) "
                 "VALUES (%(isFreshBlood)s, %(division)s, %(isVeteran)s, %(wins)s, %(losses)s, %(playerOrTeamId)s, %(playerOrTeamName)s, %(isInactive)s, %(isHotStreak)s, %(leaguePoints)s, %(league)s, %(team)s, %(queue)s)")
 
     summoner_ids_raw = [] 
+    if matchIds:
+     self.print_stuff("Extracting participant ids from %s matches" % len(matchIds))
 
-    self.print_stuff("Extracting participant ids from %s matches" % len(matchIds))
+     self.cursor.execute('SELECT DISTINCT(summonerId) FROM match_participants where matchId in ({0})'.format(', '.join(str(x) for x in matchIds)))
+     summoner_ids_raw = self.cursor.fetchall()
 
-    self.cursor.execute('SELECT DISTINCT(summonerId) FROM match_participants where matchId in ({0})'.format(', '.join(str(x) for x in matchIds)))
-    summoner_ids_raw = self.cursor.fetchall()
-
-    self.print_stuff("Finished extracting participants.")
-    summoner_ids = [] 
+     self.print_stuff("Finished extracting participants.")
+     summoner_ids = [] 
     
     
   
-    for x in summoner_ids_raw:
-     for y in x:
-      summoner_ids.append(y)
+     for x in summoner_ids_raw:
+      for y in x:
+       summoner_ids.append(y)
+     summoner_ids =  list(set(summoner_ids)-set(self.existing_entries))
+   
+    elif summonerIds:
+     self.print_stuff("Using supplied list of summoners.")
+     summoner_ids = summonerIds
+     old_count = 0 
+     summoner_ids =  list(set(summoner_ids)-set(self.existing_entries))
+     full_count = len(summoner_ids)
 
 
 
-    summoner_ids =  list(set(summoner_ids)-set(self.existing_entries))
-    
     
     for x in xrange(0,(int(len(summoner_ids)/10)+1)):
      stop = ((x+1)*10)
@@ -996,13 +1002,18 @@ class Scraper:
   if table=="membertiers":
     self.print_stuff("Updating Member-tiers.", header1 = True)
     if matchIds == False:
-     self.print_stuff("No matches given, using all.")
-     self.cursor.execute("SELECT matchId FROM matches")
-     matchIds= strip_to_list(self.cursor.fetchall())
-     
-     self.cursor.execute("SELECT count(summonerId) FROM match_participants")
-     fullcount=self.cursor.fetchall()
-     fullcount=fullcount[0][0]
+       self.print_stuff("No matches given, searching all summoners from all matches.")
+       self.cursor.execute("SELECT DISTINCT(summonerId) FROM match_participants")
+       summonerIds= strip_to_list(self.cursor.fetchall())
+       
+#           old method
+#      self.print_stuff("No matches given, using all.")
+#      self.cursor.execute("SELECT matchId FROM matches")
+#      matchIds= strip_to_list(self.cursor.fetchall())
+#      
+#      self.cursor.execute("SELECT count(summonerId) FROM match_participants")
+#      fullcount=self.cursor.fetchall()
+#      fullcount=fullcount[0][0]
     else:
      self.cursor.execute('SELECT count(summonerId) FROM match_participants where matchId in ({0})'.format(', '.join(str(x) for x in matchIds)))
      fullcount=self.cursor.fetchall()
@@ -1024,14 +1035,17 @@ class Scraper:
      self.existing_entries.append(self.skiplist)
     
     
-    
-    while len(matchIds) > 250:
-     self.get_membertiers(matchIds = matchIds[:250], old_count = self.old_count, full_count=fullcount)
-     del matchIds[:250]
+    if matchIds == False: 
+     self.get_membertiers(summonerIds=summonerIds)
+     
+    else:
+     while len(matchIds) > 250:
+      self.get_membertiers(matchIds = matchIds[:250], old_count = self.old_count, full_count=fullcount)
+      del matchIds[:250]
 
     
     
-    self.get_membertiers(matchIds, old_count = self.old_count, full_count=fullcount)
+     self.get_membertiers(matchIds, old_count = self.old_count, full_count=fullcount)
   
   if table=="individualhistory":
    self.print_stuff("Updating Individual History", header1 = True)

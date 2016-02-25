@@ -1035,10 +1035,7 @@ class Scraper:
 #        self.existing_entries.append(y)
     if ignore_skiplist == False:
      self.existing_entries.append(x for x in self.skiplist)
-     print self.existing_entries
-     print "**********************"
-     print self.skiplist
-    
+
     
     if matchIds == False: 
      self.get_membertiers(summonerIds=summonerIds)

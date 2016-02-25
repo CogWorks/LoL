@@ -1003,7 +1003,7 @@ class Scraper:
     self.print_stuff("Updating Member-tiers.", header1 = True)
     if matchIds == False:
        self.print_stuff("No matches given, searching all summoners from all matches.")
-       self.cursor.execute("SELECT DISTINCT(summonerId) FROM match_participants")
+       self.cursor.execute("SELECT DISTINCT(summonerId) FROM match_participants LIMIT 1000")
        sum_id_raw = self.cursor.fetchall()
        summonerIds= [x[0] for x in sum_id_raw]
        
@@ -1034,7 +1034,10 @@ class Scraper:
 #       for y in x:
 #        self.existing_entries.append(y)
     if ignore_skiplist == False:
-     self.existing_entries.append(self.skiplist)
+     self.existing_entries.append(x for x in self.skiplist)
+     print self.existing_entries
+     print "**********************"
+     print self.skiplist
     
     
     if matchIds == False: 

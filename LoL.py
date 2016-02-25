@@ -603,13 +603,13 @@ class Scraper:
      summoner_ids_raw = self.cursor.fetchall()
 
      self.print_stuff("Finished extracting participants.")
-     summoner_ids = [] 
+     summoner_ids = [x[0] for x in summoner_ids_raw] 
     
     
   
-     for x in summoner_ids_raw:
-      for y in x:
-       summoner_ids.append(y)
+#      for x in summoner_ids_raw:
+#       for y in x:
+#        summoner_ids.append(y)
      summoner_ids =  list(set(summoner_ids)-set(self.existing_entries))
    
     elif summonerIds:
@@ -931,12 +931,12 @@ class Scraper:
      team_ids_raw = [] 
      team_ids_raw = self.cursor.fetchall()
    
-     team_ids = [] 
+     team_ids = [x[0] for x in team_ids_raw] 
    
-     for x in team_ids_raw:
-      for y in x:
-       team_ids.append(y)
-     
+#      for x in team_ids_raw:
+#       for y in x:
+#        team_ids.append(y)
+
     else:
      self.print_stuff("Given list of team ids.")
      team_ids = teamIds
@@ -1004,7 +1004,8 @@ class Scraper:
     if matchIds == False:
        self.print_stuff("No matches given, searching all summoners from all matches.")
        self.cursor.execute("SELECT DISTINCT(summonerId) FROM match_participants")
-       summonerIds= strip_to_list(self.cursor.fetchall())
+       sum_id_raw = self.cursor.fetchall()
+       summonerIds= [x[0] for x in sum_id_raw]
        
 #           old method
 #      self.print_stuff("No matches given, using all.")
@@ -1028,9 +1029,10 @@ class Scraper:
 
     
     if allow_updates == False:
-     for x in existing_entries_raw:
-      for y in x:
-       self.existing_entries.append(y)
+     self.existing_entries = [x[0] for x in existing_entries_raw]
+#      for x in existing_entries_raw:
+#       for y in x:
+#        self.existing_entries.append(y)
     if ignore_skiplist == False:
      self.existing_entries.append(self.skiplist)
     
@@ -1058,10 +1060,10 @@ class Scraper:
      self.print_stuff("No IDs supplied, searching matches.")
      self.cursor.execute("SELECT DISTINCT(summonerId) FROM match_participants")
     summoner_ids_raw = self.cursor.fetchall()
-    summoner_ids = [] 
-    for x in summoner_ids_raw:
-     for y in x:
-      summoner_ids.append(y)
+    summoner_ids = [x[0] for x in summoner_ids_raw] 
+#     for x in summoner_ids_raw:
+#      for y in x:
+#       summoner_ids.append(y)
    else:
     self.print_stuff("IDs supplied.")
 
@@ -1101,11 +1103,11 @@ class Scraper:
 
      team_ids_raw = self.cursor.fetchall()
    
-     team_ids = [] 
+     team_ids = [x[0] for x in team_ids_raw] 
    
-     for x in team_ids_raw:
-      for y in x:
-       team_ids.append(y)
+#      for x in team_ids_raw:
+#       for y in x:
+#        team_ids.append(y)
      
     else:
      self.print_stuff("Given list of team ids.")
@@ -1423,19 +1425,19 @@ class Scraper:
 
     self.cursor.execute("SELECT matchId FROM matches")
     existing_matches_raw = self.cursor.fetchall()
-    existing_matches = []
-    for x in existing_matches_raw:
-     for y in x:
-      existing_matches.append(y)
+    existing_matches = [x[0] for x in existing_matches_raw]
+#     for x in existing_matches_raw:
+#      for y in x:
+#       existing_matches.append(y)
 
 
 
     self.cursor.execute("SELECT matchId FROM match_timeline")
     existing_timelines_raw = self.cursor.fetchall()
-    existing_timelines = []
-    for x in existing_timelines_raw:
-     for y in x:
-      existing_timelines.append(y)
+    existing_timelines = [x[0] for x in existing_timelines_raw]
+#     for x in existing_timelines_raw:
+#      for y in x:
+#       existing_timelines.append(y)
       
     if timeline_update == True:
      self.print_stuff("Overriding matchIds, updating timelines for existing matches.")     
@@ -1446,11 +1448,11 @@ class Scraper:
      self.cursor.execute("SELECT gameId FROM team_history" )         
      match_ids_raw = self.cursor.fetchall()
    
-     match_ids = [] 
+     match_ids = [x[0] for x in match_ids_raw] 
    
-     for x in match_ids_raw:
-      for y in x:
-       match_ids.append(y)
+#      for x in match_ids_raw:
+#       for y in x:
+#        match_ids.append(y)
      
     else:
      self.print_stuff("Given list of match ids.")

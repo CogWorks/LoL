@@ -1055,13 +1055,13 @@ class Scraper:
    
    curcount = 0
    for x in summoner_ids:
-    
+     
     self.get_indhistory(x)
-    if curcount.index(x) % 10 == 0:
-     self.print_stuff("Finished %s of %s" % (curcount.index(x), len(summoner_ids)), progress=True)
+    if summoner_ids.index(x) % 10 == 0:
+     self.print_stuff("Finished %s of %s" % (summoner_ids.index(x), len(summoner_ids)), progress=True)
     
     
-    self.print_stuff("Finished %s of %s" % (curcount.index(x), len(summoner_ids)), header2=True)
+    self.print_stuff("Finished %s of %s" % (summoner_ids.index(x), len(summoner_ids)), header2=True)
    
      
    

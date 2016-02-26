@@ -1069,6 +1069,12 @@ class Scraper:
 
     summoner_ids = summonerIds   
    
+   if allow_updates == False:
+    self.cursor.execute("SELECT DISTINCT(summonerId) FROM individual_history")
+    existing_ids_raw = self.cursor.fetchall()
+    existing_ids = [x[0] for x in existing_ids_raw]
+    summoner_ids = list(set(summoner_ids)-set(existing_ids))
+    
    curcount = 0
    for x in summoner_ids:
      

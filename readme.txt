@@ -77,11 +77,11 @@ LoLS = LoL.Scraper(ssh = True)
 
 
 
-# update_table("individualhistory", summonerIds = False, just_teams = True) -- summonerIds takes list ; []
+# update_table("individualhistory", summonerIds = False, just_teams = True, allow_updates = Fals) -- summonerIds takes list ; []
 # this function adds individual history to the individual_history table. you can supply it with a list of summonerIds if you wish
 # additionally, if you do not supply with summonerIds, the function takes a look at the just_teams option. if just_teams is set to true
 # we query all summoner ids in the 'team roster' list and update all of them. if just_teams is False, we use all the summoner ids in the match_participants table [much longer]
-
+# allow_updates = True, will no longer skip 'existing entries' so that you can check to see if any people have played more matches. 
 
 
 

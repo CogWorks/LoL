@@ -818,7 +818,7 @@ class Scraper:
  #       print test_team
       except mysql.connector.Error as err:
        if err.errno != 1062 or suppress_duplicates == False:
-        self.print_stuff( "Error %s" % err.errno, error = True)
+        self.print_stuff( "Error %s : " % (err.errno,summoner_id), error = True)
       else:
        self.print_stuff("Updated Individual History")
        

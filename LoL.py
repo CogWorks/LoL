@@ -1083,7 +1083,7 @@ class Scraper:
      self.print_stuff("Finished %s of %s" % (summoner_ids.index(x), len(summoner_ids)), progress=True)
     
     
-    self.print_stuff("Finished %s of %s" % (summoner_ids.index(x), len(summoner_ids)), header2=True)
+   self.print_stuff("Finished %s of %s" % (summoner_ids.index(x), len(summoner_ids)), header2=True)
    
      
    

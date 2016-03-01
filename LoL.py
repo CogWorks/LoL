@@ -45,8 +45,8 @@ def strip_to_list (data_raw):
 class Scraper:
  
  
- def __init__(self, ssh=True, use_curses=False):
-
+ def __init__(self, ssh=True, use_curses=False, rate_limiting=False):
+  self.rate_limiting = rate_limiting
   if ssh == "True":
    ssh = True
   elif ssh == "False":
@@ -109,7 +109,11 @@ class Scraper:
 
 
 
-
+ def wait():
+  if self.rate_limiting == True:
+   while not self.w.can_make_request():
+    time.sleep(1)
+    
  def write_to_skip(self, teams):
   with open('skiplist.tsv', "ab+") as skipfilew:
    for x in teams:
@@ -579,6 +583,7 @@ class Scraper:
  
  
  #  if riotwatcher.RiotWatcher(key).can_make_request():
+  self.wait()
   self.w = riotwatcher.RiotWatcher(self.key, limits=(riotwatcher.RateLimit(1500,10), riotwatcher.RateLimit(90000,600)))
  
  #  print self.w.can_make_request()
@@ -671,6 +676,7 @@ class Scraper:
   unauthorized_key = False
   while finished == False:
    err = []
+   self.wait()
    try:
     if team==True:
      league_entries = self.w.get_league_entry(team_ids=team_ids[(x*10):stop]) if unauthorized_cycle==False else self.w.get_league_entry(team_ids=team_ids)
@@ -761,6 +767,7 @@ class Scraper:
      err = []
      finished = False
      while finished == False:
+      self.wait()
       try:
        cur_matchlist = self.w.get_match_list(summoner_id)
           
@@ -847,6 +854,7 @@ class Scraper:
                 "(isFreshBlood, division, isVeteran, wins, losses, playerOrTeamId, playerOrTeamName, isInactive, isHotStreak, leaguePoints, league, team, queue) "
                 "VALUES (%(isFreshBlood)s, %(division)s, %(isVeteran)s, %(wins)s, %(losses)s, %(playerOrTeamId)s, %(playerOrTeamName)s, %(isInactive)s, %(isHotStreak)s, %(leaguePoints)s, %(league)s, %(team)s, %(queue)s)")
    self.print_stuff("Checking Challenger tier League API", header1 = True)
+   self.wait()
    challenger = self.w.get_challenger(queue=queue)
 
    s = []
@@ -884,6 +892,7 @@ class Scraper:
                 "(isFreshBlood, division, isVeteran, wins, losses, playerOrTeamId, playerOrTeamName, isInactive, isHotStreak, leaguePoints, league, team, queue) "
                 "VALUES (%(isFreshBlood)s, %(division)s, %(isVeteran)s, %(wins)s, %(losses)s, %(playerOrTeamId)s, %(playerOrTeamName)s, %(isInactive)s, %(isHotStreak)s, %(leaguePoints)s, %(league)s, %(team)s, %(queue)s)")
    self.print_stuff("Checking Master tier League API", header1 = True)
+   self.wait()
    master = self.w.get_master(queue=queue)
 
 
@@ -1137,6 +1146,7 @@ class Scraper:
      finished = False 
      service = 0
      while finished == False:
+      self.wait()
       try: 
        teams_data = self.w.get_teams(team_ids[(x*10):stop])
      
@@ -1334,6 +1344,7 @@ class Scraper:
      
       finished = False
       while finished == False:
+       self.wait()
        try:
  #        print "trying"
         teams = self.w.get_teams_for_summoners(ids)
@@ -1472,6 +1483,7 @@ class Scraper:
      cur_match_raw = []
 
      while finished == False:
+      self.wait()
       try: 
        cur_match_raw = self.w.get_match( x, region=None, include_timeline=timeline)
      

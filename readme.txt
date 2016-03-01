@@ -9,10 +9,11 @@ python LoL.py -s [True/False]
 or you can
 import LoL
 
-LoLS = LoL.Scraper(ssh = True)
+LoLS = LoL.Scraper(ssh = True, use_curses = False, rate_limiting = False)
 
 ##setting ssh = True uses the SSH = True ssh tunneling protocol from credentials.py, whereas False treats it as if its local host connection
-
+##setting use_curses = True will print through curses rather than print..
+##setting rate_limiting = True will check to see if the key can be used before ever call.
 
 
 

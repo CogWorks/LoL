@@ -1438,7 +1438,7 @@ class Scraper:
 
 
 
-    self.cursor.execute("SELECT matchId FROM match_timeline")
+    self.cursor.execute("SELECT DISTINCT(matchId) FROM match_timeline")
     existing_timelines_raw = self.cursor.fetchall()
     existing_timelines = [x[0] for x in existing_timelines_raw]
 #     for x in existing_timelines_raw:

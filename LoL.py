@@ -1449,14 +1449,15 @@ class Scraper:
 
 
 
-    self.cursor.execute("SELECT DISTINCT(matchId) FROM match_timeline")
-    existing_timelines_raw = self.cursor.fetchall()
-    existing_timelines = [x[0] for x in existing_timelines_raw]
+
 #     for x in existing_timelines_raw:
 #      for y in x:
 #       existing_timelines.append(y)
       
     if timeline_update == True:
+     self.cursor.execute("SELECT DISTINCT(matchId) FROM match_timeline")
+     existing_timelines_raw = self.cursor.fetchall()
+     existing_timelines = [x[0] for x in existing_timelines_raw]
      self.print_stuff("Overriding matchIds, updating timelines for existing matches.")     
      match_ids = list(set(existing_matches)-set(existing_timelines))
      
@@ -1466,6 +1467,7 @@ class Scraper:
      match_ids_raw = self.cursor.fetchall()
    
      match_ids = [x[0] for x in match_ids_raw] 
+     match_ids = list(set(match_ids)-set(existing_matches))
    
 #      for x in match_ids_raw:
 #       for y in x:
@@ -1474,10 +1476,11 @@ class Scraper:
     else:
      self.print_stuff("Given list of match ids.")
      match_ids = matchIds
+     match_ids = list(set(match_ids)-set(existing_matches))
  
  #    print match_ids
     teams_data = []
-   
+    
     for x in match_ids:
      finished = False 
      cur_match_raw = []
@@ -1514,7 +1517,7 @@ class Scraper:
        finished = True
     
     
-     if unicode(x) not in existing_matches and cur_match_raw:
+     if cur_match_raw:
      
       
       cur_match = {}
@@ -1585,7 +1588,7 @@ class Scraper:
       cur_match_participants_raw = cur_match_raw["participants"]
     
     
-     if (cur_match_raw and unicode(x) not in existing_matches) or (timeline == True and unicode(x) not in existing_timelines and cur_match_raw):
+     if cur_match_raw:
       cur_match_pi = {}
       for y in cur_match_raw["participantIdentities"]:
        cur_match_pi[y["participantId"]] = y["player"]
@@ -1596,7 +1599,7 @@ class Scraper:
       
       
       
-     if timeline == True and unicode(x) not in existing_timelines and cur_match_raw:  
+     if timeline == True and cur_match_raw:  
       if "timeline" in cur_match_raw:
        cur_match_timeline_raw = cur_match_raw["timeline"]   
        intervals = cur_match_timeline_raw["frameInterval"]
@@ -1749,7 +1752,7 @@ class Scraper:
       else:
        self.print_stuff("No Timeline Data; %s" % (x))
     
-     if unicode(x) not in existing_matches and cur_match_raw:
+     if cur_match_raw:
       for y in cur_match_participants_raw:
        cur_match_participant = {}
   #      print y

@@ -2307,7 +2307,7 @@ class Scraper:
   #       print cur_match_participant["nodeCapture"]
        all_match_participants.append(cur_match_participant)
       try:
-       self.cursor.execute(add_match_participant_rune, runes)
+       self.cursor.executemany(add_match_participant_rune, runes)
       except mysql.connector.Error as err:
        if err.errno != 1062 or suppress_duplicates == False:
         self.print_stuff("%s, Match: %s -- Rune" % (err.errno, x),error=True)
@@ -2316,7 +2316,7 @@ class Scraper:
        self.print_stuff("Updated Rune")
       
       try:
-       self.cursor.execute(add_match_participant_mastery, masteries)
+       self.cursor.executemany(add_match_participant_mastery, masteries)
       except mysql.connector.Error as err:
        if err.errno != 1062 or suppress_duplicates == False:
         self.print_stuff("%s, Match: %s -- Mastery" % (err.errno, x),error=True)
@@ -2334,7 +2334,7 @@ class Scraper:
        self.print_stuff("Updated Participant Deltas") 
 
       try: 
-       self.cursor.execute(add_match_participants, all_match_participants)
+       self.cursor.executemany(add_match_participants, all_match_participants)
  #       print "Try"
     
       except mysql.connector.Error as err:

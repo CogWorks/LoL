@@ -109,7 +109,7 @@ class Scraper:
 
 
 
- def wait():
+ def wait(self):
   if self.rate_limiting == True:
    while not self.w.can_make_request():
     time.sleep(1)

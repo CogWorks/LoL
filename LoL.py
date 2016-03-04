@@ -172,7 +172,8 @@ class Scraper:
      "  `team` bool NOT NULL,"
      "  `queue` varchar(25) NOT NULL,"
      "  `retrieved` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
-     "  CONSTRAINT id_queue PRIMARY KEY (`playerOrTeamId`, `queue`, `retrieved`)"
+     "  CONSTRAINT id_queue PRIMARY KEY (`playerOrTeamId`, `queue`, `retrieved`),"
+     "  INDEX id_team (playerOrTeamId, team)"
      ") CHARACTER SET utf8 ENGINE=InnoDB") 
     
     
@@ -241,7 +242,8 @@ class Scraper:
       "  `role` varchar(15) DEFAULT NULL,"
       "  `season` varchar(15) DEFAULT NULL,"
       "  `timestamp` BIGINT DEFAULT NULL,"
-      "  CONSTRAINT player_game PRIMARY KEY (`summonerId`, `matchId`)"
+      "  CONSTRAINT player_game PRIMARY KEY (`summonerId`, `matchId`),"
+      "  INDEX k_season (season)"
       ") CHARACTER SET utf8 ENGINE=InnoDB")  
     
       
@@ -255,10 +257,11 @@ class Scraper:
       "		`matchType`	varchar(20)		DEFAULT NULL	,"
       "		`matchVersion`	varchar(20)		DEFAULT NULL	,"
       "		`platformId`	varchar(8)		DEFAULT NULL	,"
-      "		`queueType`	varchar(20)		DEFAULT NULL	,"
+      "		`queueType`	varchar(30)		DEFAULT NULL	,"
       "		`region`	varchar(8)		DEFAULT NULL	,"
       "		`season`	varchar(20)		DEFAULT NULL	,"
-      " PRIMARY KEY (`matchId`)"
+      " PRIMARY KEY (`matchId`),"
+      " INDEX k_season (season)"
       ") CHARACTER SET utf8 ENGINE=InnoDB")
  
  
@@ -474,7 +477,10 @@ class Scraper:
       " `eventId` varchar(10) NOT NULL,"
       " `matchId` varchar(20) NOT NULL,"
       " `assistId` varchar(20) NOT NULL,"
-      "CONSTRAINT event_assist PRIMARY KEY (`eventId`, `assistId`)"
+      "  INDEX (`matchId`,`eventId`),"
+      "  FOREIGN KEY (`matchId`, `eventId`) "
+      "     REFERENCES `match_timeline_events` (`matchId`,`eventId`) "
+      "     ON UPDATE CASCADE ON DELETE CASCADE"
       ") CHARACTER SET utf8 ENGINE=InnoDB")
 
      
@@ -759,7 +765,7 @@ class Scraper:
  
  
  
- def get_indhistory(self, summoner_id=None):
+ def get_indhistory(self, summoner_id=None, season=None, end_time=None):
  
      add_history = ("INSERT IGNORE INTO individual_history"
              "(summonerId, championId, lane, matchId, platformId, queue, region, role, season, timestamp)" 
@@ -769,7 +775,7 @@ class Scraper:
      while finished == False:
       self.wait()
       try:
-       cur_matchlist = self.w.get_match_list(summoner_id)
+       cur_matchlist = self.w.get_match_list(summoner_id, season=season ,end_time=end_time)
           
       
       except riotwatcher.riotwatcher.LoLException as err:
@@ -834,7 +840,7 @@ class Scraper:
    
      
 
- def update_table(self, table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, create=False, teamIds=False, matchIds=False, summonerIds=False, checkTeams= False, hangwait=False, feedback="all", suppress_duplicates = False, timeline = False, allow_updates=False, ignore_skiplist=False, just_teams = True, timeline_update=False):
+ def update_table(self, table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, create=False, teamIds=False, matchIds=False, summonerIds=False, checkTeams= False, hangwait=False, feedback="all", suppress_duplicates = False, timeline = False, allow_updates=False, ignore_skiplist=False, just_teams = True, timeline_update=False, season=None, end_time=None):
   feedback = feedback.lower()
   if feedback != "all" and feedback != "quiet" and feedback != "silent":
    self.feedback="all"
@@ -1087,7 +1093,7 @@ class Scraper:
    curcount = 0
    for x in summoner_ids:
      
-    self.get_indhistory(x)
+    self.get_indhistory(x, season=season, end_time=end_time)
     if summoner_ids.index(x) % 10 == 0:
      self.print_stuff("Finished %s of %s" % (summoner_ids.index(x), len(summoner_ids)), progress=True)
     
@@ -2430,8 +2436,8 @@ class Scraper:
 
 
 
-
-
+# UPDATE matches SET queueType = 'TEAM_BUILDER_DRAFT_UNRANKED_5x5'  WHERE queueType = 'TEAM_BUILDER_DRAFT_U'  AND !isnull( queueType );
+# CREATE INDEX id_team ON by_league (playerOrTeamId, team);
 
 
 ##For personal reference, just to keep track of alterations i've made after table creation, all are reflected in the table creation now though. 

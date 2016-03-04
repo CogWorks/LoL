@@ -232,10 +232,10 @@ class Scraper:
    
   TABLES['individual_history'] = (
       "CREATE TABLE `individual_history` ("
-      "  `summonerId` int(18) NOT NULL,"
+      "  `summonerId` varchar(20) NOT NULL,"
       "		`championId`	int(4)		DEFAULT NULL	,"
       "  `lane` varchar(8) DEFAULT NULL,"
-      "  `matchId` int(18) NOT NULL,"
+      "  `matchId` varchar(20) NOT NULL,"
       "  `platformId` varchar(6) DEFAULT NULL,"
       "  `queue` varchar(32) DEFAULT NULL,"
       "  `region` varchar(6) DEFAULT NULL,"
@@ -278,7 +278,7 @@ class Scraper:
       "		`profileIcon`	smallint		DEFAULT NULL	,"
       "		`matchHistoryUri`	varchar(45)		DEFAULT NULL	,"
       "		`summonerName`	varchar(25)		DEFAULT NULL	,"
-      "		`summonerId`	varchar(16)		NOT NULL	,"
+      "		`summonerId`	varchar(20)		NOT NULL	,"
       "		`spell1Id`	smallint		DEFAULT NULL	,"
       "		`spell2Id`	smallint		DEFAULT NULL	,"
       "		`assists`	tinyint		DEFAULT NULL	,"

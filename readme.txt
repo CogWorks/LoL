@@ -67,7 +67,7 @@ LoLS = LoL.Scraper(ssh = True, use_curses = False, rate_limiting = False)
 # timeline and regular match data are treated differently. The function makes a skiplist for existing matches, and a separate one for existing timelines. all non-timeline data will be
 #    skipped if the matchid is in the matches table. However, timeline data will still be processed if timeline is set to true. 
 # timeline_update = True will override the default 'search through team history' and only update matches that have been collected and are missing timelines. 
-# allow_updates=True in conjunction with either providing a list of matchIds or not, will no longer exclude existing matches. 
+# allow_updates=True in conjunction with either providing a list of matchIds or not, will no longer exclude existing matches. This is primarily being used to fix timeline info (no long insert into, now replace into)
 
 
 # update_table("membertiers", matchIds=False, ignore_skiplist = False, allow_updates = False) -- matchIds takes list ; []

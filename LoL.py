@@ -1896,18 +1896,25 @@ class Scraper:
     add_match_bans = ("INSERT IGNORE INTO match_team_bans "
                 "(matchId, teamId, pickTurn, championId) " 
                 "VALUES (%(matchId)s, %(teamId)s, %(pickTurn)s, %(championId)s)")
-               
+          
     add_match_timeline = ("INSERT IGNORE INTO match_timeline "
                 "(matchId, summonerId, timestamp, currentGold, positionX, positionY, minionsKilled, level, jungleMinionsKilled, totalGold, dominionScore, participantId, xp, teamScore, timelineInterval) "
                 "VALUES (%(matchId)s, %(summonerId)s, %(timestamp)s, %(currentGold)s, %(positionX)s, %(positionY)s, %(minionsKilled)s, %(level)s, %(jungleMinionsKilled)s, %(totalGold)s, %(dominionScore)s, %(participantId)s, %(xp)s, %(teamScore)s, %(timelineInterval)s )")
-   
-    add_match_timeline_event =  ("INSERT IGNORE INTO match_timeline_events "
-                "(eventId, matchId, summonerId, timelineTimestamp, eventTimestamp, ascendedType, assistingParticipants, buildingType, creatorId, eventType, itemAfter, itemBefore, itemId, killerId, laneType, levelUpType, monsterType, pointCaptured, positionX, positionY, skillSlot, teamId, towerType, victimId, wardType) "
-                "VALUES (%(eventId)s, %(matchId)s, %(summonerId)s, %(timelineTimestamp)s, %(eventTimestamp)s, %(ascendedType)s, %(assistingParticipants)s, %(buildingType)s, %(creatorId)s, %(eventType)s, %(itemAfter)s, %(itemBefore)s, %(itemId)s, %(killerId`)s, %(laneType)s, %(levelUpType)s, %(monsterType)s, %(pointCaptured)s, %(positionX)s, %(positionY)s, %(skillSlot)s, %(teamId)s, %(towerType)s, %(victimId)s, %(wardType)s )")
-  
     add_match_timeline_event_assist = ("INSERT IGNORE INTO match_timeline_events_assist "
-                "(eventId, matchId, assistId)"
-                "VALUES (%(eventId)s, %(matchId)s, %(assistId)s)")
+                 "(eventId, matchId, assistId)"
+                 "VALUES (%(eventId)s, %(matchId)s, %(assistId)s)")
+    if allow_updates==True:
+     add_match_timeline_event =  ("REPLACE INTO match_timeline_events "
+                 "(eventId, matchId, summonerId, timelineTimestamp, eventTimestamp, ascendedType, assistingParticipants, buildingType, creatorId, eventType, itemAfter, itemBefore, itemId, killerId, laneType, levelUpType, monsterType, pointCaptured, positionX, positionY, skillSlot, teamId, towerType, victimId, wardType) "
+                 "VALUES (%(eventId)s, %(matchId)s, %(summonerId)s, %(timelineTimestamp)s, %(eventTimestamp)s, %(ascendedType)s, %(assistingParticipants)s, %(buildingType)s, %(creatorId)s, %(eventType)s, %(itemAfter)s, %(itemBefore)s, %(itemId)s, %(killerId`)s, %(laneType)s, %(levelUpType)s, %(monsterType)s, %(pointCaptured)s, %(positionX)s, %(positionY)s, %(skillSlot)s, %(teamId)s, %(towerType)s, %(victimId)s, %(wardType)s ) ")
+  
+
+    else:  
+     add_match_timeline_event =  ("INSERT IGNORE INTO match_timeline_events "
+                 "(eventId, matchId, summonerId, timelineTimestamp, eventTimestamp, ascendedType, assistingParticipants, buildingType, creatorId, eventType, itemAfter, itemBefore, itemId, killerId, laneType, levelUpType, monsterType, pointCaptured, positionX, positionY, skillSlot, teamId, towerType, victimId, wardType) "
+                 "VALUES (%(eventId)s, %(matchId)s, %(summonerId)s, %(timelineTimestamp)s, %(eventTimestamp)s, %(ascendedType)s, %(assistingParticipants)s, %(buildingType)s, %(creatorId)s, %(eventType)s, %(itemAfter)s, %(itemBefore)s, %(itemId)s, %(killerId`)s, %(laneType)s, %(levelUpType)s, %(monsterType)s, %(pointCaptured)s, %(positionX)s, %(positionY)s, %(skillSlot)s, %(teamId)s, %(towerType)s, %(victimId)s, %(wardType)s )")
+  
+
 
      
 

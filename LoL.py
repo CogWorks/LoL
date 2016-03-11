@@ -173,7 +173,10 @@ class Scraper:
      "  `queue` varchar(25) NOT NULL,"
      "  `retrieved` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
      "  CONSTRAINT id_queue PRIMARY KEY (`playerOrTeamId`, `queue`, `retrieved`),"
-     "  INDEX id_team (playerOrTeamId, team)"
+     "  INDEX id_team (playerOrTeamId, team),"
+     "  INDEX i_queue (queue),"
+     "  INDEX i_retrieved (retrieved)"
+     
      ") CHARACTER SET utf8 ENGINE=InnoDB") 
     
     
@@ -215,7 +218,8 @@ class Scraper:
       "  `opposingTeamKills` int(6) NOT NULL,"
       "  `opposingTeamName` varchar(25) NOT NULL,"
       "  `win` bool NOT NULL,"
-      "  CONSTRAINT game_team PRIMARY KEY (`gameId`, `fullId`)"
+      "  CONSTRAINT game_team PRIMARY KEY (`gameId`, `fullId`),"
+      "  INDEX i_teamId(fullId)"
       ") CHARACTER SET utf8 ENGINE=InnoDB") 
     
   TABLES['team_roster'] = (
@@ -226,7 +230,8 @@ class Scraper:
       "  `status` varchar(25) NOT NULL,"
       "  `isCaptain` bool NOT NULL,"
       "  `teamId` varchar(50) NOT NULL,"
-      "  CONSTRAINT player_team PRIMARY KEY (`playerId`, `teamId`)"
+      "  CONSTRAINT player_team PRIMARY KEY (`playerId`, `teamId`),"
+      "  INDEX i_teamId (teamId)"
       ") CHARACTER SET utf8 ENGINE=InnoDB")
     
    
@@ -243,7 +248,8 @@ class Scraper:
       "  `season` varchar(15) DEFAULT NULL,"
       "  `timestamp` BIGINT DEFAULT NULL,"
       "  CONSTRAINT player_game PRIMARY KEY (`summonerId`, `matchId`),"
-      "  INDEX k_season (season)"
+      "  INDEX i_season (season),"
+      "  INDEX i_matchId (matchId)"
       ") CHARACTER SET utf8 ENGINE=InnoDB")  
     
       
@@ -261,7 +267,7 @@ class Scraper:
       "		`region`	varchar(8)		DEFAULT NULL	,"
       "		`season`	varchar(20)		DEFAULT NULL	,"
       " PRIMARY KEY (`matchId`),"
-      " INDEX k_season (season)"
+      " INDEX i_season (season)"
       ") CHARACTER SET utf8 ENGINE=InnoDB")
  
  
@@ -347,7 +353,8 @@ class Scraper:
       "		`teamId`	varchar(35)		NOT NULL	,"
       "		`lane`	varchar(16)		DEFAULT NULL	,"
       "		`role`	varchar(16)		DEFAULT NULL	,"
-      "  CONSTRAINT match_player PRIMARY KEY (`matchId`, `summonerId`)"
+      "  CONSTRAINT match_player PRIMARY KEY (`matchId`, `summonerId`),"
+      "  INDEX i_summonerId (summonerId)"
       ") CHARACTER SET utf8 ENGINE=InnoDB")
      
   TABLES['match_participant_masteries'] = (
@@ -356,7 +363,9 @@ class Scraper:
       " `summonerId` varchar(20) NOT NULL,"
       " `rank` smallint NOT NULL,"
       "	`masteryId`	smallint		NOT NULL	,"
-      " CONSTRAINT match_participant_mastery PRIMARY KEY (`matchId`, `summonerId`, `masteryId`)"
+      " CONSTRAINT match_participant_mastery PRIMARY KEY (`matchId`, `summonerId`, `masteryId`),"
+      " INDEX i_summonerId (summonerId),"
+      " INDEX i_masteryId (masteryId)"
       ") CHARACTER SET utf8 ENGINE=InnoDB")
            
   TABLES['match_participant_runes'] = (
@@ -365,7 +374,9 @@ class Scraper:
       " `summonerId` varchar(20) NOT NULL,"
       " `rank` smallint NOT NULL,"
       "	`runeId`	smallint		NOT NULL	,"
-      " CONSTRAINT match_participant_rune PRIMARY KEY (`matchId`, `summonerId`, `runeId`)"
+      " CONSTRAINT match_participant_rune PRIMARY KEY (`matchId`, `summonerId`, `runeId`),"
+      " INDEX i_summonerId (summonerId),"
+      " INDEX i_runeId (runeId)"
       ") CHARACTER SET utf8 ENGINE=InnoDB")
      
      
@@ -376,7 +387,10 @@ class Scraper:
       " `deltaName` varchar(40) NOT NULL,"
       " `deltaTimeframe` varchar(20) NOT NULL,"
       " `value` double NOT NULL,"
-      " CONSTRAINT match_participant_delta PRIMARY KEY (`matchID`, `summonerId`, `deltaName`, `deltaTimeframe`)"
+      " CONSTRAINT match_participant_delta PRIMARY KEY (`matchID`, `summonerId`, `deltaName`, `deltaTimeframe`),"
+      " INDEX i_summonerId (summonerId),"
+      " INDEX i_deltaName (deltaName),"
+      " INDEX i_deltaTimeframe (deltaTimeframe)"
       ") CHARACTER SET utf8 ENGINE=InnoDB")
 
 
@@ -402,7 +416,8 @@ class Scraper:
       "		`towerKills`	tinyint		DEFAULT NULL	,"
       "		`vilemawKills`	tinyint		DEFAULT NULL	,"
       "		`winner`	bool		DEFAULT NULL	,"
-      "  CONSTRAINT match_team PRIMARY KEY (`matchId`, `teamId`)"
+      "  CONSTRAINT match_team PRIMARY KEY (`matchId`, `teamId`),"
+      "  INDEX i_teamId (teamId)"
       ") CHARACTER SET utf8 ENGINE=InnoDB")
  
  
@@ -413,7 +428,9 @@ class Scraper:
       " `teamId` varchar(35) NOT NULL ,"
       " `pickTurn` tinyint NOT NULL ,"
       " `championId` smallint NOT NULL ,"
-      "CONSTRAINT match_team_ban PRIMARY KEY (`matchId`, `teamId`, `pickTurn`)"
+      "CONSTRAINT match_team_ban PRIMARY KEY (`matchId`, `teamId`, `pickTurn`),"
+      "INDEX i_teamId (teamId),"
+      "INDEX i_pickTurn (pickTurn)"
       ") CHARACTER SET utf8 ENGINE=InnoDB")
 
 
@@ -434,7 +451,9 @@ class Scraper:
       " `xp` int DEFAULT NULL,"
       " `teamScore` mediumint DEFAULT NULL,"
       " `timelineInterval` int NOT NULL,"
-      "CONSTRAINT match_summoner_time PRIMARY KEY (`matchId`, `summonerId`, `timestamp`)"
+      "CONSTRAINT match_summoner_time PRIMARY KEY (`matchId`, `summonerId`, `timestamp`),"
+      "INDEX i_summonerId (summonerId),"
+      "INDEX i_timestamp (timestamp)"
       ") CHARACTER SET utf8 ENGINE=InnoDB")
      
   TABLES['match_timeline_events'] = (
@@ -464,7 +483,11 @@ class Scraper:
       " `towerType` varchar(20) DEFAULT NULL,"
       " `victimId` varchar(20) DEFAULT NULL,"
       " `wardType` varchar(25) DEFAULT NULL,"
-      "CONSTRAINT match_event PRIMARY KEY (`matchId`, `eventId`)"
+      "CONSTRAINT match_event PRIMARY KEY (`matchId`, `eventId`),"
+      "INDEX i_eventId (eventId),"
+      "INDEX i_eventType (eventType),"
+      "INDEX i_summonerId (summonerId),"
+      "INDEX i_timelineTimestamp (timelineTimestamp)"
       ") CHARACTER SET utf8 ENGINE=InnoDB")
      
      
@@ -479,8 +502,8 @@ class Scraper:
       " `assistId` varchar(20) NOT NULL,"
       "  INDEX (`matchId`,`eventId`),"
       "  FOREIGN KEY (`matchId`, `eventId`) "
-      "     REFERENCES `match_timeline_events` (`matchId`,`eventId`) "
-      "     ON UPDATE CASCADE ON DELETE CASCADE"
+      "     REFERENCES `match_timeline_events` (`matchId`,`eventId`), "
+      "  INDEX i_eventId (eventId)"
       ") CHARACTER SET utf8 ENGINE=InnoDB")
 
      
@@ -2128,7 +2151,7 @@ class Scraper:
           cur_timeline_event = {}
    #        print z
 
-          for s in ["ascendedType", "assistingParticipants", "buildingType", "creatorId", "eventType", "itemAfter", "itemBefore", "itemId", "killerId`", "laneType", "levelUpType", "monsterType", "pointCaptured", "positionX", "positionY", "skillSlot", "teamId", "towerType", "victimId", "wardType"]:
+          for s in ["ascendedType", "assistingParticipants", "buildingType", "creatorId", "eventType", "itemAfter", "itemBefore", "itemId", "killerId`", "laneType", "levelUpType", "monsterType", "pointCaptured", "position", "skillSlot", "teamId", "towerType", "victimId", "wardType"]:
         
        
            if s=="assistingParticipants":

@@ -1656,7 +1656,7 @@ class Scraper:
           cur_timeline_event = {}
    #        print z
 
-          for s in ["ascendedType", "assistingParticipants", "buildingType", "creatorId", "eventType", "itemAfter", "itemBefore", "itemId", "killerId`", "laneType", "levelUpType", "monsterType", "pointCaptured", "positionX", "positionY", "skillSlot", "teamId", "towerType", "victimId", "wardType"]:
+          for s in ["ascendedType", "assistingParticipants", "buildingType", "creatorId", "eventType", "itemAfter", "itemBefore", "itemId", "killerId`", "laneType", "levelUpType", "monsterType", "pointCaptured", "position", "skillSlot", "teamId", "towerType", "victimId", "wardType"]:
         
        
            if s=="assistingParticipants":

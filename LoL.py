@@ -1926,26 +1926,13 @@ class Scraper:
     add_match_timeline_event_assist = ("INSERT IGNORE INTO match_timeline_events_assist "
                  "(eventId, matchId, assistId)"
                  "VALUES (%(eventId)s, %(matchId)s, %(assistId)s)")
-    if allow_updates==True:
-     add_match_timeline_event =  ("REPLACE INTO match_timeline_events "
-                 "(eventId, matchId, summonerId, timelineTimestamp, eventTimestamp, ascendedType, assistingParticipants, buildingType, creatorId, eventType, itemAfter, itemBefore, itemId, killerId, laneType, levelUpType, monsterType, pointCaptured, positionX, positionY, skillSlot, teamId, towerType, victimId, wardType) "
-                 "VALUES (%(eventId)s, %(matchId)s, %(summonerId)s, %(timelineTimestamp)s, %(eventTimestamp)s, %(ascendedType)s, %(assistingParticipants)s, %(buildingType)s, %(creatorId)s, %(eventType)s, %(itemAfter)s, %(itemBefore)s, %(itemId)s, %(killerId`)s, %(laneType)s, %(levelUpType)s, %(monsterType)s, %(pointCaptured)s, %(positionX)s, %(positionY)s, %(skillSlot)s, %(teamId)s, %(towerType)s, %(victimId)s, %(wardType)s ) ")
-  
-
-    else:  
-     add_match_timeline_event =  ("INSERT IGNORE INTO match_timeline_events "
-                 "(eventId, matchId, summonerId, timelineTimestamp, eventTimestamp, ascendedType, assistingParticipants, buildingType, creatorId, eventType, itemAfter, itemBefore, itemId, killerId, laneType, levelUpType, monsterType, pointCaptured, positionX, positionY, skillSlot, teamId, towerType, victimId, wardType) "
-                 "VALUES (%(eventId)s, %(matchId)s, %(summonerId)s, %(timelineTimestamp)s, %(eventTimestamp)s, %(ascendedType)s, %(assistingParticipants)s, %(buildingType)s, %(creatorId)s, %(eventType)s, %(itemAfter)s, %(itemBefore)s, %(itemId)s, %(killerId`)s, %(laneType)s, %(levelUpType)s, %(monsterType)s, %(pointCaptured)s, %(positionX)s, %(positionY)s, %(skillSlot)s, %(teamId)s, %(towerType)s, %(victimId)s, %(wardType)s )")
-  
-
-
-     
-
+    
+    
     self.print_stuff("Updating Match Tables.", header1 = True)
-
-    self.cursor.execute("SELECT matchId FROM matches")
-    existing_matches_raw = self.cursor.fetchall()
-    existing_matches = [x[0] for x in existing_matches_raw]
+    if allow_updates != True:
+     self.cursor.execute("SELECT matchId FROM matches")
+     existing_matches_raw = self.cursor.fetchall()
+     existing_matches = [x[0] for x in existing_matches_raw]
 #     for x in existing_matches_raw:
 #      for y in x:
 #       existing_matches.append(y)
@@ -1970,7 +1957,8 @@ class Scraper:
      match_ids_raw = self.cursor.fetchall()
    
      match_ids = [x[0] for x in match_ids_raw] 
-     match_ids = list(set(match_ids)-set(existing_matches))
+     if allow_updates != True :
+      match_ids = list(set(match_ids)-set(existing_matches))
    
 #      for x in match_ids_raw:
 #       for y in x:
@@ -1979,7 +1967,8 @@ class Scraper:
     else:
      self.print_stuff("Given list of match ids.")
      match_ids = matchIds
-     match_ids = list(set(match_ids)-set(existing_matches))
+     if allow_updates != True :
+      match_ids = list(set(match_ids)-set(existing_matches))
  
  #    print match_ids
     teams_data = []

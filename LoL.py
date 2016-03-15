@@ -252,6 +252,14 @@ class Scraper:
       "  INDEX i_matchId (matchId)"
       ") CHARACTER SET utf8 ENGINE=InnoDB")  
     
+  TABLES['summoner_list'] = (
+      "CREATE TABLE `summoner_list` ("
+      "  `summonerId` varchar(20) NOT NULL,"
+      "  `constr` BIGINT DEFAULT NULL,
+      "  `updated` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
+      "  PRIMARY KEY (`summonerId`),"
+      "  INDEX i_constr (constr)"
+      ") CHARACTER SET utf8 ENGINE=InnoDB")
       
   TABLES['matches'] = ( 
       "CREATE TABLE `matches` ("
@@ -270,10 +278,6 @@ class Scraper:
       " INDEX i_season (season)"
       ") CHARACTER SET utf8 ENGINE=InnoDB")
  
- 
- 
- 
-
 
   TABLES['match_participants'] = (
       "CREATE TABLE `match_participants` ("
@@ -793,6 +797,10 @@ class Scraper:
      add_history = ("INSERT IGNORE INTO individual_history"
              "(summonerId, championId, lane, matchId, platformId, queue, region, role, season, timestamp)" 
              "VALUES (%(summonerId)s, %(championId)s, %(lane)s, %(matchId)s, %(platformId)s, %(queue)s, %(region)s, %(role)s, %(season)s, %(timestamp)s)" )
+     add_summoner = ("UPDATE INTO summoner_list"
+             "(summonerId, constr)" 
+             "VALUES (%(summonerId)s, %(constr)s)" )
+     
      err = []
      finished = False
      while finished == False:
@@ -857,6 +865,17 @@ class Scraper:
         self.print_stuff( "Error %s : %s" % (err.errno,summoner_id), error = True)
       else:
        self.print_stuff("Updated Individual History")
+     
+     summoner_update = {}
+     summoner_update['summonerId'] = summoner_id
+     summoner_update['constr'] = end_time
+     
+     try:
+       self.cursor.executemany(add_summoner, summoner_update)
+ #       print test_team
+      except mysql.connector.Error as err:
+       if err.errno != 1062 or suppress_duplicates == False:
+        self.print_stuff( "Error %s : %s -- Summoner List" % (err.errno,summoner_id), error = True)
        
         
       

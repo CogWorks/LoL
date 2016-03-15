@@ -255,7 +255,7 @@ class Scraper:
   TABLES['summoner_list'] = (
       "CREATE TABLE `summoner_list` ("
       "  `summonerId` varchar(20) NOT NULL,"
-      "  `constr` BIGINT DEFAULT NULL,
+      "  `constr` BIGINT DEFAULT NULL,"
       "  `updated` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
       "  PRIMARY KEY (`summonerId`),"
       "  INDEX i_constr (constr)"

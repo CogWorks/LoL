@@ -797,7 +797,7 @@ class Scraper:
      add_history = ("INSERT IGNORE INTO individual_history"
              "(summonerId, championId, lane, matchId, platformId, queue, region, role, season, timestamp)" 
              "VALUES (%(summonerId)s, %(championId)s, %(lane)s, %(matchId)s, %(platformId)s, %(queue)s, %(region)s, %(role)s, %(season)s, %(timestamp)s)" )
-     add_summoner = ("UPDATE INTO summoner_list"
+     add_summoner = ("REPLACE INTO summoner_list"
              "(summonerId, constr)" 
              "VALUES (%(summonerId)s, %(constr)s)" )
      

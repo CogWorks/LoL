@@ -1478,7 +1478,7 @@ class Scraper:
    
     add_match_timeline_event =  ("INSERT IGNORE INTO match_timeline_events "
                 "(eventId, matchId, summonerId, timelineTimestamp, eventTimestamp, ascendedType, assistingParticipants, buildingType, creatorId, eventType, itemAfter, itemBefore, itemId, killerId, laneType, levelUpType, monsterType, pointCaptured, positionX, positionY, skillSlot, teamId, towerType, victimId, wardType) "
-                "VALUES (%(eventId)s, %(matchId)s, %(summonerId)s, %(timelineTimestamp)s, %(eventTimestamp)s, %(ascendedType)s, %(assistingParticipants)s, %(buildingType)s, %(creatorId)s, %(eventType)s, %(itemAfter)s, %(itemBefore)s, %(itemId)s, %(killerId`)s, %(laneType)s, %(levelUpType)s, %(monsterType)s, %(pointCaptured)s, %(positionX)s, %(positionY)s, %(skillSlot)s, %(teamId)s, %(towerType)s, %(victimId)s, %(wardType)s )")
+                "VALUES (%(eventId)s, %(matchId)s, %(summonerId)s, %(timelineTimestamp)s, %(eventTimestamp)s, %(ascendedType)s, %(assistingParticipants)s, %(buildingType)s, %(creatorId)s, %(eventType)s, %(itemAfter)s, %(itemBefore)s, %(itemId)s, %(killerId)s, %(laneType)s, %(levelUpType)s, %(monsterType)s, %(pointCaptured)s, %(positionX)s, %(positionY)s, %(skillSlot)s, %(teamId)s, %(towerType)s, %(victimId)s, %(wardType)s )")
   
     add_match_timeline_event_assist = ("INSERT IGNORE INTO match_timeline_events_assist "
                 "(eventId, matchId, assistId)"
@@ -1698,7 +1698,7 @@ class Scraper:
           cur_timeline_event = {}
    #        print z
 
-          for s in ["ascendedType", "assistingParticipants", "buildingType", "creatorId", "eventType", "itemAfter", "itemBefore", "itemId", "killerId`", "laneType", "levelUpType", "monsterType", "pointCaptured", "position", "skillSlot", "teamId", "towerType", "victimId", "wardType"]:
+          for s in ["ascendedType", "assistingParticipants", "buildingType", "creatorId", "eventType", "itemAfter", "itemBefore", "itemId", "killerId", "laneType", "levelUpType", "monsterType", "pointCaptured", "position", "skillSlot", "teamId", "towerType", "victimId", "wardType"]:
         
        
            if s=="assistingParticipants":
@@ -1948,13 +1948,13 @@ class Scraper:
     if allow_updates==True:
      add_match_timeline_event =  ("REPLACE INTO match_timeline_events "
                  "(eventId, matchId, summonerId, timelineTimestamp, eventTimestamp, ascendedType, assistingParticipants, buildingType, creatorId, eventType, itemAfter, itemBefore, itemId, killerId, laneType, levelUpType, monsterType, pointCaptured, positionX, positionY, skillSlot, teamId, towerType, victimId, wardType) "
-                 "VALUES (%(eventId)s, %(matchId)s, %(summonerId)s, %(timelineTimestamp)s, %(eventTimestamp)s, %(ascendedType)s, %(assistingParticipants)s, %(buildingType)s, %(creatorId)s, %(eventType)s, %(itemAfter)s, %(itemBefore)s, %(itemId)s, %(killerId`)s, %(laneType)s, %(levelUpType)s, %(monsterType)s, %(pointCaptured)s, %(positionX)s, %(positionY)s, %(skillSlot)s, %(teamId)s, %(towerType)s, %(victimId)s, %(wardType)s ) ")
+                 "VALUES (%(eventId)s, %(matchId)s, %(summonerId)s, %(timelineTimestamp)s, %(eventTimestamp)s, %(ascendedType)s, %(assistingParticipants)s, %(buildingType)s, %(creatorId)s, %(eventType)s, %(itemAfter)s, %(itemBefore)s, %(itemId)s, %(killerId)s, %(laneType)s, %(levelUpType)s, %(monsterType)s, %(pointCaptured)s, %(positionX)s, %(positionY)s, %(skillSlot)s, %(teamId)s, %(towerType)s, %(victimId)s, %(wardType)s ) ")
   
 
     else:  
      add_match_timeline_event =  ("INSERT IGNORE INTO match_timeline_events "
                  "(eventId, matchId, summonerId, timelineTimestamp, eventTimestamp, ascendedType, assistingParticipants, buildingType, creatorId, eventType, itemAfter, itemBefore, itemId, killerId, laneType, levelUpType, monsterType, pointCaptured, positionX, positionY, skillSlot, teamId, towerType, victimId, wardType) "
-                 "VALUES (%(eventId)s, %(matchId)s, %(summonerId)s, %(timelineTimestamp)s, %(eventTimestamp)s, %(ascendedType)s, %(assistingParticipants)s, %(buildingType)s, %(creatorId)s, %(eventType)s, %(itemAfter)s, %(itemBefore)s, %(itemId)s, %(killerId`)s, %(laneType)s, %(levelUpType)s, %(monsterType)s, %(pointCaptured)s, %(positionX)s, %(positionY)s, %(skillSlot)s, %(teamId)s, %(towerType)s, %(victimId)s, %(wardType)s )")
+                 "VALUES (%(eventId)s, %(matchId)s, %(summonerId)s, %(timelineTimestamp)s, %(eventTimestamp)s, %(ascendedType)s, %(assistingParticipants)s, %(buildingType)s, %(creatorId)s, %(eventType)s, %(itemAfter)s, %(itemBefore)s, %(itemId)s, %(killerId)s, %(laneType)s, %(levelUpType)s, %(monsterType)s, %(pointCaptured)s, %(positionX)s, %(positionY)s, %(skillSlot)s, %(teamId)s, %(towerType)s, %(victimId)s, %(wardType)s )")
   
 
 
@@ -2171,7 +2171,7 @@ class Scraper:
           cur_timeline_event = {}
    #        print z
 
-          for s in ["ascendedType", "assistingParticipants", "buildingType", "creatorId", "eventType", "itemAfter", "itemBefore", "itemId", "killerId`", "laneType", "levelUpType", "monsterType", "pointCaptured", "position", "skillSlot", "teamId", "towerType", "victimId", "wardType"]:
+          for s in ["ascendedType", "assistingParticipants", "buildingType", "creatorId", "eventType", "itemAfter", "itemBefore", "itemId", "killerId", "laneType", "levelUpType", "monsterType", "pointCaptured", "position", "skillSlot", "teamId", "towerType", "victimId", "wardType"]:
         
        
            if s=="assistingParticipants":

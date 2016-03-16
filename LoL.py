@@ -866,12 +866,13 @@ class Scraper:
       else:
        self.print_stuff("Updated Individual History")
      
+
      summoner_update = {}
      summoner_update['summonerId'] = summoner_id
      summoner_update['constr'] = end_time
-     
+#      print summoner_update
      try:
-      self.cursor.executemany(add_summoner, summoner_update)
+      self.cursor.execute(add_summoner, summoner_update)
  #       print test_team
      except mysql.connector.Error as err:
       if err.errno != 1062 or suppress_duplicates == False:

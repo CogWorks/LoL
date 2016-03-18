@@ -871,13 +871,13 @@ class Scraper:
      summoner_update['summonerId'] = summoner_id
      summoner_update['constr'] = end_time
 #      print summoner_update
-     try:
-      self.cursor.execute(add_summoner, summoner_update)
+#      try:
+     self.cursor.execute(add_summoner, summoner_update)
  #       print test_team
-     except mysql.connector.Error as err:
-      if err.errno != 1062 or suppress_duplicates == False:
-       self.print_stuff( "Error %s : %s -- Summoner List" % (err.errno,summoner_id), error = True)
-       
+    #  except mysql.connector.Error as err:
+#       if err.errno != 1062 or suppress_duplicates == False:
+#        self.print_stuff( "Error %s : %s -- Summoner List" % (err.errno,summoner_id), error = True)
+#        
         
       
    

@@ -641,7 +641,7 @@ class Scraper:
      summoner_ids_raw = self.cursor.fetchall()
 
      self.print_stuff("Finished extracting participants.")
-     summoner_ids = [x[0] for x in summoner_ids_raw] 
+     summoner_ids = [unicode(x[0]) for x in summoner_ids_raw] 
     
     
   
@@ -989,7 +989,7 @@ class Scraper:
      team_ids_raw = [] 
      team_ids_raw = self.cursor.fetchall()
    
-     team_ids = [x[0] for x in team_ids_raw] 
+     team_ids = [unicode(x[0]) for x in team_ids_raw] 
    
 #      for x in team_ids_raw:
 #       for y in x:
@@ -1063,7 +1063,7 @@ class Scraper:
        self.print_stuff("No matches given, searching all summoners from all matches.")
        self.cursor.execute("SELECT DISTINCT(summonerId) FROM match_participants")
        sum_id_raw = self.cursor.fetchall()
-       summonerIds= [x[0] for x in sum_id_raw]
+       summonerIds= [unicode(x[0]) for x in sum_id_raw]
        
 #           old method
 #      self.print_stuff("No matches given, using all.")
@@ -1087,7 +1087,7 @@ class Scraper:
 
     
     if allow_updates == False:
-     self.existing_entries = [x[0] for x in existing_entries_raw]
+     self.existing_entries = [unicode(x[0]) for x in existing_entries_raw]
 #      for x in existing_entries_raw:
 #       for y in x:
 #        self.existing_entries.append(y)
@@ -1118,7 +1118,7 @@ class Scraper:
      self.print_stuff("No IDs supplied, searching matches.")
      self.cursor.execute("SELECT DISTINCT(summonerId) FROM match_participants")
     summoner_ids_raw = self.cursor.fetchall()
-    summoner_ids = [x[0] for x in summoner_ids_raw] 
+    summoner_ids = [unicode(x[0]) for x in summoner_ids_raw] 
 #     for x in summoner_ids_raw:
 #      for y in x:
 #       summoner_ids.append(y)
@@ -1130,7 +1130,7 @@ class Scraper:
    if allow_updates == False:
     self.cursor.execute("SELECT DISTINCT(summonerId) FROM individual_history")
     existing_ids_raw = self.cursor.fetchall()
-    existing_ids = [x[0] for x in existing_ids_raw]
+    existing_ids = [unicode(x[0]) for x in existing_ids_raw]
     summoner_ids = list(set(summoner_ids)-set(existing_ids))
     
    curcount = 0
@@ -1167,7 +1167,7 @@ class Scraper:
 
      team_ids_raw = self.cursor.fetchall()
    
-     team_ids = [x[0] for x in team_ids_raw] 
+     team_ids = [unicode(x[0]) for x in team_ids_raw] 
    
 #      for x in team_ids_raw:
 #       for y in x:
@@ -1491,7 +1491,7 @@ class Scraper:
     if allow_updates != True:
      self.cursor.execute("SELECT matchId FROM matches")
      existing_matches_raw = self.cursor.fetchall()
-     existing_matches = [x[0] for x in existing_matches_raw]
+     existing_matches = [unicode(x[0]) for x in existing_matches_raw]
 #     for x in existing_matches_raw:
 #      for y in x:
 #       existing_matches.append(y)
@@ -1506,7 +1506,7 @@ class Scraper:
     if timeline_update == True:
      self.cursor.execute("SELECT DISTINCT(matchId) FROM match_timeline")
      existing_timelines_raw = self.cursor.fetchall()
-     existing_timelines = [x[0] for x in existing_timelines_raw]
+     existing_timelines = [unicode(x[0]) for x in existing_timelines_raw]
      self.print_stuff("Overriding matchIds, updating timelines for existing matches.")     
      match_ids = list(set(existing_matches)-set(existing_timelines))
      
@@ -1515,7 +1515,7 @@ class Scraper:
      self.cursor.execute("SELECT gameId FROM team_history" )         
      match_ids_raw = self.cursor.fetchall()
    
-     match_ids = [x[0] for x in match_ids_raw] 
+     match_ids = [unicode(x[0]) for x in match_ids_raw] 
      if allow_updates != True :
       match_ids = list(set(match_ids)-set(existing_matches))
    
@@ -1964,7 +1964,7 @@ class Scraper:
     if allow_updates != True:
      self.cursor.execute("SELECT matchId FROM matches")
      existing_matches_raw = self.cursor.fetchall()
-     existing_matches = [x[0] for x in existing_matches_raw]
+     existing_matches = [unicode(x[0]) for x in existing_matches_raw]
 #     for x in existing_matches_raw:
 #      for y in x:
 #       existing_matches.append(y)
@@ -1979,7 +1979,7 @@ class Scraper:
     if timeline_update == True:
      self.cursor.execute("SELECT DISTINCT(matchId) FROM match_timeline")
      existing_timelines_raw = self.cursor.fetchall()
-     existing_timelines = [x[0] for x in existing_timelines_raw]
+     existing_timelines = [unicode(x[0]) for x in existing_timelines_raw]
      self.print_stuff("Overriding matchIds, updating timelines for existing matches.")     
      match_ids = list(set(existing_matches)-set(existing_timelines))
      
@@ -1988,7 +1988,7 @@ class Scraper:
      self.cursor.execute("SELECT gameId FROM team_history" )         
      match_ids_raw = self.cursor.fetchall()
    
-     match_ids = [x[0] for x in match_ids_raw] 
+     match_ids = [unicode(x[0]) for x in match_ids_raw] 
      if allow_updates != True :
       match_ids = list(set(match_ids)-set(existing_matches))
    
@@ -2527,7 +2527,7 @@ class Scraper:
 # # people = {}
 # people = []
 # for x in people_raw:
-#  people.append(x[0])
+#  people.append(unicode(x[0]))
 # 
 # all = []
 # for x in all_raw:

@@ -873,6 +873,7 @@ class Scraper:
 #      print summoner_update
 #      try:
      self.cursor.execute(add_summoner, summoner_update)
+     self.cnx.commit()
  #       print test_team
     #  except mysql.connector.Error as err:
 #       if err.errno != 1062 or suppress_duplicates == False:

@@ -343,7 +343,7 @@ class Scraper:
       "		`totalPlayerScore`	smallint		DEFAULT NULL	,"
       "		`totalScoreRank`	smallint		DEFAULT NULL	,"
       "		`totalTimeCrowdControlDealt`	smallint		DEFAULT NULL	,"
-      "		`totalUnitsHealed`	tinyint		DEFAULT NULL	,"
+      "		`totalUnitsHealed`	smallint		DEFAULT NULL	,"
       "		`towerKills`	tinyint		DEFAULT NULL	,"
       "		`tripleKills`	tinyint		DEFAULT NULL	,"
       "		`trueDamageDealt`	mediumint		DEFAULT NULL	,"
@@ -352,7 +352,7 @@ class Scraper:
       "		`unrealKills`	tinyint		DEFAULT NULL	,"
       "		`visionWardsBoughtInGame`	tinyint		DEFAULT NULL	,"
       "		`wardsKilled`	tinyint		DEFAULT NULL	,"
-      "		`wardsPlaced`	tinyint		DEFAULT NULL	,"
+      "		`wardsPlaced`	smallint		DEFAULT NULL	,"
       "		`winner`	bool		DEFAULT NULL	,"
       "		`teamId`	varchar(35)		NOT NULL	,"
       "		`lane`	varchar(16)		DEFAULT NULL	,"
@@ -510,7 +510,36 @@ class Scraper:
       "  INDEX i_eventId (eventId)"
       ") CHARACTER SET utf8 ENGINE=InnoDB")
 
-     
+
+  TABLES['stats'] = (
+      "CREATE TABLE `stats` ("
+      "  `summonerId` varchar(20) NOT NULL,"
+      "  `season` varchar(15) NOT NULL,"
+      "  `playerStatSummaryType` varchar(30) NOT NULL,"
+      "  `modifyDate` BIGINT NOT NULL,"
+      "  `wins` int NOT NULL,"
+      "  `losses` int DEFAULT NULL,"
+      "  `updated` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
+      "  CONSTRAINT summoner_season PRIMARY KEY (`summonerId`, `season`, `playerStatSummaryType`)"
+      #"  INDEX i_season (season),"
+      #"  INDEX i_type (playerStatSummaryType)"
+      ") CHARACTER SET utf8 ENGINE=InnoDB")
+   
+   
+  TABLES['stats_aggregate'] = (
+      "CREATE TABLE `stats_aggregate` ("
+      "  `summonerId` varchar(20) NOT NULL,"
+      "  `season` varchar(15) NOT NULL,"
+      "  `playerStatSummaryType` varchar(30) NOT NULL,"
+      "  `aggregatedStat` varchar(35) NOT NULL,"
+      "  `aggregatedStatValue` int NOT NULL,"      
+      "  `updated` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
+      "  CONSTRAINT summoner_season PRIMARY KEY (`summonerId`, `season`, `playerStatSummaryType`, `aggregatedStat`)"
+      #"  INDEX i_season (season),"
+      #"  INDEX i_type (playerStatSummaryType)"
+      #"  INDEX i_type (playerStatSummaryType)"    
+      ") CHARACTER SET utf8 ENGINE=InnoDB")
+       
 
 
       
@@ -880,7 +909,109 @@ class Scraper:
 #        self.print_stuff( "Error %s : %s -- Summoner List" % (err.errno,summoner_id), error = True)
 #        
         
-      
+ def get_aggstats(self, summoner_id=None, season="ALL"):  
+  add_stats = ("INSERT IGNORE INTO stats"
+       "(summonerId, season, playerStatSummaryType, modifyDate, wins, losses)"
+       "VALUES (%(summonerId)s, %(season)s, %(playerStatSummaryType)s, %(modifyDate)s, %(wins)s, %(losses)s)" )
+   
+  add_substats = ("INSERT IGNORE INTO stats_aggregate"
+       "(summonerId, season, playerStatSummaryType, aggregatedStat, aggregatedStatValue)"
+       "VALUES (%(summonerId)s, %(season)s, %(playerStatSummaryType)s, %(aggregatedStat)s, %(aggregatedStatValue)s)")
+  
+  if season == "ALL":
+   seasons = ["3", "2014", "2015", "2016"]
+  elif season == "3" or season == "2014" or season == "2015" or season == "2016":
+   seasons = [season]
+  else: 
+   self.print_stuff("Invalid Season, Defaulting to ALL")
+   seasons = ["3", "2014", "2015", "2016"]
+  
+  err = []
+  all_stats = []
+  all_substats = []
+
+  for x in seasons:
+   finished = False
+   while finished == False:
+    self.wait()
+    try:
+     cur_stats_all = self.w.get_stat_summary(summoner_id, season=x)
+        
+    
+    except riotwatcher.riotwatcher.LoLException as err:
+#       print str(err)
+     if str(err) == "Game data not found":
+      finished = True
+     elif str(err) == "Too many requests" or str(err) == "Unauthorized" or str(err) == "Blacklisted key":
+#         print "New Key" 
+      drop = False
+      if str(err) == "Blacklisted key":
+       self.print_stuff("Blacklisted key, using new key, dropping current.")
+       drop = True
+      if str(err) == "Unauthorized":
+       self.print_stuff("Unauthorized, using new key")
+      if len(keys)==1:
+       self.print_stuff("Too many requests, not enough keys.", error=True)
+       if hangwait == False:
+        break 
+       else:
+        time.sleep(5)
+      self.new_key(drop=drop)
+     
+     else:
+
+      self.print_stuff("%s, Summoner: %s" % (str(err), summoner_id), error= True)
+      break
+    else:
+     finished = True
+  
+
+   if cur_stats_all:       
+    for y in cur_stats_all["playerStatSummaries"]:
+     cur_stats = {}
+     cur_substats = {}
+     cur_stats['summonerId'] = summoner_id
+     cur_stats['season'] = x
+     for z in ['playerStatSummaryType', 'modifyDate', 'wins', 'losses']:
+      try:
+       cur_stats[z] = y[z]
+      except:
+       cur_stats[z] = None
+     all_stats.append(cur_stats)
+     if y["aggregatedStats"]:
+      if y["aggregatedStats"] != {}:
+       for z in y["aggregatedStats"].keys():
+        cur_substats = {}
+        cur_substats['summonerId'] = summoner_id
+        cur_substats['season'] = x
+        cur_substats['playerStatSummaryType'] = cur_stats['playerStatSummaryType']
+        cur_substats['aggregatedStat'] = z
+        cur_substats['aggregatedStatValue'] = y["aggregatedStats"][z]
+        all_substats.append(cur_substats)
+     
+        
+  try:
+   self.cursor.executemany(add_stats, all_stats)
+ #       print test_team
+  except mysql.connector.Error as err:
+   if err.errno != 1062 or suppress_duplicates == False:
+    self.print_stuff( "Error %s : %s" % (err.errno,summoner_id), error = True)
+  else:
+   self.print_stuff("Updated Stats")    
+  try:
+   self.cursor.executemany(add_substats, all_substats)
+ #       print test_team
+  except mysql.connector.Error as err:
+   if err.errno != 1062 or suppress_duplicates == False:
+    self.print_stuff( "Error %s : %s" % (err.errno,summoner_id), error = True)
+  else:
+   self.print_stuff("Updated Sub-Stats")    
+  self.cnx.commit() 
+        
+  
+
+  
+  
    
      
 
@@ -2431,7 +2562,33 @@ class Scraper:
        
      self.print_stuff("Finished %s of %s; %s" % (match_ids.index(x)+1,len(match_ids),x), header2=True)
      self.cnx.commit()
-          
+  
+  
+  
+  if table=="stats":
+   if summonerIds==False:
+    self.print_stuff("No Ids provided, defaulting to searching Summoner List")
+    self.cursor.execute("SELECT DISTINCT(summonerId) FROM summoner_list")
+    summoner_ids_raw = self.cursor.fetchall()
+    summoner_ids = [unicode(x[0]) for x in summoner_ids_raw] 
+   else:
+    summoner_ids = summonerIds
+   if allow_updates == False:
+    self.cursor.execute("SELECT DISTINCT(summonerId) FROM stats")
+    existing_ids_raw = self.cursor.fetchall()
+    existing_ids = [unicode(x[0]) for x in existing_ids_raw] 
+    
+    summoner_ids = list(set(summoner_ids) - set(existing_ids))
+   
+   for x in summoner_ids:
+    self.get_aggstats(summoner_id=x, season=season)   
+    if (summoner_ids.index(x)+1) % 10 == 0:
+     self.print_stuff("Finished %s of %s" % (summoner_ids.index(x)+1, len(summoner_ids)), progress=True)
+    
+    
+   self.print_stuff("Finished %s of %s" % (summoner_ids.index(x)+1, len(summoner_ids)), header2=True)
+   
+        
      
      
 

@@ -922,7 +922,10 @@ class Scraper:
    seasons = ["3", "2014", "2015", "2016"]
   elif season == "3" or season == "2014" or season == "2015" or season == "2016":
    seasons = [season]
-  else: 
+  elif isinstance(season, list):
+   all_l = ["3", "2014", "2015", "2016"]
+   seasons = list(set(all_l) - (set(all_l)-set(season)))
+  else:
    self.print_stuff("Invalid Season, Defaulting to ALL")
    seasons = ["3", "2014", "2015", "2016"]
   
@@ -1260,7 +1263,7 @@ class Scraper:
     summoner_ids = summonerIds   
    
    if allow_updates == False:
-    self.cursor.execute("SELECT DISTINCT(summonerId) FROM individual_history")
+    self.cursor.execute("SELECT DISTINCT(summonerId) FROM summoner_list")
     existing_ids_raw = self.cursor.fetchall()
     existing_ids = [unicode(x[0]) for x in existing_ids_raw]
     summoner_ids = list(set(summoner_ids)-set(existing_ids))

@@ -83,6 +83,19 @@ LoLS = LoL.Scraper(ssh = True, use_curses = False, rate_limiting = False)
 # additionally, if you do not supply with summonerIds, the function takes a look at the just_teams option. if just_teams is set to true
 # we query all summoner ids in the 'team roster' list and update all of them. if just_teams is False, we use all the summoner ids in the match_participants table [much longer]
 # allow_updates = True, will no longer skip 'existing entries' so that you can check to see if any people have played more matches. 
+# season must be set to "SEASON3", "SEASON2014", "SEASON2015", "SEASON2016", "PRESEASON3", "PRESEASON2014", "PRESEASON2015", "PRESEASON2016", or None.
+# end_time must be millisecond level epoch time -- 1457111882000 for example 
+
+
+
+# update_table("stats", summonerIds = False, season=None, allow_updates = False) -- summonerIds takes list ; []
+# this function adds the summary 'stats'  stats table. you can supply it with a list of summonerIds if you wish.
+# additionally, if you do not supply with summonerIds, the function takes at the summoner_list table (all the individual histories that have been updated)
+# season must be set to, None or "ALL" [they are equivalently treated by the function], other accepted values are "3", "2014", "2015", and "2016". 
+#     season also supports lists of seasons. you can supply season = ["3", "2015"], and only those will be run. Any invalid entries will be discarded 
+# allow_updates = True is not fully supported yet, please don't use. 
+
+
 
 
 

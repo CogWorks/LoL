@@ -647,7 +647,7 @@ class Scraper:
  
  #  if riotwatcher.RiotWatcher(key).can_make_request():
   self.wait()
-  if self.rate.lower() = "fast":
+  if self.rate.lower() == "fast":
    self.w = riotwatcher.RiotWatcher(self.key, limits=(riotwatcher.RateLimit(1500,10), riotwatcher.RateLimit(90000,600)))
   else:
    self.w = riotwatcher.RiotWatcher(self.key)

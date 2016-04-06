@@ -14,7 +14,8 @@ LoLS = LoL.Scraper(ssh = True, use_curses = False, rate_limiting = False)
 ##setting ssh = True uses the SSH = True ssh tunneling protocol from credentials.py, whereas False treats it as if its local host connection
 ##setting use_curses = True will print through curses rather than print..
 ##setting rate_limiting = True will check to see if the key can be used before ever call.
-
+##setting rate = "Fast" will change rate Limits to fast rate limit (1500 requests 10 seconds && 90000 requests 600 seconds) 
+##     default of slow (10 requests 10 seconds, 500 requests 600 seconds)
 
 
 # HOW TO USE.

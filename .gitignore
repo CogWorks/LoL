@@ -14,3 +14,11 @@ credentials-cogsci.py
 test2.py
 
 test.py
+
+season_dist.py
+
+*.ipynb
+
+skiplist.tsv
+
+test3.py

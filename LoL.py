@@ -872,9 +872,15 @@ class Scraper:
 
      if err == "Game data not found":
        err = []
+       self.print_stuff("Game data not found", error=True)
        return
      
-     
+     summoner_update = {}
+     summoner_update['summonerId'] = summoner_id
+     summoner_update['constr'] = end_time
+#      print summoner_update
+#      try:
+     self.cursor.execute(add_summoner, summoner_update)     
      
      ind_history = True 
      all_history = []
@@ -901,12 +907,7 @@ class Scraper:
        self.print_stuff("Updated Individual History")
      
 
-     summoner_update = {}
-     summoner_update['summonerId'] = summoner_id
-     summoner_update['constr'] = end_time
-#      print summoner_update
-#      try:
-     self.cursor.execute(add_summoner, summoner_update)
+
      self.cnx.commit()
  #       print test_team
     #  except mysql.connector.Error as err:

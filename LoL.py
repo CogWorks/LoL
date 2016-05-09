@@ -870,7 +870,7 @@ class Scraper:
       else:
        finished = True
 
-     if err == "Game data not found":
+     if str(err) == "Game data not found":
        err = []
        self.print_stuff("Game data not found", error=True)
        return

@@ -13,6 +13,10 @@ import requests
 import time
 import csv
 import curses
+from twisted.internet import task
+from twisted.internet import reactor
+
+
 
 from utils import todict
 import mysql.connector
@@ -88,11 +92,12 @@ class Scraper:
   else:
     print "Connected to %s database" % credentials.config()['database']
   self.cursor = self.cnx.cursor()
-  global keys
  
-  keys = credentials.keys
+  keys_temp = credentials.keys
+  
 
-  self.key = keys[0]
+  self.keydict = {x:[0,0] for x in keys_temp}
+  self.key = self.keydict.keys()[0]
   
   self.skipfiler = open('skiplist.tsv', "rb+")
   self.skiplist = self.skipfiler.read()
@@ -105,15 +110,47 @@ class Scraper:
    self.msgs = []
    self.errormsg = []
   
-  
-  
+  self.checkcount = 0
+  self.timeout = 10 # Ten seconds
+  self.initialize_reactor
 
+
+ def initialize_reactor(self):
+  l = task.LoopingCall(self.check_keys)
+  l.start(self.timeout) # call every ten seconds
+
+  reactor.run()
+
+
+
+ def check_keys(self):
+  self.checkcount += 1
+  if self.checkcount == 60:
+   tenmin = True
+   self.checkcount = 0 
+  else:
+   tenmin = False
+  if self.rate_limiting == True:
+   if tenmin == True:
+    self.keydict = {x:[0,0] for x in self.keydict.keys()}
+   else:
+    for k in self.keydict.keys():
+     self.keydict[k][0] = 0
+    
 
 
  def wait(self):
   if self.rate_limiting == True:
    while not self.w.can_make_request():
     time.sleep(1)
+   if self.rate == "Slow":
+    rate1 = 10
+    rate2 = 500
+   else:
+    rate1 = 1500
+    rate2 = 90000
+   if self.keydict[self.key][0] >= rate1 or self.keydict[self.key][1] >= rate2:
+    self.new_key()
     
  def write_to_skip(self, teams):
   with open('skiplist.tsv', "ab+") as skipfilew:
@@ -614,7 +651,8 @@ class Scraper:
      
     
    
-    
+
+ 
     
 
  def new_key (self, t=None, drop=False):
@@ -624,24 +662,24 @@ class Scraper:
   if t:
    self.key = t
  
-  if self.key == keys[len(keys)-1]:
+  if self.key == self.keydict.keys()[len(self.keydict)-1]:
    if drop == True:
-    del keys[len(keys)-1]
-   self.key = keys[0]
+    self.keydict.remove(self.key)
+   self.key = self.keydict.keys()[0]
   else:
-   if len(keys)>1:
+   if len(self.keydict)>1:
     if drop == True:
-     new_key = keys[keys.index(self.key)+1] 
-     del keys[keys.index(key)]
+     new_key = self.keydict.keys()[self.keydict.keys().index(self.key)+1] 
+     self.keydict.remove(self.key)
      self.key = new_key
     else:
-     self.key = keys[keys.index(self.key)+1] 
+     self.key = self.keydict.keys()[self.keydict.keys().index(self.key)+1] 
    else:
     self.print_stuff("Only one key.")
     if drop == True:
      self.print_stuff("Can't drop only key. Breaking.")
-     stop
-    self.key = keys[0]
+     self.wait()
+    self.key = self.keydict.keys()[0]
  
  
  
@@ -855,7 +893,7 @@ class Scraper:
          drop = True
         if str(err) == "Unauthorized":
          self.print_stuff("Unauthorized, using new key")
-        if len(keys)==1:
+        if len(self.keydict)==1:
          self.print_stuff("Too many requests, not enough keys.", error=True)
          if hangwait == False:
           break 
@@ -959,7 +997,7 @@ class Scraper:
        drop = True
       if str(err) == "Unauthorized":
        self.print_stuff("Unauthorized, using new key")
-      if len(keys)==1:
+      if len(self.keydict)==1:
        self.print_stuff("Too many requests, not enough keys.", error=True)
        if hangwait == False:
         break 
@@ -1033,7 +1071,7 @@ class Scraper:
   if feedback == "quiet" or feedback == "silent":
    suppress_duplicates = True
   self.feedback = feedback
-  self.key = keys[0]
+  self.key = self.keydict.keys()[0]
   self.new_key()
 
   if create== True:
@@ -1353,7 +1391,7 @@ class Scraper:
           service += 1
          if str(err) == "Unauthorized" or "Internal server error":
           self.print_stuff("Unauthorized, using new key")
-         if len(keys)==1:
+         if len(self.keydict)==1:
           self.print_stuff("Too many requests, not enough keys.")
           if hangwait == False:
            break 
@@ -1551,7 +1589,7 @@ class Scraper:
           drop = True
          if str(err) == "Unauthorized":
           self.print_stuff("Unauthorized, using new key")
-         if len(keys)==1:
+         if len(self.keydict)==1:
           self.print_stuff("Too many requests, not enough keys.", error=True)
           if hangwait == False:
            break 
@@ -1697,7 +1735,7 @@ class Scraper:
           drop = True
          if str(err) == "Unauthorized":
           self.print_stuff("Unauthorized, using new key")
-         if len(keys)==1:
+         if len(self.keydict)==1:
           self.print_stuff("Too many requests, not enough keys.", error=True)
           if hangwait == False:
            break 

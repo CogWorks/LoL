@@ -116,10 +116,10 @@ class Scraper:
 
 
  def initialize_reactor(self):
-  l = task.LoopingCall(self.check_keys)
-  l.start(self.timeout) # call every ten seconds
+  self.l = task.LoopingCall(self.check_keys)
+  self.l.start(self.timeout) # call every ten seconds
 
-  reactor.run()
+  self.reactor.run()
 
 
 
@@ -2188,6 +2188,7 @@ class Scraper:
   self.cnx.close()
   if ssh == True:
    credentials.server.stop()
+  self.reactor.stop()
 
 
 

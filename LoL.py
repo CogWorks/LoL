@@ -664,13 +664,13 @@ class Scraper:
  
   if self.key == self.keydict.keys()[len(self.keydict)-1]:
    if drop == True:
-    self.keydict.remove(self.key)
+    del self.keydict[self.key]
    self.key = self.keydict.keys()[0]
   else:
    if len(self.keydict)>1:
     if drop == True:
      new_key = self.keydict.keys()[self.keydict.keys().index(self.key)+1] 
-     self.keydict.remove(self.key)
+     del self.keydict[self.key]
      self.key = new_key
     else:
      self.key = self.keydict.keys()[self.keydict.keys().index(self.key)+1] 

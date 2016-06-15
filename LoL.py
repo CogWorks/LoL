@@ -15,6 +15,7 @@ import csv
 import curses
 from twisted.internet import task
 from twisted.internet import reactor
+from os import path
 
 
 
@@ -99,7 +100,7 @@ class Scraper:
   self.keydict = {x:[0,0] for x in keys_temp}
   self.key = self.keydict.keys()[0]
   
-  self.skipfiler = open('skiplist.tsv', "rb+")
+  self.skipfiler = open(path.join(path.dirname(__file__), 'skiplist.tsv'), "rb+")
   self.skiplist = self.skipfiler.read()
   self.skipfiler.close()
   self.old_count = 0
@@ -153,7 +154,7 @@ class Scraper:
     self.new_key()
     
  def write_to_skip(self, teams):
-  with open('skiplist.tsv', "ab+") as skipfilew:
+  with open(path.join(path.dirname(__file__), 'skiplist.tsv'), "ab+") as skipfilew:
    for x in teams:
     skipfilew.write("%s\n" % (x))
   skipfilew.close()

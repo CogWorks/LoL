@@ -1,7 +1,7 @@
 
 from sshtunnel import SSHTunnelForwarder
 
-##Make sure to make a copy of this file, name it credentials.py and change the appropriate things
+##Make sure to make a copy of this file, name it credentials.py, place it in the subfolder 'lol' and change the appropriate things
 
 ##if you are locally running the scripts, use ssh=False
 

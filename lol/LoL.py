@@ -50,7 +50,7 @@ def strip_to_list (data_raw):
 class Scraper:
  
  
- def __init__(self, ssh=True, use_curses=False, rate_limiting=True, rate = "Slow"):
+ def __init__(self, ssh=True, use_curses=False, rate_limiting=True, rate = "Slow", skipfile = False):
   self.rate_limiting = rate_limiting
   self.rate = rate
   if ssh == "True":
@@ -100,7 +100,10 @@ class Scraper:
   self.keydict = {x:[0,0] for x in keys_temp}
   self.key = self.keydict.keys()[0]
   
-  self.skipfiler = open(path.join(path.dirname(__file__), 'skiplist.tsv'), "rb+")
+  if skipfile:
+    self.skipfiler = open(path.join(skipfile,'skiplist.tsv'),"rb+")
+  else:
+    self.skipfiler = open(path.join(os.getwd(), 'skiplist.tsv'), "rb+")
   self.skiplist = self.skipfiler.read()
   self.skipfiler.close()
   self.old_count = 0

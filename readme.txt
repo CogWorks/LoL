@@ -1,21 +1,37 @@
 Make copy of credentials-template.py and rename it credentials.py
 create a file called skiplist.tsv
 
+
+you can run LoL.py from command line to do certain things. however it is primarily optimized for importing as a module
 python LoL.py -s [True/False]
 
 -s : option declares whether ssh is being used or not
 
 
-or you can
-import LoL
 
-LoLS = LoL.Scraper(ssh = True, use_curses = False, rate_limiting = False)
+To Import as Module:
+clone the repo. 
+change directory to the repo.
+
+
+--python setup.py install
+--easy_install LoL
+
+then you should be able to add the following line to gain access to the lol module
+from lol import LoL
+
+
+
+USAGE: 
+
+LoLS = LoL.Scraper(ssh = True, use_curses = False, rate_limiting = False, skipfile = False)
 
 ##setting ssh = True uses the SSH = True ssh tunneling protocol from credentials.py, whereas False treats it as if its local host connection
 ##setting use_curses = True will print through curses rather than print..
 ##setting rate_limiting = True will check to see if the key can be used before ever call.
 ##setting rate = "Fast" will change rate Limits to fast rate limit (1500 requests 10 seconds && 90000 requests 600 seconds) 
 ##     default of slow (10 requests 10 seconds, 500 requests 600 seconds)
+##setting skipfile to a location will have the module version look for the skiplist.tsv file you created in a location you choose. Otherwise it will assume the file is in your working directory. 
 
 
 # HOW TO USE.

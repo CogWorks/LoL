@@ -1,9 +1,10 @@
+
 import os.path
 
 from setuptools import setup, find_packages
 from pip.req import parse_requirements
 
-__version__ = '1.0'
+__version__ = '1.0.1'
 
 descr_file = os.path.join(os.path.dirname(__file__), 'readme.txt')
 setup_dir = os.path.dirname(os.path.realpath(__file__))
@@ -13,10 +14,8 @@ install_reqs = parse_requirements(path_req, session=False)
 reqs = [str(ir.req) for ir in install_reqs]
 
 setup(
-    name='LoL',
+    name='lol',
     version=__version__,
-    
-    packages=['lol'],
 
     description='LoL Scraper allows you to use Riot-Watcher to scrape into MySQL.',
     long_description=open(descr_file).read(),
@@ -30,5 +29,6 @@ setup(
         'Topic :: Games/Entertainment :: Role-Playing'
     ],
     license='RPI',
+    packages = find_packages(),
     install_requires=reqs,
  )

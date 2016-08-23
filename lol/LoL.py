@@ -16,6 +16,7 @@ import curses
 from twisted.internet import task
 from twisted.internet import reactor
 from os import path
+import os
 
 
 
@@ -103,7 +104,7 @@ class Scraper:
   if skipfile:
     self.skipfiler = open(path.join(skipfile,'skiplist.tsv'),"rb+")
   else:
-    self.skipfiler = open(path.join(os.getwd(), 'skiplist.tsv'), "rb+")
+    self.skipfiler = open(path.join(os.getcwd(), 'skiplist.tsv'), "rb+")
   self.skiplist = self.skipfiler.read()
   self.skipfiler.close()
   self.old_count = 0

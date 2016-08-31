@@ -19,7 +19,6 @@ from os import path
 import os
 
 
-
 from utils import todict
 import mysql.connector
 from mysql.connector import errorcode
@@ -51,7 +50,7 @@ def strip_to_list (data_raw):
 class Scraper:
  
  
- def __init__(self, ssh=True, use_curses=False, rate_limiting=True, rate = "Slow", skipfile = False):
+ def __init__(self, ssh=True, use_curses=False, rate_limiting=True, rate = "Slow", skipfile=False):
   self.rate_limiting = rate_limiting
   self.rate = rate
   if ssh == "True":
@@ -100,7 +99,6 @@ class Scraper:
 
   self.keydict = {x:[0,0] for x in keys_temp}
   self.key = self.keydict.keys()[0]
-  
   if skipfile:
     self.skipfiler = open(path.join(skipfile,'skiplist.tsv'),"rb+")
   else:
@@ -766,7 +764,7 @@ class Scraper:
      try:
       self.cursor.executemany(add_league, by_leagues)
      except mysql.connector.Error as err:
-      if err.errno != 1062 or suppress_duplicates == False:
+      if err.errno != 1062 or self.suppress_duplicates == False:
        self.print_stuff("%s - Member-Tiers" % err.msg, error = True)
 
      else:
@@ -944,7 +942,7 @@ class Scraper:
        self.cursor.executemany(add_history, all_history)
  #       print test_team
       except mysql.connector.Error as err:
-       if err.errno != 1062 or suppress_duplicates == False:
+       if err.errno != 1062 or self.suppress_duplicates == False:
         self.print_stuff( "Error %s : %s" % (err.errno,summoner_id), error = True)
       else:
        self.print_stuff("Updated Individual History")
@@ -954,7 +952,7 @@ class Scraper:
      self.cnx.commit()
  #       print test_team
     #  except mysql.connector.Error as err:
-#       if err.errno != 1062 or suppress_duplicates == False:
+#       if err.errno != 1062 or self.suppress_duplicates == False:
 #        self.print_stuff( "Error %s : %s -- Summoner List" % (err.errno,summoner_id), error = True)
 #        
         
@@ -1046,7 +1044,7 @@ class Scraper:
    self.cursor.executemany(add_stats, all_stats)
  #       print test_team
   except mysql.connector.Error as err:
-   if err.errno != 1062 or suppress_duplicates == False:
+   if err.errno != 1062 or self.suppress_duplicates == False:
     self.print_stuff( "Error %s : %s" % (err.errno,summoner_id), error = True)
   else:
    self.print_stuff("Updated Stats")    
@@ -1054,7 +1052,7 @@ class Scraper:
    self.cursor.executemany(add_substats, all_substats)
  #       print test_team
   except mysql.connector.Error as err:
-   if err.errno != 1062 or suppress_duplicates == False:
+   if err.errno != 1062 or self.suppress_duplicates == False:
     self.print_stuff( "Error %s : %s" % (err.errno,summoner_id), error = True)
   else:
    self.print_stuff("Updated Sub-Stats")    
@@ -1078,6 +1076,7 @@ class Scraper:
   self.feedback = feedback
   self.key = self.keydict.keys()[0]
   self.new_key()
+  self.suppress_duplicates = suppress_duplicates
 
   if create== True:
    self.create_tables()
@@ -1104,7 +1103,7 @@ class Scraper:
    except mysql.connector.Error as err:
    ##error 1062 is duplicate entry error for mysql
     if err.errno == 1062:
-     if suppress_duplicates == False :
+     if self.suppress_duplicates == False :
       self.print_stuff("Error %s" % (err.errno), error=True)
     else:
      self.print_stuff("Error %s" % (err.errno), error=True)
@@ -1142,7 +1141,7 @@ class Scraper:
    except mysql.connector.Error as err:
    ##error 1062 is duplicate entry error for mysql
     if err.errno == 1062:
-     if suppress_duplicates == False:
+     if self.suppress_duplicates == False:
       self.print_stuff("Error %s" % (err.errno), error = True)
     else:
      self.print_stuff("Error %s" % (err.errno), error = True)
@@ -1215,7 +1214,7 @@ class Scraper:
      try:
       self.cursor.executemany(add_league, by_leagues)
      except mysql.connector.Error as err:
-      if err.errno != 1062 or suppress_duplicates == False:
+      if err.errno != 1062 or self.suppress_duplicates == False:
        self.print_stuff(err.errno, error = True)
 
 
@@ -1452,7 +1451,7 @@ class Scraper:
         try:
          self.cursor.execute(add_team, cur_team)
         except mysql.connector.Error as err:
-         if err.errno != 1062 or suppress_duplicates == False:
+         if err.errno != 1062 or self.suppress_duplicates == False:
           self.print_stuff("%s, Team: %s" % (err.errno, y), error= True)
    #       print add_team % cur_team
         else:
@@ -1492,7 +1491,7 @@ class Scraper:
          self.cursor.executemany(add_team_history, all_teams)
    #       print test_team
         except mysql.connector.Error as err:
-         if err.errno != 1062 or suppress_duplicates == False:
+         if err.errno != 1062 or self.suppress_duplicates == False:
           self.print_stuff("Error %s" % err.errno, error = True)
         else:
          self.print_stuff("Updated Team-History")
@@ -1540,7 +1539,7 @@ class Scraper:
          self.cursor.executemany(add_team_roster, all_teams)
    #       print test_team
         except mysql.connector.Error as err:
-         if err.errno != 1062 or suppress_duplicates == False:
+         if err.errno != 1062 or self.suppress_duplicates == False:
           self.print_stuff("Error %s" % err.errno, error = True)
         else:
          self.print_stuff("Updated Team-Roster")
@@ -1557,7 +1556,7 @@ class Scraper:
         
     if checkTeams==True:
      self.print_stuff("Checking Teams")
-     self.update_table("checkteams", feedback=feedback, suppress_duplicates = suppress_duplicates, ignore_skiplist=ignore_skiplist, allow_updates=allow_updates)
+     self.update_table("checkteams", feedback=feedback, suppress_duplicates = self.suppress_duplicates, ignore_skiplist=ignore_skiplist, allow_updates=allow_updates)
     
 
   if table=="iterate":
@@ -1620,13 +1619,13 @@ class Scraper:
  #         print v
       self.print_stuff("Finished %s of %s, %s teams found." % (int(stop-iteratestart), int(iterate), len(team_ids)), progress = True)
      self.print_stuff("Updating Team Table", header2 = True)
-     self.update_table("team", teamIds = team_ids, checkTeams = checkTeams, feedback=feedback, suppress_duplicates = suppress_duplicates, allow_updates = allow_updates, ignore_skiplist=ignore_skiplist)  
+     self.update_table("team", teamIds = team_ids, checkTeams = checkTeams, feedback=feedback, suppress_duplicates = self.suppress_duplicates, allow_updates = allow_updates, ignore_skiplist=ignore_skiplist)  
  
  
   if table=="all":
-   self.update_table("challenger", feedback=feedback, queue= queue, suppress_duplicates = suppress_duplicates)
-   self.update_table("master", feedback=feedback, queue = queue, suppress_duplicates = suppress_duplicates)
-   self.update_table("team", checkTeams =True, feedback=feedback, suppress_duplicates = suppress_duplicates, allow_updates = allow_updates, ignore_skiplist=ignore_skiplist)
+   self.update_table("challenger", feedback=feedback, queue= queue, suppress_duplicates = self.suppress_duplicates)
+   self.update_table("master", feedback=feedback, queue = queue, suppress_duplicates = self.suppress_duplicates)
+   self.update_table("team", checkTeams =True, feedback=feedback, suppress_duplicates = self.suppress_duplicates, allow_updates = allow_updates, ignore_skiplist=ignore_skiplist)
      
   if table=="match":
     add_match = ("INSERT IGNORE INTO matches "
@@ -1775,7 +1774,7 @@ class Scraper:
        self.cursor.execute(add_match, cur_match)
       except mysql.connector.Error as err:
 
-        if err.errno != 1062 or suppress_duplicates == False:
+        if err.errno != 1062 or self.suppress_duplicates == False:
          self.print_stuff("%s, Match: %s -- Match" % (err.errno, x), error= True)
   #       print add_team % cur_team
       else:
@@ -1809,7 +1808,7 @@ class Scraper:
       try:
        self.cursor.executemany(add_match_teams, all_match_teams)
       except mysql.connector.Error as err:
-       if err.errno != 1062 or suppress_duplicates == False:
+       if err.errno != 1062 or self.suppress_duplicates == False:
         self.print_stuff("%s, Match: %s -- Teams" % (err.errno, x), error=True)
       else:
        self.print_stuff("Updated Match-Teams")
@@ -1818,7 +1817,7 @@ class Scraper:
       try:
        self.cursor.executemany(add_match_bans, all_match_bans)
       except mysql.connector.Error as err:
-       if err.errno != 1062 or suppress_duplicates == False:
+       if err.errno != 1062 or self.suppress_duplicates == False:
         self.print_stuff("%s, Match: %s -- Bans" % (err.errno, x), error=True)
       else:
        self.print_stuff("Updated Match-Bans")
@@ -1963,7 +1962,7 @@ class Scraper:
           self.cursor.executemany(add_match_timeline_event, timeline_events)
 
          except mysql.connector.Error as err:
-          if err.errno != 1062 or suppress_duplicates == False:
+          if err.errno != 1062 or self.suppress_duplicates == False:
            self.print_stuff("%s, Match: %s, Timeframe: %s-- Timeline-Events" % (err.errno, x, cur_match_timeline_raw["frames"].index(y)), error=True)
          else:
           self.print_stuff("Updated Timeline-Events")
@@ -1974,7 +1973,7 @@ class Scraper:
            self.cursor.executemany(add_match_timeline_event_assist, assists)
 
           except mysql.connector.Error as err:
-           if err.errno != 1062 or suppress_duplicates == False:
+           if err.errno != 1062 or self.suppress_duplicates == False:
             self.print_stuff("%s, Match: %s, Timeframe: %s-- Timeline-Events-Assists" % (err.errno, x, cur_match_timeline_raw["frames"].index(y)),error=True)
           else:
            self.print_stuff("Updated Timeline-Assists")
@@ -1985,7 +1984,7 @@ class Scraper:
         try:
          self.cursor.executemany(add_match_timeline, cur_timeline)
         except mysql.connector.Error as err:
-         if err.errno != 1062 or suppress_duplicates == False:
+         if err.errno != 1062 or self.suppress_duplicates == False:
           self.print_stuff("%s, Match: %s, Timeframe: %s-- Timeline" % (err.errno, x, cur_match_timeline_raw["frames"].index(y)), error=True)
         else:
          self.print_stuff("Updated Timeline")
@@ -2041,7 +2040,7 @@ class Scraper:
 #            try:
 #             self.cursor.execute(add_match_participant_mastery, cur_mastery)
 #            except mysql.connector.Error as err:
-#             if err.errno != 1062 or suppress_duplicates == False:
+#             if err.errno != 1062 or self.suppress_duplicates == False:
 #              self.print_stuff("%s, Match: %s, Player: %s -- Mastery" % (err.errno, x, cur_match_pi[y["participantId"]]["summonerId"]),error=True)
 #    #          print add_team % cur_team
 #            else:
@@ -2071,7 +2070,7 @@ class Scraper:
              # try:
 #               self.cursor.execute(add_match_participant_delta, cur_delta)
 #              except mysql.connector.Error as err:
-#               if err.errno != 1062 or suppress_duplicates == False:
+#               if err.errno != 1062 or self.suppress_duplicates == False:
 #                self.print_stuff("%s, Match: %s, Player: %s -- Delta" % (err.errno, x, cur_match_pi[y["participantId"]]["summonerId"]),error=True)
 #      #          print add_team % cur_team
 #              else:
@@ -2091,7 +2090,7 @@ class Scraper:
       try:
        self.cursor.executemany(add_match_participant_rune, runes)
       except mysql.connector.Error as err:
-       if err.errno != 1062 or suppress_duplicates == False:
+       if err.errno != 1062 or self.suppress_duplicates == False:
         self.print_stuff("%s, Match: %s -- Rune" % (err.errno, x),error=True)
 #          print add_team % cur_team
       else:
@@ -2100,7 +2099,7 @@ class Scraper:
       try:
        self.cursor.executemany(add_match_participant_mastery, masteries)
       except mysql.connector.Error as err:
-       if err.errno != 1062 or suppress_duplicates == False:
+       if err.errno != 1062 or self.suppress_duplicates == False:
         self.print_stuff("%s, Match: %s -- Mastery" % (err.errno, x),error=True)
 #          print add_team % cur_team
       else:
@@ -2109,7 +2108,7 @@ class Scraper:
       try:
        self.cursor.executemany(add_match_participant_delta, deltas)
       except mysql.connector.Error as err:
-       if err.errno != 1062 or suppress_duplicates == False:
+       if err.errno != 1062 or self.suppress_duplicates == False:
         self.print_stuff("%s, Match: %s -- Delta" % (err.errno, x),error=True)
 #          print add_team % cur_team
       else:
@@ -2120,7 +2119,7 @@ class Scraper:
  #       print "Try"
     
       except mysql.connector.Error as err:
-       if err.errno != 1062 or suppress_duplicates == False:
+       if err.errno != 1062 or self.suppress_duplicates == False:
         self.print_stuff("%s, Match: %s-- Participant" % (err.errno, x), error=True)
  #       print add_team % cur_team
       else:
@@ -2132,7 +2131,7 @@ class Scraper:
 #   #       print "Try"
 #      
 #        except mysql.connector.Error as err:
-#         if err.errno != 1062 or suppress_duplicates == False:
+#         if err.errno != 1062 or self.suppress_duplicates == False:
 #          self.print_stuff("%s, Match: %s, Player: %s -- Participant" % (err.errno, x, cur_match_pi[y["participantId"]]["summonerId"]), error=True)
 #   #       print add_team % cur_team
 #        else:
@@ -2141,7 +2140,7 @@ class Scraper:
         
         
      else:
-      if suppress_duplicates == False:
+      if self.suppress_duplicates == False:
        self.print_stuff("Duplicate Match; %s" % (x))
 
      

@@ -14,8 +14,13 @@ clone the repo.
 change directory to the repo.
 
 
---python setup.py install
---easy_install LoL
+$ python setup.py install
+$ easy_install LoL
+
+if "easy_install LoL" does not immediately work, try:
+$ pip install LoL
+
+
 
 then you should be able to add the following line to gain access to the lol module
 from lol import LoL

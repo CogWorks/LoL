@@ -145,15 +145,16 @@ class Scraper:
  def wait(self):
   if self.rate_limiting == True:
    while not self.w.can_make_request():
-    time.sleep(1)
+    time.sleep(0.1)
    if self.rate == "Slow":
     rate1 = 10
     rate2 = 500
    else:
-    rate1 = 1500
-    rate2 = 90000
+    rate1 = 3000
+    rate2 = 180000
    if self.keydict[self.key][0] >= rate1 or self.keydict[self.key][1] >= rate2:
     self.new_key()
+    
     
  def write_to_skip(self, teams):
   with open(path.join(path.dirname(__file__), 'skiplist.tsv'), "ab+") as skipfilew:
@@ -839,7 +840,7 @@ class Scraper:
       self.print_stuff("Unauthorized, checking individual")
       for s in team_ids[(x*10):stop]:
        if team == False:
-        time.sleep(5)
+        time.sleep(0.5)
        unauthorized_key=False
  #       print team
        cur_entry = self.get_leagues(team_ids=[s], x=x, stop=stop, key=self.key, unauthorized_cycle=True, team=team)
@@ -888,7 +889,7 @@ class Scraper:
  #       print str(err)
        if str(err) == "Game data not found":
         finished = True
-       elif str(err) == "Too many requests" or str(err) == "Unauthorized" or str(err) == "Blacklisted key":
+       elif (str(err) == "Too many requests" and 'Retry-After' in err.headers) or str(err) == "Unauthorized" or str(err) == "Blacklisted key":
 #         print "New Key" 
         drop = False
         if str(err) == "Blacklisted key":
@@ -901,9 +902,10 @@ class Scraper:
          if hangwait == False:
           break 
          else:
-          time.sleep(5)
+          time.sleep(0.5)
         self.new_key(drop=drop)
-       
+       elif (str(err) == "Too many requests" and 'Retry-After' not in err.headers):
+        time.sleep(0.01)       
        else:
 
         self.print_stuff("%s, Summoner: %s" % (str(err), summoner_id), error= True)
@@ -992,7 +994,7 @@ class Scraper:
 #       print str(err)
      if str(err) == "Game data not found":
       finished = True
-     elif str(err) == "Too many requests" or str(err) == "Unauthorized" or str(err) == "Blacklisted key":
+     elif (str(err) == "Too many requests" and 'Retry-After' in err.headers) or str(err) == "Unauthorized" or str(err) == "Blacklisted key":
 #         print "New Key" 
       drop = False
       if str(err) == "Blacklisted key":
@@ -1005,9 +1007,10 @@ class Scraper:
        if hangwait == False:
         break 
        else:
-        time.sleep(5)
+        time.sleep(0.5)
       self.new_key(drop=drop)
-     
+     elif (str(err) == "Too many requests" and 'Retry-After' not in err.headers):
+      time.sleep(0.01)
      else:
 
       self.print_stuff("%s, Summoner: %s" % (str(err), summoner_id), error= True)
@@ -1383,7 +1386,7 @@ class Scraper:
        teams_data = self.w.get_teams(team_ids[(x*10):stop])
      
       except riotwatcher.riotwatcher.LoLException as err:
-       if str(err) == "Too many requests" or str(err) == "Service unavailable" or str(err) == "Unauthorized" or str(err) == "Internal server error" or str(err) == "Blacklisted key":
+       if (str(err) == "Too many requests" and 'Retry-After' in err.headers) or str(err) == "Service unavailable" or str(err) == "Unauthorized" or str(err) == "Internal server error" or str(err) == "Blacklisted key":
  #         print "New Key" 
          drop = False
          if str(err) == "Blacklisted key":
@@ -1400,9 +1403,10 @@ class Scraper:
           if hangwait == False:
            break 
           else:
-           time.sleep(5)
+           time.sleep(0.5)
          self.new_key(drop = drop)
-        
+       elif (str(err) == "Too many requests" and 'Retry-After' not in err.headers):
+        time.sleep(0.01) 
        else:
         self.print_stuff("%s, Teams: %s" % (str(err), team_ids[(x*10):stop]), error= True)
         break
@@ -1585,7 +1589,7 @@ class Scraper:
   #       print str(err)
         if str(err) == "Game data not found":
          finished = True
-        elif str(err) == "Too many requests" or str(err) == "Unauthorized" or str(err) == "Blacklisted key":
+        elif (str(err) == "Too many requests" and 'Retry-After' in err.headers) or str(err) == "Unauthorized" or str(err) == "Blacklisted key":
  #         print "New Key" 
          drop = False
          if str(err) == "Blacklisted key":
@@ -1598,9 +1602,10 @@ class Scraper:
           if hangwait == False:
            break 
           else:
-           time.sleep(5)
+           time.sleep(0.5)
          self.new_key(drop=drop)
-        
+        elif (str(err) == "Too many requests" and 'Retry-After' not in err.headers):
+         time.sleep(0.01)
         else:
 
          self.print_stuff("%s, Team: %s" % (str(err), ids), error= True)
@@ -1731,7 +1736,7 @@ class Scraper:
        cur_match_raw = self.w.get_match( x, region=None, include_timeline=timeline)
      
       except riotwatcher.riotwatcher.LoLException as err:
-       if str(err) == "Too many requests" or str(err) == "Unauthorized" or str(err) == "Blacklisted key":
+       if (str(err) == "Too many requests" and 'Retry-After' in err.headers) or str(err) == "Unauthorized" or str(err) == "Blacklisted key":
  #         print "New Key" 
          drop = False
          if str(err) == "Blacklisted key":
@@ -1744,9 +1749,10 @@ class Scraper:
           if hangwait == False:
            break 
           else:
-           time.sleep(5)
+           time.sleep(0.5)
          self.new_key(drop=drop)
-        
+       elif (str(err) == "Too many requests" and 'Retry-After' not in err.headers):
+        time.sleep(0.01) 
        else:
         self.print_stuff("%s, Match: %s -- Request" % (str(err), x),error=True)
         break

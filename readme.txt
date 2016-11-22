@@ -20,15 +20,30 @@ $ easy_install LoL
 if "easy_install LoL" does not immediately work, try:
 $ pip install LoL
 
-may need to run:
-$ sudo apt-get install libmysqlclient-dev
-if you get "EnvironmentError: mysql_config not found"
-if your ubuntu machine doesnt have cffi
-$ sudo apt-get install python-cffi
+
+
 
 
 then you should be able to add the following line to gain access to the lol module
 from lol import LoL
+
+Troubleshooting Install:
+may need to run:
+$ sudo apt-get install libmysqlclient-dev
+if you get "EnvironmentError: mysql_config not found"
+
+if your machine does not have cryptography:
+For Debian and Ubuntu, the following command will ensure that the required dependencies are installed:
+
+$ sudo apt-get install build-essential libssl-dev libffi-dev python-dev
+For Fedora and RHEL-derivatives, the following command will ensure that the required dependencies are installed:
+
+$ sudo yum install gcc libffi-devel python-devel openssl-devel
+You should now be able to build and install cryptography with the usual
+
+$ pip install cryptography
+
+
 
 
 

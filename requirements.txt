@@ -6,3 +6,4 @@ mysqlclient>=1.3.7
 PyOpenSSL
 sshtunnel
 argparse
+service_identity

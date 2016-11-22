@@ -23,6 +23,8 @@ $ pip install LoL
 may need to run:
 $ sudo apt-get install libmysqlclient-dev
 if you get "EnvironmentError: mysql_config not found"
+if your ubuntu machine doesnt have cffi
+$ sudo apt-get install python-cffi
 
 
 then you should be able to add the following line to gain access to the lol module

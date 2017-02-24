@@ -1853,7 +1853,8 @@ class Scraper:
       if "timeline" in cur_match_raw:
        cur_match_timeline_raw = cur_match_raw["timeline"]   
        intervals = cur_match_timeline_raw["frameInterval"]
-    
+       timeline_events = []
+       assists = []   
        for y in cur_match_timeline_raw["frames"]:
 
         cur_timeline = []
@@ -1891,8 +1892,7 @@ class Scraper:
    #      timeline_events = []
   #       print x
         if "events" in y:
-         timeline_events = []
-         assists = []
+
 
          for z in y["events"]:
           cur_timeline_event = {}
@@ -1964,25 +1964,7 @@ class Scraper:
 
    #       print timeline_events 
 
-         try:
-          self.cursor.executemany(add_match_timeline_event, timeline_events)
 
-         except mysql.connector.Error as err:
-          if err.errno != 1062 or self.suppress_duplicates == False:
-           self.print_stuff("%s, Match: %s, Timeframe: %s-- Timeline-Events" % (err.errno, x, cur_match_timeline_raw["frames"].index(y)), error=True)
-         else:
-          self.print_stuff("Updated Timeline-Events")
-         
-         if assists != []:
-          try:
-   #         print assists
-           self.cursor.executemany(add_match_timeline_event_assist, assists)
-
-          except mysql.connector.Error as err:
-           if err.errno != 1062 or self.suppress_duplicates == False:
-            self.print_stuff("%s, Match: %s, Timeframe: %s-- Timeline-Events-Assists" % (err.errno, x, cur_match_timeline_raw["frames"].index(y)),error=True)
-          else:
-           self.print_stuff("Updated Timeline-Assists")
     #       stop
     
        
@@ -1999,7 +1981,26 @@ class Scraper:
       
       
    #       if killerid == 0, Minion
+       if timeline_events != []:
+         try:
+          self.cursor.executemany(add_match_timeline_event, timeline_events)
 
+         except mysql.connector.Error as err:
+          if err.errno != 1062 or self.suppress_duplicates == False:
+           self.print_stuff("%s, Match: %s, Timeframe: %s-- Timeline-Events" % (err.errno, x, cur_match_timeline_raw["frames"].index(y)), error=True)
+         else:
+          self.print_stuff("Updated Timeline-Events")
+
+       if assists != []:
+          try:
+    #         print assists
+           self.cursor.executemany(add_match_timeline_event_assist, assists)
+
+          except mysql.connector.Error as err:
+           if err.errno != 1062 or self.suppress_duplicates == False:
+            self.print_stuff("%s, Match: %s, Timeframe: %s-- Timeline-Events-Assists" % (err.errno, x, cur_match_timeline_raw["frames"].index(y)),error=True)
+          else:
+           self.print_stuff("Updated Timeline-Assists")
        self.print_stuff("Finished Timeline")
       else:
        self.print_stuff("No Timeline Data; %s" % (x))

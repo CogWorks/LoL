@@ -1,5 +1,5 @@
 requests
-riotwatcher>=1.3.2
+git+https://github.com/CogWorks/Riot-Watcher.git
 Twisted>=16.0.0
 mysql-connector-python-rf==2.1.3
 mysqlclient>=1.3.7

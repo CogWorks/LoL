@@ -12,7 +12,7 @@ path_req = os.path.join(setup_dir, 'requirements.txt')
 install_reqs = parse_requirements(path_req, session=False)
 
 reqs = [str(ir.req) for ir in install_reqs]
-reqs = reqs.append('riotwatcher=1.3.3')
+
 setup(
     name='lol',
     version=__version__,
@@ -31,7 +31,4 @@ setup(
     license='RPI',
     packages = find_packages(),
     install_requires=reqs,
-        dependency_links=[
-        'https://github.com/CogWorks/Riot-Watcher/tarball/master#egg=riotwatcher-1.3.3'
-    ],
  )

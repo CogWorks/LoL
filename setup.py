@@ -29,6 +29,9 @@ setup(
         'Topic :: Games/Entertainment :: Role-Playing'
     ],
     license='RPI',
+    dependency_links=[
+        'git+https://github.com/CogWorks/Riot-Watcher.git'
+    ]
     packages = find_packages(),
     install_requires=reqs,
  )

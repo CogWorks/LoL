@@ -6,13 +6,13 @@ from pip.req import parse_requirements
 
 __version__ = '1.0.2'
 
-descr_file = os.path.join(os.path.dirname(__file__), 'readme.txt')
+descr_file = os.path.join(os.path.dirname(__file__), 'readme.rst')
 setup_dir = os.path.dirname(os.path.realpath(__file__))
 path_req = os.path.join(setup_dir, 'requirements.txt')
 install_reqs = parse_requirements(path_req, session=False)
 
 reqs = [str(ir.req) for ir in install_reqs]
-
+reqs = reqs.append('riotwatcher=1.3.2')
 setup(
     name='lol',
     version=__version__,
@@ -29,9 +29,9 @@ setup(
         'Topic :: Games/Entertainment :: Role-Playing'
     ],
     license='RPI',
-    dependency_links=[
-        'https://github.com/CogWorks/Riot-Watcher/tarball/master#egg=riotwatcher-1.3.2'
-    ],
     packages = find_packages(),
     install_requires=reqs,
+        dependency_links=[
+        'https://github.com/CogWorks/Riot-Watcher/tarball/master#egg=riotwatcher-1.3.2'
+    ],
  )

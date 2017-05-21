@@ -54,7 +54,7 @@ $ pip install cryptography
 
 
 USAGE: 
--------------
+===============
 
 LoLS = LoL.Scraper(ssh = True, use_curses = False, rate_limiting = False, skipfile = False)
 

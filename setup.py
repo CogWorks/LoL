@@ -30,7 +30,7 @@ setup(
     ],
     license='RPI',
     dependency_links=[
-        'git+https://github.com/CogWorks/Riot-Watcher.git'
+        'https://github.com/CogWorks/Riot-Watcher/tarball/master#egg=riotwatcher-1.3.2'
     ]
     packages = find_packages(),
     install_requires=reqs,

@@ -1,3 +1,7 @@
+LoL v1.0.2
+==================
+
+
 Make copy of credentials-template.py and rename it credentials.py
 create a file called skiplist.tsv
 

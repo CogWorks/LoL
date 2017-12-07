@@ -2193,7 +2193,8 @@ class Scraper:
  
  
  def __exit__(self):
-  curses.endwin()
+  if self.use_curses == True :
+   curses.endwin()
   self.cnx.commit()
   self.cursor.close()
   self.cnx.close()

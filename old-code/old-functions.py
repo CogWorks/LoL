@@ -1,7 +1,92 @@
 ### OLD CODE FOR HISTORIC PURPOSES. 
 ### THE FOLLOWING CODE WERE OPTIONS UNDER THE "update_table" FUNCTION, BUT NO LONGER WORK
 ### THIS IS DUE TO THE REMOVAL OF THE "TEAM API" 
+       
+  if table=="checkteams":
+    add_league = ("INSERT IGNORE INTO by_league "
+                "(isFreshBlood, division, isVeteran, wins, losses, playerOrTeamId, playerOrTeamName, isInactive, isHotStreak, leaguePoints, league, team, queue) "
+                "VALUES (%(isFreshBlood)s, %(division)s, %(isVeteran)s, %(wins)s, %(losses)s, %(playerOrTeamId)s, %(playerOrTeamName)s, %(isInactive)s, %(isHotStreak)s, %(leaguePoints)s, %(league)s, %(team)s, %(queue)s)")
+
+    self.print_stuff("Checking Teams on League API", header1 = True)
+    self.cursor.execute("SELECT playerOrTeamID, queue FROM by_league")
+    existing_entries = self.cursor.fetchall()
    
+    if(teamIds==False):
+     self.print_stuff("No list of team ids, defaulting to search by_league")
+     self.cursor.execute("SELECT fullId FROM team" )    
+   
+
+     team_ids_raw = [] 
+     team_ids_raw = self.cursor.fetchall()
+   
+     team_ids = [unicode(x[0]) for x in team_ids_raw] 
+   
+#      for x in team_ids_raw:
+#       for y in x:
+#        team_ids.append(y)
+
+    else:
+     self.print_stuff("Given list of team ids.")
+     team_ids = teamIds
+ 
+    if ignore_skiplist == False:
+     team_ids = [x for x in team_ids if x not in self.skiplist]
+    for x in xrange(0,(int(len(team_ids)/10)+1)):
+     stop = ((x+1)*10)
+
+     if x == int(len(team_ids)/10):
+      stop = (len(team_ids))
+     if stop == x*10:
+      continue
+  
+ #     print "%s, %s" % ((x*10), stop)
+
+
+     league_entries = self.get_leagues(ids=team_ids,x=x, stop=stop, key=self.key, unauthorized_cycle=False, team=True)
+     by_leagues = []
+     for z in league_entries:
+      for y in league_entries[z]:
+       if 'entries' in y:
+        for v in y['entries']:
+         if allow_updates == True or ( (v['playerOrTeamId'], y['queue']) not in existing_entries):
+          v['league'] = y['tier']
+          v['team'] = (True if y['queue']!="RANKED_SOLO_5x5" else False)
+          v['queue'] = y['queue']
+   #  for right now we're just going to discard miniSeries data
+          if "miniSeries" in v:
+           del v['miniSeries']
+          by_leagues.append(v)
+
+       
+     try:
+      self.cursor.executemany(add_league, by_leagues)
+     except mysql.connector.Error as err:
+      if err.errno != 1062 or self.suppress_duplicates == False:
+       self.print_stuff(err.errno, error = True)
+
+
+     else:
+      self.print_stuff("Updated By-League", override = True)
+       
+ #        OLD METHOD
+ #        try:
+ #  #        print x['playerOrTeamId']
+ #         self.cursor.execute(add_league, v)
+ #        except mysql.connector.Error as err:
+ #         if err.errno != 1062 or feedback == "all":
+ #          if feedback != "silent":
+ #           print "%s, Team: %s" % (err.msg, v['playerOrTeamId']) 
+ # 
+ # 
+ #        else:
+ #         if feedback != "silent":
+ #          print "Updated By-League"    
+
+     if stop==(len(team_ids)):
+      self.print_stuff("Finished %s of %s" % (stop, len(team_ids)), header2=True)
+     else:
+      self.print_stuff("Finished %s of %s" % (stop+1, len(team_ids)), progress=True)
+        
      
    
         

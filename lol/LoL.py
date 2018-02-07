@@ -17,7 +17,7 @@ from twisted.internet import task
 from twisted.internet import reactor
 from os import path
 import os
-
+from requests import HTTPError
 
 from utils import todict
 import mysql.connector
@@ -162,460 +162,6 @@ class Scraper:
     skipfilew.write("%s\n" % (x))
   skipfilew.close()
  
-  
- def create_tables(self):
- 
-  DB_NAME = 'lol'
-
-  TABLES = {}
- #  TABLES['challenger'] = (
- #     "CREATE TABLE `challenger` ("
- #     "  `isFreshBlood` bool NOT NULL,"
- #     "  `division` varchar(2) NOT NULL,"
- #     "  `isVeteran` bool NOT NULL,"
- #     "  `wins` int(8) NOT NULL,"
- #     "  `losses` int(8) NOT NULL,"
- #     "  `playerOrTeamId` varchar(50) NOT NULL,"
- #     "  `playerOrTeamName` varchar(25) NOT NULL,"
- #     "  `isInactive` bool NOT NULL,"
- #     "  `isHotStreak` bool NOT NULL,"
- #     "  `leaguePoints` int(8) NOT NULL,"
- #     "  PRIMARY KEY (`playerOrTeamId`)"
- #     ") CHARACTER SET utf8 ENGINE=InnoDB")
- #  
- #  TABLES['master'] = (
- #     "CREATE TABLE `master` ("
- #     "  `isFreshBlood` bool NOT NULL,"
- #     "  `division` varchar(2) NOT NULL,"
- #     "  `isVeteran` bool NOT NULL,"
- #     "  `wins` int(8) NOT NULL,"
- #     "  `losses` int(8) NOT NULL,"
- #     "  `playerOrTeamId` varchar(50) NOT NULL,"
- #     "  `playerOrTeamName` varchar(25) NOT NULL,"
- #     "  `isInactive` bool NOT NULL,"
- #     "  `isHotStreak` bool NOT NULL,"
- #     "  `leaguePoints` int(8) NOT NULL,"
- #     "  PRIMARY KEY (`playerOrTeamId`)"
- #     ") CHARACTER SET utf8 ENGINE=InnoDB") 
-    
-  TABLES['by_league'] = (
-     "CREATE TABLE `by_league` ("
-     "  `isFreshBlood` bool NOT NULL,"
-     "  `division` varchar(5) NOT NULL,"
-     "  `isVeteran` bool NOT NULL,"
-     "  `wins` int(8) NOT NULL,"
-     "  `losses` int(8) NOT NULL,"
-     "  `playerOrTeamId` varchar(50) NOT NULL,"
-     "  `playerOrTeamName` varchar(25) NOT NULL,"
-     "  `isInactive` bool NOT NULL,"
-     "  `isHotStreak` bool NOT NULL,"
-     "  `leaguePoints` int(8) NOT NULL,"
-     "  `league` varchar(25) NOT NULL,"
-     "  `team` bool NOT NULL,"
-     "  `queue` varchar(25) NOT NULL,"
-     "  `retrieved` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
-     "  CONSTRAINT id_queue PRIMARY KEY (`playerOrTeamId`, `queue`, `retrieved`),"
-     "  INDEX id_team (playerOrTeamId, team),"
-     "  INDEX i_queue (queue),"
-     "  INDEX i_retrieved (retrieved)"
-     
-     ") CHARACTER SET utf8 ENGINE=InnoDB") 
-    
-    
-    
-  TABLES['team'] = (
-     "CREATE TABLE `team` ("
-     "  `createDate` BIGINT NOT NULL,"
-     "  `fullId` varchar(50) NOT NULL,"
-     "  `lastGameDate` BIGINT DEFAULT NULL,"
-     "  `lastJoinDate` BIGINT NOT NULL,"
-     "  `lastJoinedRankedTeamQueueDate` BIGINT NOT NULL,"
-     "  `modifyDate` BIGINT NOT NULL,"
-     "  `name` varchar(25) NOT NULL,"
-     "  `secondLastJoinDate` BIGINT DEFAULT NULL,"
-     "  `status` varchar(25) NOT NULL,"
-     "  `tag` varchar(25) NOT NULL,"
-     "  `thirdLastJoinDate` BIGINT DEFAULT NULL,"
-     "  `averageGamesPlayed3v3` int(6) NOT NULL,"
-     "  `losses3v3` int(6) NOT NULL,"
-     "  `wins3v3` int(6) NOT NULL,"
-     "  `averageGamesPlayed5v5` int(6) NOT NULL,"
-     "  `losses5v5` int(6) NOT NULL,"
-     "  `wins5v5` int(6) NOT NULL,"
-     "  PRIMARY KEY (`fullId`)"
-     ") CHARACTER SET utf8 ENGINE=InnoDB") 
- 
-
-  TABLES['team_history'] = (
-      "CREATE TABLE `team_history` ("
-      "  `fullId` varchar(50) NOT NULL,"
-      "  `assists` int(6) NOT NULL,"
-      "  `date` BIGINT NOT NULL,"
-      "  `deaths` int(6) NOT NULL,"
-      "  `gameId` int(18) NOT NULL,"
-      "  `gameMode` varchar(25) NOT NULL,"
-      "  `invalid` bool NOT NULL,"
-      "  `kills` int(6) NOT NULL,"
-      "  `mapId` int(4) NOT NULL,"
-      "  `opposingTeamKills` int(6) NOT NULL,"
-      "  `opposingTeamName` varchar(25) NOT NULL,"
-      "  `win` bool NOT NULL,"
-      "  CONSTRAINT game_team PRIMARY KEY (`gameId`, `fullId`),"
-      "  INDEX i_teamId(fullId)"
-      ") CHARACTER SET utf8 ENGINE=InnoDB") 
-    
-  TABLES['team_roster'] = (
-      "CREATE TABLE `team_roster` ("
-      "  `inviteDate` BIGINT NOT NULL,"
-      "  `joinDate` BIGINT DEFAULT NULL,"
-      "  `playerId` int(18) NOT NULL,"
-      "  `status` varchar(25) NOT NULL,"
-      "  `isCaptain` bool NOT NULL,"
-      "  `teamId` varchar(50) NOT NULL,"
-      "  CONSTRAINT player_team PRIMARY KEY (`playerId`, `teamId`),"
-      "  INDEX i_teamId (teamId)"
-      ") CHARACTER SET utf8 ENGINE=InnoDB")
-    
-   
-  TABLES['individual_history'] = (
-      "CREATE TABLE `individual_history` ("
-      "  `summonerId` varchar(20) NOT NULL,"
-      "		`championId`	int(4)		DEFAULT NULL	,"
-      "  `lane` varchar(8) DEFAULT NULL,"
-      "  `matchId` varchar(20) NOT NULL,"
-      "  `platformId` varchar(6) DEFAULT NULL,"
-      "  `queue` varchar(32) DEFAULT NULL,"
-      "  `region` varchar(6) DEFAULT NULL,"
-      "  `role` varchar(15) DEFAULT NULL,"
-      "  `season` varchar(15) DEFAULT NULL,"
-      "  `timestamp` BIGINT DEFAULT NULL,"
-      "  CONSTRAINT player_game PRIMARY KEY (`summonerId`, `matchId`),"
-      "  INDEX i_season (season),"
-      "  INDEX i_matchId (matchId)"
-      ") CHARACTER SET utf8 ENGINE=InnoDB")  
-    
-  TABLES['summoner_list'] = (
-      "CREATE TABLE `summoner_list` ("
-      "  `summonerId` varchar(20) NOT NULL,"
-      "  `constr` BIGINT DEFAULT NULL,"
-      "  `updated` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
-      "  PRIMARY KEY (`summonerId`),"
-      "  INDEX i_constr (constr)"
-      ") CHARACTER SET utf8 ENGINE=InnoDB")
-      
-  TABLES['matches'] = ( 
-      "CREATE TABLE `matches` ("
-      "		`mapId`		int(4)		NOT NULL	,"
-      "		`matchCreation`		BIGINT		NOT NULL	,"
-      "		`matchDuration`	int(6)		NOT NULL	,"
-      "		`matchId`	varchar(20)		NOT NULL	,"
-      "		`matchMode`	varchar(20)		DEFAULT NULL	,"
-      "		`matchType`	varchar(20)		DEFAULT NULL	,"
-      "		`matchVersion`	varchar(20)		DEFAULT NULL	,"
-      "		`platformId`	varchar(8)		DEFAULT NULL	,"
-      "		`queueType`	varchar(30)		DEFAULT NULL	,"
-      "		`region`	varchar(8)		DEFAULT NULL	,"
-      "		`season`	varchar(20)		DEFAULT NULL	,"
-      " PRIMARY KEY (`matchId`),"
-      " INDEX i_season (season)"
-      ") CHARACTER SET utf8 ENGINE=InnoDB")
- 
-
-  TABLES['match_participants'] = (
-      "CREATE TABLE `match_participants` ("
-      "		`matchId`	varchar(20)		NOT NULL	,"
-      "		`championId`	int(4)		NOT NULL	,"
-      "		`highestAchievedSeasonTier`	varchar(16)		DEFAULT NULL	,"
-      "		`participantId`	tinyint		NOT NULL	,"
-      "		`profileIcon`	smallint		DEFAULT NULL	,"
-      "		`matchHistoryUri`	varchar(45)		DEFAULT NULL	,"
-      "		`summonerName`	varchar(25)		DEFAULT NULL	,"
-      "		`summonerId`	varchar(20)		NOT NULL	,"
-      "		`spell1Id`	smallint		DEFAULT NULL	,"
-      "		`spell2Id`	smallint		DEFAULT NULL	,"
-      "		`assists`	tinyint		DEFAULT NULL	,"
-      "		`champLevel`	tinyint		DEFAULT NULL	,"
-      "		`combatPlayerScore`	varchar(8)		DEFAULT NULL	,"
-      "		`deaths`	tinyint		DEFAULT NULL	,"
-      "		`doubleKills`	tinyint		DEFAULT NULL	,"
-      "		`firstBloodAssist`	bool		DEFAULT NULL	,"
-      "		`firstBloodKill`	bool		DEFAULT NULL	,"
-      "		`firstInhibitorAssist`	bool		DEFAULT NULL	,"
-      "		`firstInhibitorKill`	bool		DEFAULT NULL	,"
-      "		`firstTowerAssist`	bool		DEFAULT NULL	,"
-      "		`firstTowerKill`	bool		DEFAULT NULL	,"
-      "		`goldEarned`	int(8)		DEFAULT NULL	,"
-      "		`goldSpent`	int(8)		DEFAULT NULL	,"
-      "		`inhibitorKills`	tinyint		DEFAULT NULL	,"
-      "		`item0`		smallint		DEFAULT NULL	,"
-      "		`item1`		smallint		DEFAULT NULL	,"
-      "		`item2`	smallint		DEFAULT NULL	,"
-      "		`item3`	smallint		DEFAULT NULL	,"
-      "		`item4`	smallint		DEFAULT NULL	,"
-      "		`item5`	smallint		DEFAULT NULL	,"
-      "		`item6`	smallint		DEFAULT NULL	,"
-      "		`killingSprees`	tinyint		DEFAULT NULL	,"
-      "		`kills`	tinyint		DEFAULT NULL	,"
-      "		`largestCriticalStrike`	mediumint		DEFAULT NULL	,"
-      "		`largestKillingSpree`	tinyint		DEFAULT NULL	,"
-      "		`largestMultiKill`	tinyint		DEFAULT NULL	,"
-      "		`magicDamageDealt`	mediumint		DEFAULT NULL	,"
-      "		`magicDamageDealtToChampions`	mediumint		DEFAULT NULL	,"
-      "		`magicDamageTaken`	mediumint		DEFAULT NULL	,"
-      "		`minionsKilled`	smallint		DEFAULT NULL	,"
-      "		`neutralMinionsKilled`	smallint		DEFAULT NULL	,"
-      "		`neutralMinionsKilledEnemyJungle`	smallint		DEFAULT NULL	,"
-      "		`neutralMinionsKilledTeamJungle`	smallint		DEFAULT NULL	,"
-      "		`nodeCapture`	smallint		DEFAULT NULL	,"
-      "		`nodeCaptureAssist`	smallint		DEFAULT NULL	,"
-      "		`nodeNeutralize`	smallint		DEFAULT NULL	,"
-      "		`nodeNeutralizeAssist`	smallint		DEFAULT NULL	,"
-      "		`objectivePlayerScore`	smallint		DEFAULT NULL	,"
-      "		`pentaKills`	tinyint		DEFAULT NULL	,"
-      "		`physicalDamageDealt`	mediumint		DEFAULT NULL	,"
-      "		`physicalDamageDealtToChampions`	mediumint		DEFAULT NULL	,"
-      "		`physicalDamageTaken`	mediumint		DEFAULT NULL	,"
-      "		`quadrakills`	tinyint		DEFAULT NULL	,"
-      "		`sightWardsBoughtInGame`	smallint		DEFAULT NULL	,"
-      "		`teamObjective`	smallint		DEFAULT NULL	,"
-      "		`totalDamageDealt`	mediumint		DEFAULT NULL	,"
-      "		`totalDamageDealtToChampions`	mediumint		DEFAULT NULL	,"
-      "		`totalDamageTaken`	mediumint		DEFAULT NULL	,"
-      "		`totalHeal`	mediumint		DEFAULT NULL	,"
-      "		`totalPlayerScore`	smallint		DEFAULT NULL	,"
-      "		`totalScoreRank`	smallint		DEFAULT NULL	,"
-      "		`totalTimeCrowdControlDealt`	smallint		DEFAULT NULL	,"
-      "		`totalUnitsHealed`	smallint		DEFAULT NULL	,"
-      "		`towerKills`	tinyint		DEFAULT NULL	,"
-      "		`tripleKills`	tinyint		DEFAULT NULL	,"
-      "		`trueDamageDealt`	mediumint		DEFAULT NULL	,"
-      "		`trueDamageDealtToChampions`	mediumint		DEFAULT NULL	,"
-      "		`trueDamageTaken`	mediumint		DEFAULT NULL	,"
-      "		`unrealKills`	tinyint		DEFAULT NULL	,"
-      "		`visionWardsBoughtInGame`	tinyint		DEFAULT NULL	,"
-      "		`wardsKilled`	tinyint		DEFAULT NULL	,"
-      "		`wardsPlaced`	smallint		DEFAULT NULL	,"
-      "		`winner`	bool		DEFAULT NULL	,"
-      "		`teamId`	varchar(35)		NOT NULL	,"
-      "		`lane`	varchar(16)		DEFAULT NULL	,"
-      "		`role`	varchar(16)		DEFAULT NULL	,"
-      "  CONSTRAINT match_player PRIMARY KEY (`matchId`, `summonerId`),"
-      "  INDEX i_summonerId (summonerId)"
-      ") CHARACTER SET utf8 ENGINE=InnoDB")
-     
-  TABLES['match_participant_masteries'] = (
-      "CREATE TABLE `match_participant_masteries` ("
-      " `matchId` varchar(20) NOT NULL,"
-      " `summonerId` varchar(20) NOT NULL,"
-      " `rank` smallint NOT NULL,"
-      "	`masteryId`	smallint		NOT NULL	,"
-      " CONSTRAINT match_participant_mastery PRIMARY KEY (`matchId`, `summonerId`, `masteryId`),"
-      " INDEX i_summonerId (summonerId),"
-      " INDEX i_masteryId (masteryId)"
-      ") CHARACTER SET utf8 ENGINE=InnoDB")
-           
-  TABLES['match_participant_runes'] = (
-      "CREATE TABLE `match_participant_runes` ("
-      " `matchId` varchar(20) NOT NULL,"
-      " `summonerId` varchar(20) NOT NULL,"
-      " `rank` smallint NOT NULL,"
-      "	`runeId`	smallint		NOT NULL	,"
-      " CONSTRAINT match_participant_rune PRIMARY KEY (`matchId`, `summonerId`, `runeId`),"
-      " INDEX i_summonerId (summonerId),"
-      " INDEX i_runeId (runeId)"
-      ") CHARACTER SET utf8 ENGINE=InnoDB")
-     
-     
-  TABLES['match_participant_deltas'] = (
-      "CREATE TABLE `match_participant_deltas` ("
-      " `matchId` varchar(20) NOT NULL,"
-      " `summonerId` varchar(20) NOT NULL,"
-      " `deltaName` varchar(40) NOT NULL,"
-      " `deltaTimeframe` varchar(20) NOT NULL,"
-      " `value` double NOT NULL,"
-      " CONSTRAINT match_participant_delta PRIMARY KEY (`matchID`, `summonerId`, `deltaName`, `deltaTimeframe`),"
-      " INDEX i_summonerId (summonerId),"
-      " INDEX i_deltaName (deltaName),"
-      " INDEX i_deltaTimeframe (deltaTimeframe)"
-      ") CHARACTER SET utf8 ENGINE=InnoDB")
-
-
-     
-
-     
-  
-  TABLES['match_teams'] = (
-      "CREATE TABLE `match_teams` ("
-      "		`matchId`	varchar(20)		NOT NULL	,"
-      "		`teamId`	varchar(35)		NOT NULL	,"
-      "		`baronKills`	tinyint		DEFAULT NULL	,"
-      "		`dominionVictoryScore`	varchar(10)		DEFAULT NULL	,"
-      "		`dragonKills`	tinyint		DEFAULT NULL	,"
-      "		`firstBaron`	bool		DEFAULT NULL	,"
-      "		`firstBlood`	bool		DEFAULT NULL	,"
-      "		`firstDragon`	bool		DEFAULT NULL	,"
-      "		`firstInhibitor`	bool		DEFAULT NULL	,"
-      "		`firstRiftHerald`	bool		DEFAULT NULL	,"
-      "		`firstTower`	bool		DEFAULT NULL	,"
-      "		`inhibitorKills`	tinyint		DEFAULT NULL	,"
-      "		`riftHeraldKills`	tinyint		DEFAULT NULL	,"
-      "		`towerKills`	tinyint		DEFAULT NULL	,"
-      "		`vilemawKills`	tinyint		DEFAULT NULL	,"
-      "		`winner`	bool		DEFAULT NULL	,"
-      "  CONSTRAINT match_team PRIMARY KEY (`matchId`, `teamId`),"
-      "  INDEX i_teamId (teamId)"
-      ") CHARACTER SET utf8 ENGINE=InnoDB")
- 
- 
-
-  TABLES['match_team_bans'] = (
-      "CREATE TABLE `match_team_bans` ("
-      " `matchId` varchar(20) NOT NULL ,"
-      " `teamId` varchar(35) NOT NULL ,"
-      " `pickTurn` tinyint NOT NULL ,"
-      " `championId` smallint NOT NULL ,"
-      "CONSTRAINT match_team_ban PRIMARY KEY (`matchId`, `teamId`, `pickTurn`),"
-      "INDEX i_teamId (teamId),"
-      "INDEX i_pickTurn (pickTurn)"
-      ") CHARACTER SET utf8 ENGINE=InnoDB")
-
-
-  TABLES['match_timeline'] = (
-      "CREATE TABLE `match_timeline` ("
-      " `matchId` varchar(20) NOT NULL,"
-      " `summonerId` varchar(20) NOT NULL,"
-      " `timestamp` mediumint NOT NULL,"
-      " `currentGold` mediumint DEFAULT NULL,"
-      " `positionX` smallint DEFAULT NULL,"
-      " `positionY` smallint DEFAULT NULL,"
-      " `minionsKilled` smallint DEFAULT NULL,"
-      " `level` tinyint DEFAULT NULL,"
-      " `jungleMinionsKilled` smallint DEFAULT NULL,"
-      " `totalGold` mediumint DEFAULT NULL,"
-      " `dominionScore` mediumint DEFAULT NULL,"
-      " `participantId` tinyint DEFAULT NULL,"
-      " `xp` int DEFAULT NULL,"
-      " `teamScore` mediumint DEFAULT NULL,"
-      " `timelineInterval` int NOT NULL,"
-      "CONSTRAINT match_summoner_time PRIMARY KEY (`matchId`, `summonerId`, `timestamp`),"
-      "INDEX i_summonerId (summonerId),"
-      "INDEX i_timestamp (timestamp)"
-      ") CHARACTER SET utf8 ENGINE=InnoDB")
-     
-  TABLES['match_timeline_events'] = (
-      "CREATE TABLE `match_timeline_events` ("
-      " `eventId` varchar(10) NOT NULL,"
-      " `matchId` varchar(20) NOT NULL,"
-      " `summonerId` varchar(20) DEFAULT NULL,"
-      " `timelineTimestamp` mediumint NOT NULL,"
-      " `eventTimestamp` mediumint NOT NULL,"
-      " `ascendedType` varchar(25) DEFAULT NULL,"
-      " `assistingParticipants` bool DEFAULT NULL,"
-      " `buildingType` varchar(25) DEFAULT NULL,"
-      " `creatorId` varchar(20) DEFAULT NULL,"
-      " `eventType` varchar(25) NOT NULL,"
-      " `itemAfter` smallint DEFAULT NULL,"
-      " `itemBefore` smallint DEFAULT NULL,"
-      " `itemId` smallint DEFAULT NULL,"
-      " `killerId` varchar(20) DEFAULT NULL,"
-      " `laneType` varchar(10) DEFAULT NULL,"
-      " `levelUpType` varchar(8) DEFAULT NULL,"
-      " `monsterType` varchar(15) DEFAULT NULL,"
-      " `pointCaptured` varchar(8) DEFAULT NULL,"
-      " `positionX` smallint DEFAULT NULL,"
-      " `positionY` smallint DEFAULT NULL,"
-      " `skillSlot` smallint DEFAULT NULL,"
-      " `teamId` smallint DEFAULT NULL,"
-      " `towerType` varchar(20) DEFAULT NULL,"
-      " `victimId` varchar(20) DEFAULT NULL,"
-      " `wardType` varchar(25) DEFAULT NULL,"
-      "CONSTRAINT match_event PRIMARY KEY (`matchId`, `eventId`),"
-      "INDEX i_eventId (eventId),"
-      "INDEX i_eventType (eventType),"
-      "INDEX i_summonerId (summonerId),"
-      "INDEX i_timelineTimestamp (timelineTimestamp)"
-      ") CHARACTER SET utf8 ENGINE=InnoDB")
-     
-     
-     
-     
-    
-     
-  TABLES['match_timeline_events_assist'] = (
-      "CREATE TABLE `match_timeline_events_assist` ("
-      " `eventId` varchar(10) NOT NULL,"
-      " `matchId` varchar(20) NOT NULL,"
-      " `assistId` varchar(20) NOT NULL,"
-      "  INDEX (`matchId`,`eventId`),"
-      "  FOREIGN KEY (`matchId`, `eventId`) "
-      "     REFERENCES `match_timeline_events` (`matchId`,`eventId`), "
-      "  INDEX i_eventId (eventId)"
-      ") CHARACTER SET utf8 ENGINE=InnoDB")
-
-
-  TABLES['stats'] = (
-      "CREATE TABLE `stats` ("
-      "  `summonerId` varchar(20) NOT NULL,"
-      "  `season` varchar(15) NOT NULL,"
-      "  `playerStatSummaryType` varchar(30) NOT NULL,"
-      "  `modifyDate` BIGINT NOT NULL,"
-      "  `wins` int NOT NULL,"
-      "  `losses` int DEFAULT NULL,"
-      "  `updated` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
-      "  CONSTRAINT summoner_season PRIMARY KEY (`summonerId`, `season`, `playerStatSummaryType`)"
-      #"  INDEX i_season (season),"
-      #"  INDEX i_type (playerStatSummaryType)"
-      ") CHARACTER SET utf8 ENGINE=InnoDB")
-   
-   
-  TABLES['stats_aggregate'] = (
-      "CREATE TABLE `stats_aggregate` ("
-      "  `summonerId` varchar(20) NOT NULL,"
-      "  `season` varchar(15) NOT NULL,"
-      "  `playerStatSummaryType` varchar(30) NOT NULL,"
-      "  `aggregatedStat` varchar(35) NOT NULL,"
-      "  `aggregatedStatValue` int NOT NULL,"      
-      "  `updated` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
-      "  CONSTRAINT summoner_season PRIMARY KEY (`summonerId`, `season`, `playerStatSummaryType`, `aggregatedStat`)"
-      #"  INDEX i_season (season),"
-      #"  INDEX i_type (playerStatSummaryType)"
-      #"  INDEX i_type (playerStatSummaryType)"    
-      ") CHARACTER SET utf8 ENGINE=InnoDB")
-       
-
-
-      
-  def create_database(cursor):
-     try:
-         self.cursor.execute(
-             "CREATE DATABASE {} DEFAULT CHARACTER SET 'utf8'".format(DB_NAME))
-     except mysql.connector.Error as err:
-         print("Failed creating database: {}".format(err))
-         exit(1)
-
-  try:
-      self.cnx.database = DB_NAME 
- #      print "Test"   
-  except mysql.connector.Error as err:
-      if err.errno == errorcode.ER_BAD_DB_ERROR:
-          create_database(cursor)
-          self.cnx.database = DB_NAME
-         
-      else:
-          print(err)
-          exit(1)   
-  for name, ddl in TABLES.iteritems():
-      try:
-          print("Creating table {}: ".format(name))
-          self.cursor.execute(ddl)
-      except mysql.connector.Error as err:
-          if err.errno == errorcode.ER_TABLE_EXISTS_ERROR:
-              print("already exists.")
-          else:
-              print(err.msg)
-      else:
-          print("OK")
-
  def print_stuff(self, msg=None, header1 = False, header2 = False, clear = False, error = False, progress = False, override = False):
   feedback = self.feedback
   if msg is None:
@@ -746,7 +292,7 @@ class Scraper:
     
  #     print summoner_ids[(x*10):stop]
     
-     league_entries = self.get_leagues(team_ids=summoner_ids,x=x, stop=stop, key=self.key, unauthorized_cycle=False, team=False)
+     league_entries = self.get_leagues(ids=summoner_ids,x=x, stop=stop, key=self.key, unauthorized_cycle=False)
 
      by_leagues = []
      for z in league_entries:
@@ -780,84 +326,89 @@ class Scraper:
      self.cnx.commit() 
        
          
- def get_leagues(self, team_ids=None,x=None, stop=None, key=None, unauthorized_cycle=False, team=True):
+ def get_leagues(self, ids=None,x=None, stop=None, key=None, unauthorized_cycle=False):
   finished = False
   unauthorized_key = False
   while finished == False:
    err = []
    self.wait()
    try:
-    if team==True:
-     league_entries = self.w.get_league_entry(team_ids=team_ids[(x*10):stop]) if unauthorized_cycle==False else self.w.get_league_entry(team_ids=team_ids)
-    else:
-     league_entries = self.w.get_league_entry(summoner_ids=team_ids[(x*10):stop]) if unauthorized_cycle==False else self.w.get_league_entry(summoner_ids=team_ids)
-
-
-   except riotwatcher.riotwatcher.LoLException as err:
-    drop = False
-    if str(err) == "Unauthorized" :
-
-     
-     self.print_stuff("Unauthorized, using new key") 
- # This to ensure that you only try one new key for unauthorized, just switch truth value
-   
-     unauthorized_key= (True if unauthorized_key == False else False)
- #         print unauthorized_key
-
- #       print str(err)
-    if str(err) == "Too many requests" or str(err) == "Blacklisted key":
-     if str(err) == "Blacklisted key":
-      self.print_stuff("Blacklisted key, using new key, dropping current.")
-      drop = True
-     unauthorized_key=False
-     
-     if str(err) != "Unauthorized" and str(err) != "Too many requests" and str(err) != "Blacklisted key":
-      
-      self.print_stuff("Break, %s" % (str(err)), error = True)
-      break 
-
-
-   
- # Checks to make sure the error is not just coming from missing data     
-    if str(err) == "Game data not found":
-     
-     self.print_stuff("No data, skipping %s" % (team_ids if unauthorized_cycle == True else team_ids[(x*10):stop]))
-     league_entries = {}
-     if unauthorized_cycle == True:
-      self.write_to_skip(team_ids)
-     else: 
-      self.write_to_skip(team_ids[(x*10):stop])
-     finished = True   
- # Basically this checks to see if unauthorized_key has been used and switched back to false. This should only happen if you have two unauthorized key changes in a row
-    elif unauthorized_key == True or str(err) != "Unauthorized":
-     self.print_stuff("New key assigned, %s" % str(err))
- #         print str(err)
-    
-     self.new_key(drop = drop)
-    elif unauthorized_key == False and str(err) == "Unauthorized":
-     league_entries = {}
-     if unauthorized_cycle== False:
-      self.print_stuff("Unauthorized, checking individual")
-      for s in team_ids[(x*10):stop]:
-       if team == False:
-        time.sleep(0.5)
-       unauthorized_key=False
- #       print team
-       cur_entry = self.get_leagues(team_ids=[s], x=x, stop=stop, key=self.key, unauthorized_cycle=True, team=team)
-       print cur_entry 
-       if cur_entry != {}:
-        league_entries[s] = cur_entry[s]
-       else:
- #            print "No entry for %s" % s
-        continue
-
-       finished = True
-     else:         
- #          print "skipping %s" % team_ids
-      league_entries = {}
-      finished = True
-   
-
+     league_entries = self.w.league.by_summoner(self._region, summoner_ids=ids[(x*10):stop]) if unauthorized_cycle==False else self.w.league.by_summoner(self._region, summoner_ids=ids)
+   except HTTPError as err:
+        if err.response.status_code == 429:
+            print('We should retry in {} seconds.'.format(e.headers['Retry-After']))
+#             print('this retry-after is handled by default by the RiotWatcher library')
+#             print('future requests wait until the retry-after time passes')
+        elif err.response.status_code == 404:
+            print('League not found.')
+        else:
+            raise
+# 
+#    except riotwatcher.riotwatcher.LoLException as err:
+#     drop = False
+#     if str(err) == "Unauthorized" :
+# 
+#      
+#      self.print_stuff("Unauthorized, using new key") 
+#  # This to ensure that you only try one new key for unauthorized, just switch truth value
+#    
+#      unauthorized_key= (True if unauthorized_key == False else False)
+#  #         print unauthorized_key
+# 
+#  #       print str(err)
+#     if str(err) == "Too many requests" or str(err) == "Blacklisted key":
+#      if str(err) == "Blacklisted key":
+#       self.print_stuff("Blacklisted key, using new key, dropping current.")
+#       drop = True
+#      unauthorized_key=False
+#      
+#      if str(err) != "Unauthorized" and str(err) != "Too many requests" and str(err) != "Blacklisted key":
+#       
+#       self.print_stuff("Break, %s" % (str(err)), error = True)
+#       break 
+# 
+# 
+#    
+#  # Checks to make sure the error is not just coming from missing data     
+#     if str(err) == "Game data not found":
+#      
+#      self.print_stuff("No data, skipping %s" % (team_ids if unauthorized_cycle == True else team_ids[(x*10):stop]))
+#      league_entries = {}
+#      if unauthorized_cycle == True:
+#       self.write_to_skip(team_ids)
+#      else: 
+#       self.write_to_skip(team_ids[(x*10):stop])
+#      finished = True   
+#  # Basically this checks to see if unauthorized_key has been used and switched back to false. This should only happen if you have two unauthorized key changes in a row
+#     elif unauthorized_key == True or str(err) != "Unauthorized":
+#      self.print_stuff("New key assigned, %s" % str(err))
+#  #         print str(err)
+#     
+#      self.new_key(drop = drop)
+#     elif unauthorized_key == False and str(err) == "Unauthorized":
+#      league_entries = {}
+#      if unauthorized_cycle== False:
+#       self.print_stuff("Unauthorized, checking individual")
+#       for s in team_ids[(x*10):stop]:
+#        if team == False:
+#         time.sleep(0.5)
+#        unauthorized_key=False
+#  #       print team
+#        cur_entry = self.get_leagues(ids=[s], x=x, stop=stop, key=self.key, unauthorized_cycle=True)
+#        print cur_entry 
+#        if cur_entry != {}:
+#         league_entries[s] = cur_entry[s]
+#        else:
+#  #            print "No entry for %s" % s
+#         continue
+# 
+#        finished = True
+#      else:         
+#  #          print "skipping %s" % team_ids
+#       league_entries = {}
+#       finished = True
+#    
+# 
    else: 
  #        print "Success"
  #        print league_entries
@@ -883,33 +434,42 @@ class Scraper:
       self.wait()
       try:
        cur_matchlist = self.w.get_match_list(summoner_id, season=season ,end_time=end_time)
-          
-      
-      except riotwatcher.riotwatcher.LoLException as err:
- #       print str(err)
-       if str(err) == "Game data not found":
-        finished = True
-       elif (str(err) == "Too many requests" and 'Retry-After' in err.headers) or str(err) == "Unauthorized" or str(err) == "Blacklisted key":
-#         print "New Key" 
-        drop = False
-        if str(err) == "Blacklisted key":
-         self.print_stuff("Blacklisted key, using new key, dropping current.")
-         drop = True
-        if str(err) == "Unauthorized":
-         self.print_stuff("Unauthorized, using new key")
-        if len(self.keydict)==1:
-         self.print_stuff("Too many requests, not enough keys.", error=True)
-         if hangwait == False:
-          break 
-         else:
-          time.sleep(0.5)
-        self.new_key(drop=drop)
-       elif (str(err) == "Too many requests" and 'Retry-After' not in err.headers):
-        time.sleep(0.01)       
-       else:
-
-        self.print_stuff("%s, Summoner: %s" % (str(err), summoner_id), error= True)
-        break
+      except HTTPError as err:
+        if err.response.status_code == 429:
+            print('We should retry in {} seconds.'.format(e.headers['Retry-After']))
+#             print('this retry-after is handled by default by the RiotWatcher library')
+#             print('future requests wait until the retry-after time passes')
+        elif err.response.status_code == 404:
+            finished=True
+            print('Summoner not found.')
+        else:
+            raise
+ #      
+#       except riotwatcher.riotwatcher.LoLException as err:
+#  #       print str(err)
+#        if str(err) == "Game data not found":
+#         finished = True
+#        elif (str(err) == "Too many requests" and 'Retry-After' in err.headers) or str(err) == "Unauthorized" or str(err) == "Blacklisted key":
+# #         print "New Key" 
+#         drop = False
+#         if str(err) == "Blacklisted key":
+#          self.print_stuff("Blacklisted key, using new key, dropping current.")
+#          drop = True
+#         if str(err) == "Unauthorized":
+#          self.print_stuff("Unauthorized, using new key")
+#         if len(self.keydict)==1:
+#          self.print_stuff("Too many requests, not enough keys.", error=True)
+#          if hangwait == False:
+#           break 
+#          else:
+#           time.sleep(0.5)
+#         self.new_key(drop=drop)
+#        elif (str(err) == "Too many requests" and 'Retry-After' not in err.headers):
+#         time.sleep(0.01)       
+#        else:
+# 
+#         self.print_stuff("%s, Summoner: %s" % (str(err), summoner_id), error= True)
+#         break
       else:
        finished = True
 
@@ -988,33 +548,41 @@ class Scraper:
     self.wait()
     try:
      cur_stats_all = self.w.get_stat_summary(summoner_id, season=x)
-        
-    
-    except riotwatcher.riotwatcher.LoLException as err:
-#       print str(err)
-     if str(err) == "Game data not found":
-      finished = True
-     elif (str(err) == "Too many requests" and 'Retry-After' in err.headers) or str(err) == "Unauthorized" or str(err) == "Blacklisted key":
-#         print "New Key" 
-      drop = False
-      if str(err) == "Blacklisted key":
-       self.print_stuff("Blacklisted key, using new key, dropping current.")
-       drop = True
-      if str(err) == "Unauthorized":
-       self.print_stuff("Unauthorized, using new key")
-      if len(self.keydict)==1:
-       self.print_stuff("Too many requests, not enough keys.", error=True)
-       if hangwait == False:
-        break 
-       else:
-        time.sleep(0.5)
-      self.new_key(drop=drop)
-     elif (str(err) == "Too many requests" and 'Retry-After' not in err.headers):
-      time.sleep(0.01)
-     else:
-
-      self.print_stuff("%s, Summoner: %s" % (str(err), summoner_id), error= True)
-      break
+    except HTTPError as err:
+        if err.response.status_code == 429:
+            print('We should retry in {} seconds.'.format(e.headers['Retry-After']))
+#             print('this retry-after is handled by default by the RiotWatcher library')
+#             print('future requests wait until the retry-after time passes')
+        elif err.response.status_code == 404:
+            print('Summoner not found.')
+            finished=True
+        else:
+            raise    
+#     except riotwatcher.riotwatcher.LoLException as err:
+# #       print str(err)
+#      if str(err) == "Game data not found":
+#       finished = True
+#      elif (str(err) == "Too many requests" and 'Retry-After' in err.headers) or str(err) == "Unauthorized" or str(err) == "Blacklisted key":
+# #         print "New Key" 
+#       drop = False
+#       if str(err) == "Blacklisted key":
+#        self.print_stuff("Blacklisted key, using new key, dropping current.")
+#        drop = True
+#       if str(err) == "Unauthorized":
+#        self.print_stuff("Unauthorized, using new key")
+#       if len(self.keydict)==1:
+#        self.print_stuff("Too many requests, not enough keys.", error=True)
+#        if hangwait == False:
+#         break 
+#        else:
+#         time.sleep(0.5)
+#       self.new_key(drop=drop)
+#      elif (str(err) == "Too many requests" and 'Retry-After' not in err.headers):
+#       time.sleep(0.01)
+#      else:
+# 
+#       self.print_stuff("%s, Summoner: %s" % (str(err), summoner_id), error= True)
+#       break
     else:
      finished = True
   
@@ -1068,7 +636,10 @@ class Scraper:
    
      
 
- def update_table(self, table, queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, create=False, teamIds=False, matchIds=False, summonerIds=False, checkTeams= False, hangwait=False, feedback="all", suppress_duplicates = False, timeline = False, allow_updates=False, ignore_skiplist=False, just_teams = True, timeline_update=False, season=None, end_time=None):
+ def update_table(self, table, region="na1", queue="RANKED_TEAM_5x5", iteratestart=1, iterate=100, teamIds=False, matchIds=False, summonerIds=False, checkTeams= False, hangwait=False, feedback="all", suppress_duplicates = False, timeline = False, allow_updates=False, ignore_skiplist=False, just_teams = True, timeline_update=False, season=None, end_time=None, SQL=True):
+  self._region = region
+  self.SQL = SQL
+  self.mat = self.mte = self.mp = self.mteam = self.mt = self.mtb = self.mpr = self.mpm = self.mpd = self.mtea = 1
   feedback = feedback.lower()
   if feedback != "all" and feedback != "quiet" and feedback != "silent":
    self.feedback="all"
@@ -1081,8 +652,6 @@ class Scraper:
   self.new_key()
   self.suppress_duplicates = suppress_duplicates
 
-  if create== True:
-   self.create_tables()
 
   if table=="challenger":
    add_challenger = ("INSERT IGNORE INTO by_league "
@@ -1090,7 +659,7 @@ class Scraper:
                 "VALUES (%(isFreshBlood)s, %(division)s, %(isVeteran)s, %(wins)s, %(losses)s, %(playerOrTeamId)s, %(playerOrTeamName)s, %(isInactive)s, %(isHotStreak)s, %(leaguePoints)s, %(league)s, %(team)s, %(queue)s)")
    self.print_stuff("Checking Challenger tier League API", header1 = True)
    self.wait()
-   challenger = self.w.get_challenger(queue=queue)
+   challenger = self.w.league.challenger_by_queue(self._region, queue=queue)
 
    s = []
    for x in todict(challenger)['entries']:
@@ -1128,7 +697,7 @@ class Scraper:
                 "VALUES (%(isFreshBlood)s, %(division)s, %(isVeteran)s, %(wins)s, %(losses)s, %(playerOrTeamId)s, %(playerOrTeamName)s, %(isInactive)s, %(isHotStreak)s, %(leaguePoints)s, %(league)s, %(team)s, %(queue)s)")
    self.print_stuff("Checking Master tier League API", header1 = True)
    self.wait()
-   master = self.w.get_master(queue=queue)
+   master = self.w.league.masters_by_queue(self._region, queue=queue)
 
 
    s = []
@@ -1157,92 +726,7 @@ class Scraper:
     
    if err.errno == 1062:
     self.print_stuff("Finished Master", header2 = True) 
-    
-  if table=="checkteams":
-    add_league = ("INSERT IGNORE INTO by_league "
-                "(isFreshBlood, division, isVeteran, wins, losses, playerOrTeamId, playerOrTeamName, isInactive, isHotStreak, leaguePoints, league, team, queue) "
-                "VALUES (%(isFreshBlood)s, %(division)s, %(isVeteran)s, %(wins)s, %(losses)s, %(playerOrTeamId)s, %(playerOrTeamName)s, %(isInactive)s, %(isHotStreak)s, %(leaguePoints)s, %(league)s, %(team)s, %(queue)s)")
 
-    self.print_stuff("Checking Teams on League API", header1 = True)
-    self.cursor.execute("SELECT playerOrTeamID, queue FROM by_league")
-    existing_entries = self.cursor.fetchall()
-   
-    if(teamIds==False):
-     self.print_stuff("No list of team ids, defaulting to search by_league")
-     self.cursor.execute("SELECT fullId FROM team" )    
-   
-
-     team_ids_raw = [] 
-     team_ids_raw = self.cursor.fetchall()
-   
-     team_ids = [unicode(x[0]) for x in team_ids_raw] 
-   
-#      for x in team_ids_raw:
-#       for y in x:
-#        team_ids.append(y)
-
-    else:
-     self.print_stuff("Given list of team ids.")
-     team_ids = teamIds
- 
-    if ignore_skiplist == False:
-     team_ids = [x for x in team_ids if x not in self.skiplist]
-    for x in xrange(0,(int(len(team_ids)/10)+1)):
-     stop = ((x+1)*10)
-
-     if x == int(len(team_ids)/10):
-      stop = (len(team_ids))
-     if stop == x*10:
-      continue
-  
- #     print "%s, %s" % ((x*10), stop)
-
-
-     league_entries = self.get_leagues(team_ids=team_ids,x=x, stop=stop, key=self.key, unauthorized_cycle=False, team=True)
-     by_leagues = []
-     for z in league_entries:
-      for y in league_entries[z]:
-       if 'entries' in y:
-        for v in y['entries']:
-         if allow_updates == True or ( (v['playerOrTeamId'], y['queue']) not in existing_entries):
-          v['league'] = y['tier']
-          v['team'] = (True if y['queue']!="RANKED_SOLO_5x5" else False)
-          v['queue'] = y['queue']
-   #  for right now we're just going to discard miniSeries data
-          if "miniSeries" in v:
-           del v['miniSeries']
-          by_leagues.append(v)
-
-       
-     try:
-      self.cursor.executemany(add_league, by_leagues)
-     except mysql.connector.Error as err:
-      if err.errno != 1062 or self.suppress_duplicates == False:
-       self.print_stuff(err.errno, error = True)
-
-
-     else:
-      self.print_stuff("Updated By-League", override = True)
-       
- #        OLD METHOD
- #        try:
- #  #        print x['playerOrTeamId']
- #         self.cursor.execute(add_league, v)
- #        except mysql.connector.Error as err:
- #         if err.errno != 1062 or feedback == "all":
- #          if feedback != "silent":
- #           print "%s, Team: %s" % (err.msg, v['playerOrTeamId']) 
- # 
- # 
- #        else:
- #         if feedback != "silent":
- #          print "Updated By-League"    
-
-     if stop==(len(team_ids)):
-      self.print_stuff("Finished %s of %s" % (stop, len(team_ids)), header2=True)
-     else:
-      self.print_stuff("Finished %s of %s" % (stop+1, len(team_ids)), progress=True)
-        
   if table=="membertiers":
     self.print_stuff("Updating Member-tiers.", header1 = True)
     if matchIds == False:
@@ -1328,309 +812,10 @@ class Scraper:
     
     
    self.print_stuff("Finished %s of %s" % (summoner_ids.index(x), len(summoner_ids)), header2=True)
-   
-     
-   
-        
-  if table=="team":
-   
-    add_team = ("INSERT IGNORE INTO team "
-                "(createDate, fullId, lastGameDate, lastJoinDate, lastJoinedRankedTeamQueueDate, modifyDate, name, secondLastJoinDate, status, tag, thirdLastJoinDate, averageGamesPlayed3v3, losses3v3, wins3v3, averageGamesPlayed5v5, losses5v5, wins5v5) " 
-                "VALUES (%(createDate)s, %(fullId)s, %(lastGameDate)s, %(lastJoinDate)s, %(lastJoinedRankedTeamQueueDate)s, %(modifyDate)s, %(name)s, %(secondLastJoinDate)s, %(status)s, %(tag)s, %(thirdLastJoinDate)s, %(averageGamesPlayed3v3)s, %(losses3v3)s, %(wins3v3)s, %(averageGamesPlayed5v5)s, %(losses5v5)s, %(wins5v5)s) " )
+
+
+
  
-    add_team_history = ("INSERT IGNORE INTO team_history "
-             "(fullId, assists, date, deaths, gameId, gameMode, invalid, kills, mapId, opposingTeamKills, opposingTeamName, win)" 
-             "VALUES (%(fullId)s, %(assists)s, %(date)s, %(deaths)s, %(gameId)s, %(gameMode)s, %(invalid)s, %(kills)s, %(mapId)s, %(opposingTeamKills)s, %(opposingTeamName)s, %(win)s)" )
-   
-    add_team_roster = ("INSERT IGNORE INTO team_roster "
-             "(inviteDate, joinDate, playerId, status, isCaptain, teamId)"
-             "VALUES (%(inviteDate)s, %(joinDate)s, %(playerId)s, %(status)s, %(isCaptain)s, %(teamId)s)")
-    self.print_stuff("Updating Team Tables.", header1 = True)
-    if(teamIds==False):
-     self.print_stuff("No list of team ids, defaulting to search by_league")
-     self.cursor.execute("SELECT DISTINCT(playerOrTeamId) FROM by_league WHERE team = True" )         
-   
-
-     team_ids_raw = self.cursor.fetchall()
-   
-     team_ids = [unicode(x[0]) for x in team_ids_raw] 
-   
-#      for x in team_ids_raw:
-#       for y in x:
-#        team_ids.append(y)
-     
-    else:
-     self.print_stuff("Given list of team ids.")
-     team_ids = teamIds
- 
-    teams_data = []
-
-    for x in xrange(0,(int(len(team_ids)/10)+1)):
-
-     stop = ((x+1)*10)
-
-
-     if x == int(len(team_ids)/10) and (x+1)*10 != int(len(team_ids)/10):
-      stop = (len(team_ids))
- #     print "%s, %s" % (x,stop)
-     if x*10 == stop:
-      continue
-
-
- #     print "%s, %s" % (x*10, stop)
-     finished = False 
-     service = 0
-     while finished == False:
-      self.wait()
-      try: 
-       teams_data = self.w.get_teams(team_ids[(x*10):stop])
-     
-      except riotwatcher.riotwatcher.LoLException as err:
-       if (str(err) == "Too many requests" and 'Retry-After' in err.headers) or str(err) == "Service unavailable" or str(err) == "Unauthorized" or str(err) == "Internal server error" or str(err) == "Blacklisted key":
- #         print "New Key" 
-         drop = False
-         if str(err) == "Blacklisted key":
-          self.print_stuff("Blacklisted key, using new key, dropping current.")
-          drop = True
-
-         if str(err) == "Service unavailable" and service != 10:
-          self.print_stuff("Service unavailable, using new key")
-          service += 1
-         if str(err) == "Unauthorized" or "Internal server error":
-          self.print_stuff("Unauthorized, using new key")
-         if len(self.keydict)==1:
-          self.print_stuff("Too many requests, not enough keys.")
-          if hangwait == False:
-           break 
-          else:
-           time.sleep(0.5)
-         self.new_key(drop = drop)
-       elif (str(err) == "Too many requests" and 'Retry-After' not in err.headers):
-        time.sleep(0.01) 
-       else:
-        self.print_stuff("%s, Teams: %s" % (str(err), team_ids[(x*10):stop]), error= True)
-        break
-      except:
-       self.print_stuff("Other Error Requesting Teams",error=True)
-      else:
-       finished = True
-
-     for y in team_ids[(x*10):stop]:
- #      print y
-      cur_team_full = todict(teams_data).get(y)
-      cur_team = {}
-      for n in ['createDate', 'fullId', 'lastGameDate', 'lastJoinDate', 'lastJoinedRankedTeamQueueDate', 'modifyDate', 'name', 'secondLastJoinDate', 'status', 'tag', 'thirdLastJoinDate']:
-       try:
- #        print "tried"
-        cur_team[n] = cur_team_full[n]
-
-       except:
- #        print "set to null"
-        cur_team[n] = None
-
- #      print cur_team      
- #      averageGamesPlayed3v3, losses3v3, wins3v3, averageGamesPlayed5v5, losses5v5, wins5v5
-
-      try:
-       if "teamStatDetails" in cur_team_full:
-        team_stats =  cur_team_full['teamStatDetails']
-     
-        if team_stats[0]['teamStatType'] == "RANKED_TEAM_3x3":
-         cur_team['averageGamesPlayed3v3'] = team_stats[0]['averageGamesPlayed']
-         cur_team['losses3v3'] = team_stats[0]['losses']
-         cur_team['wins3v3'] = team_stats[0]['wins']
-         cur_team['averageGamesPlayed5v5'] = team_stats[1]['averageGamesPlayed']      
-         cur_team['losses5v5'] = team_stats[1]['losses']
-         cur_team['wins5v5'] = team_stats[1]['wins']
-        elif team_stats[0]['teamStatType'] == "RANKED_TEAM_5x5":
-         cur_team['averageGamesPlayed3v3'] = team_stats[1]['averageGamesPlayed']
-         cur_team['losses3v3'] = team_stats[1]['losses']
-         cur_team['wins3v3'] = team_stats[1]['wins']
-         cur_team['averageGamesPlayed5v5'] = team_stats[0]['averageGamesPlayed']      
-         cur_team['losses5v5'] = team_stats[0]['losses']
-         cur_team['wins5v5'] = team_stats[0]['wins']
-        else:
-         self.print_stuff("Error, team stats messed up", error = True)
-      
-        try:
-         self.cursor.execute(add_team, cur_team)
-        except mysql.connector.Error as err:
-         if err.errno != 1062 or self.suppress_duplicates == False:
-          self.print_stuff("%s, Team: %s" % (err.errno, y), error= True)
-   #       print add_team % cur_team
-        else:
-         self.print_stuff("Updated Team", override = True)
-
-     
-       all_teams = []
-       team_history = True
-       try:
-        for n in cur_team_full['matchHistory']:
-         cur_team_history = {}
-         cur_team_history['fullId'] = y
-         for z in ['assists', 'date', 'deaths', 'gameId', 'gameMode', 'invalid', 'kills', 'mapId', 'opposingTeamKills', 'opposingTeamName', 'win']:
-          cur_team_history[z] = n[z]
-         all_teams.append(cur_team_history)
-
-     
-  #        OLD METHOD
-  #        try:
-  # #         print(add_team_history, cur_team_history)
-  #         self.cursor.execute(add_team_history, cur_team_history)
-  #        
-  #        except mysql.connector.Error as err:
-  #         if err.errno != 1062:
-  #          print "%s, Team: %s" (err.msg, y)
-  #       
-  #        else:
-  #         print "Updated Team-History"
-        
-       except:
-        team_history = False
-        self.print_stuff( "No Team-History")
-
-
-       if team_history == True:
-        try:
-         self.cursor.executemany(add_team_history, all_teams)
-   #       print test_team
-        except mysql.connector.Error as err:
-         if err.errno != 1062 or self.suppress_duplicates == False:
-          self.print_stuff("Error %s" % err.errno, error = True)
-        else:
-         self.print_stuff("Updated Team-History")
-      
-      
-      
-
-       all_teams = []
-       team_roster = True
-       try:  
-        for n in cur_team_full['roster']['memberList']:
-         cur_team_roster = {}
-  #        print(n)
-         for z in ['inviteDate', 'joinDate', 'playerId', 'status']:
-  #         print n[z]
-          try:
-           cur_team_roster[z] = n[z]
-          except:
-           cur_team_roster[z] = None
-         if cur_team_full['roster']['ownerId'] == n['playerId']:
-          cur_team_roster['isCaptain'] = True
-         else:
-          cur_team_roster['isCaptain'] = False
-         cur_team_roster['teamId'] = y
-         all_teams.append(cur_team_roster)
-       
-  #      OLD METHOD
-  #        try:
-  #         self.cursor.execute(add_team_roster, cur_team_roster)
-  #        except mysql.connector.Error as err:
-  #         if err.errno != 1062:
-  #          print "%s, Team: %s" % (err.msg, y)
-  #        else:
-  #         print "Updated Team-Roster"
-       except:
-        team_roster = False
-        if (cur_team_full['status']=="DISBANDED"):
-         self.print_stuff("No Team-Roster -- Team Disbanded")
-        else:
-         self.print_stuff("No Team-Roster")
-     
-     
-       if team_roster == True:
-        try:
-         self.cursor.executemany(add_team_roster, all_teams)
-   #       print test_team
-        except mysql.connector.Error as err:
-         if err.errno != 1062 or self.suppress_duplicates == False:
-          self.print_stuff("Error %s" % err.errno, error = True)
-        else:
-         self.print_stuff("Updated Team-Roster")
-     
-      except:
-       self.print_stuff("Error, no team information; %s" % (y), error=True)
-    
-
-     self.print_stuff("Finished %s of %s" % (stop, len(team_ids)), progress=True)
-     if stop == len(team_ids):
-      self.print_stuff("Finished %s of %s" % (stop, len(team_ids)),  header2=True)
-    
-     self.cnx.commit()
-        
-    if checkTeams==True:
-     self.print_stuff("Checking Teams")
-     self.update_table("checkteams", feedback=feedback, suppress_duplicates = self.suppress_duplicates, ignore_skiplist=ignore_skiplist, allow_updates=allow_updates)
-    
-
-  if table=="iterate":
-     self.print_stuff("Iterating through possible summonerIds.", header1 = True)
-     team_ids = []
-     err = []
-     for x in xrange(int(round(iteratestart, -1)/10), int((round(iteratestart+iterate, -1)/10))):
-     
-      stop = (((x+1)*10) if ((x+1)*10) <= int(iteratestart+iterate) else (int(iteratestart+iterate)))
-      if x*10 == stop:
-       continue
-
-      ids = []
-      for y in xrange((x*10), (x+1)*10):
-       ids.append(y)
- #      print ids
-     
-      finished = False
-      while finished == False:
-       self.wait()
-       try:
- #        print "trying"
-        teams = self.w.get_teams_for_summoners(ids)
-      
-       except riotwatcher.riotwatcher.LoLException as err:
-  #       print str(err)
-        if str(err) == "Game data not found":
-         finished = True
-        elif (str(err) == "Too many requests" and 'Retry-After' in err.headers) or str(err) == "Unauthorized" or str(err) == "Blacklisted key":
- #         print "New Key" 
-         drop = False
-         if str(err) == "Blacklisted key":
-          self.print_stuff("Blacklisted key, using new key, dropping current.")
-          drop = True
-         if str(err) == "Unauthorized":
-          self.print_stuff("Unauthorized, using new key")
-         if len(self.keydict)==1:
-          self.print_stuff("Too many requests, not enough keys.", error=True)
-          if hangwait == False:
-           break 
-          else:
-           time.sleep(0.5)
-         self.new_key(drop=drop)
-        elif (str(err) == "Too many requests" and 'Retry-After' not in err.headers):
-         time.sleep(0.01)
-        else:
-
-         self.print_stuff("%s, Team: %s" % (str(err), ids), error= True)
-         break
-       else:
-        finished = True
-
-      if err == "Game data not found":
-        err = []
-        continue
-       
- #      print teams 
-      for y in teams:
-       for z in teams[y]:
-        team_ids.append(z['fullId'])
- #         print v
-      self.print_stuff("Finished %s of %s, %s teams found." % (int(stop-iteratestart), int(iterate), len(team_ids)), progress = True)
-     self.print_stuff("Updating Team Table", header2 = True)
-     self.update_table("team", teamIds = team_ids, checkTeams = checkTeams, feedback=feedback, suppress_duplicates = self.suppress_duplicates, allow_updates = allow_updates, ignore_skiplist=ignore_skiplist)  
- 
- 
-  if table=="all":
-   self.update_table("challenger", feedback=feedback, queue= queue, suppress_duplicates = self.suppress_duplicates)
-   self.update_table("master", feedback=feedback, queue = queue, suppress_duplicates = self.suppress_duplicates)
-   self.update_table("team", checkTeams =True, feedback=feedback, suppress_duplicates = self.suppress_duplicates, allow_updates = allow_updates, ignore_skiplist=ignore_skiplist)
      
   if table=="match":
     add_match = ("INSERT IGNORE INTO matches "
@@ -1733,29 +918,37 @@ class Scraper:
      while finished == False:
       self.wait()
       try: 
-       cur_match_raw = self.w.get_match( x, region=None, include_timeline=timeline)
-     
-      except riotwatcher.riotwatcher.LoLException as err:
-       if (str(err) == "Too many requests" and 'Retry-After' in err.headers) or str(err) == "Unauthorized" or str(err) == "Blacklisted key":
- #         print "New Key" 
-         drop = False
-         if str(err) == "Blacklisted key":
-          self.print_stuff("Blacklisted key, using new key, dropping current.")
-          drop = True
-         if str(err) == "Unauthorized":
-          self.print_stuff("Unauthorized, using new key")
-         if len(self.keydict)==1:
-          self.print_stuff("Too many requests, not enough keys.", error=True)
-          if hangwait == False:
-           break 
-          else:
-           time.sleep(0.5)
-         self.new_key(drop=drop)
-       elif (str(err) == "Too many requests" and 'Retry-After' not in err.headers):
-        time.sleep(0.01) 
-       else:
-        self.print_stuff("%s, Match: %s -- Request" % (str(err), x),error=True)
-        break
+       cur_match_raw = self.w.match.by_id( self._region, x)
+      except HTTPError as err:
+        if err.response.status_code == 429:
+            print('We should retry in {} seconds.'.format(e.headers['Retry-After']))
+#             print('this retry-after is handled by default by the RiotWatcher library')
+#             print('future requests wait until the retry-after time passes')
+        elif err.response.status_code == 404:
+            print('Match not found.')
+        else:
+            raise
+#       except riotwatcher.riotwatcher.LoLException as err:
+#        if (str(err) == "Too many requests" and 'Retry-After' in err.headers) or str(err) == "Unauthorized" or str(err) == "Blacklisted key":
+#  #         print "New Key" 
+#          drop = False
+#          if str(err) == "Blacklisted key":
+#           self.print_stuff("Blacklisted key, using new key, dropping current.")
+#           drop = True
+#          if str(err) == "Unauthorized":
+#           self.print_stuff("Unauthorized, using new key")
+#          if len(self.keydict)==1:
+#           self.print_stuff("Too many requests, not enough keys.", error=True)
+#           if hangwait == False:
+#            break 
+#           else:
+#            time.sleep(0.5)
+#          self.new_key(drop=drop)
+#        elif (str(err) == "Too many requests" and 'Retry-After' not in err.headers):
+#         time.sleep(0.01) 
+#        else:
+#         self.print_stuff("%s, Match: %s -- Request" % (str(err), x),error=True)
+#         break
  #      except:
  #       print "Other Error"
       
@@ -1776,15 +969,25 @@ class Scraper:
         cur_match[y] = None
     
   #     print cur_match
-      try:
-       self.cursor.execute(add_match, cur_match)
-      except mysql.connector.Error as err:
+      if self.SQL == True:
+          try:
+           self.cursor.execute(add_match, cur_match)
+          except mysql.connector.Error as err:
 
-        if err.errno != 1062 or self.suppress_duplicates == False:
-         self.print_stuff("%s, Match: %s -- Match" % (err.errno, x), error= True)
-  #       print add_team % cur_team
+            if err.errno != 1062 or self.suppress_duplicates == False:
+             self.print_stuff("%s, Match: %s -- Match" % (err.errno, x), error= True)
+      #       print add_team % cur_team
+          else:
+            self.print_stuff("Updated Match")
       else:
-        self.print_stuff("Updated Match")
+        with open(path.join(os.getcwd(), 'matchfiles/matches_%s.tsv' % self.mat), "ab+") as csvfile:
+            swriter = csv.DictWriter(csvfile, restval = 'NULL', delimiter='\t',
+                            quotechar='|', quoting=csv.QUOTE_MINIMAL, fieldnames=sorted(cur_match.keys()))
+            maxsize = 150000000
+            size = os.fstat(csvfile.fileno()).st_size 
+            if size > maxsize:
+                self.mat = self.mat + 1
+            swriter.writerow(cur_match)
       all_match_teams = []
       all_match_bans = []
     
@@ -1811,23 +1014,59 @@ class Scraper:
        cur_match_teams['matchId'] = x
        all_match_teams.append(cur_match_teams)
       
-      try:
-       self.cursor.executemany(add_match_teams, all_match_teams)
-      except mysql.connector.Error as err:
-       if err.errno != 1062 or self.suppress_duplicates == False:
-        self.print_stuff("%s, Match: %s -- Teams" % (err.errno, x), error=True)
-      else:
-       self.print_stuff("Updated Match-Teams")
-   
-
-      try:
-       self.cursor.executemany(add_match_bans, all_match_bans)
-      except mysql.connector.Error as err:
-       if err.errno != 1062 or self.suppress_duplicates == False:
-        self.print_stuff("%s, Match: %s -- Bans" % (err.errno, x), error=True)
-      else:
-       self.print_stuff("Updated Match-Bans")
-      
+      if self.SQL == True:
+          try:
+           self.cursor.executemany(add_match_teams, all_match_teams)
+          except mysql.connector.Error as err:
+           if err.errno != 1062 or self.suppress_duplicates == False:
+            self.print_stuff("%s, Match: %s -- Teams" % (err.errno, x), error=True)
+          else:
+           self.print_stuff("Updated Match-Teams")
+          try:
+           self.cursor.executemany(add_match_bans, all_match_bans)
+          except mysql.connector.Error as err:
+           if err.errno != 1062 or self.suppress_duplicates == False:
+            self.print_stuff("%s, Match: %s -- Bans" % (err.errno, x), error=True)
+          else:
+           self.print_stuff("Updated Match-Bans")
+      else: 
+        with open(path.join(os.getcwd(), 'matchfiles/match_teams_%s.tsv' % self.mteam), "ab+") as csvfile:
+            fieldnames = ['matchId','teamId','baronKills','dominionVictoryScore','dragonKills','firstBaron',
+                        'firstBlood','firstDragon','firstInhibitor','firstRiftHerald','firstTower','inhibitorKills',
+                        'riftHeraldKills','towerKills','vilemawKills','winner']
+            swriter = csv.DictWriter(csvfile, restval = 'NULL', delimiter='\t',
+                            quotechar='|', quoting=csv.QUOTE_MINIMAL, fieldnames=fieldnames)
+            maxsize = 15000000 
+            size = os.fstat(csvfile.fileno()).st_size
+            if size > maxsize:
+                self.mteam = self.mteam + 1
+            for row in all_match_teams:
+                if 'bans' in row:
+                    if row['bans'] == "":
+                        del row['bans']
+                        swriter.writerow(row)
+                    elif row['bans'] == None:
+                        del row['bans']
+                        swriter.writerow(row)
+                    else:
+                        with open(path.join(os.getcwd(), 'matchfiles/match_teams_broke_%s.tsv' % self.mteam), "ab+") as csvfile2:
+                            swriter2 = csv.DictWriter(csvfile2, delimiter = '\t',
+                                quotechar='|', quoting=csv.QUOTE_MINIMAL, fieldnames=row.keys())
+                            swriter2.writerow(row)
+                else:
+                    swriter.writerow(row)
+        if len(all_match_bans)>0:   
+            with open(path.join(os.getcwd(), 'matchfiles/match_team_bans_%s.tsv' % self.mtb), "ab+") as csvfile:
+                fieldnames = ['matchId','teamId','pickTurn','championId']
+                swriter = csv.DictWriter(csvfile, restval = 'NULL', delimiter='\t',
+                                quotechar='|', quoting=csv.QUOTE_MINIMAL, fieldnames=fieldnames)
+                maxsize = 15000000 
+                size = os.fstat(csvfile.fileno()).st_size
+                if size > maxsize:
+                    self.mtb = self.mtb + 1
+                for row in all_match_bans:
+                    swriter.writerow(row)         
+       
        
            
   #     print cur_match_raw
@@ -1850,11 +1089,21 @@ class Scraper:
       
       
      if timeline == True and cur_match_raw:  
+      try: 
+       cur_match_raw["timeline"] = self.w.match.timeline_by_match(self._region, x)
+      except HTTPError as err:
+        if err.response.status_code == 429:
+            print('We should retry in {} seconds.'.format(e.headers['Retry-After']))
+#             print('this retry-after is handled by default by the RiotWatcher library')
+#             print('future requests wait until the retry-after time passes')
+        elif err.response.status_code == 404:
+            print('Timeline not found.')
+        else:
+            raise
       if "timeline" in cur_match_raw:
        cur_match_timeline_raw = cur_match_raw["timeline"]   
        intervals = cur_match_timeline_raw["frameInterval"]
-       timeline_events = []
-       assists = []   
+
        for y in cur_match_timeline_raw["frames"]:
 
         cur_timeline = []
@@ -1892,6 +1141,8 @@ class Scraper:
    #      timeline_events = []
   #       print x
         if "events" in y:
+         timeline_events = []
+         assists = []   
 
 
          for z in y["events"]:
@@ -1963,44 +1214,82 @@ class Scraper:
    #        print cur_timeline_event
 
    #       print timeline_events 
+         if self.SQL == True:
+             try:
+              self.cursor.executemany(add_match_timeline_event, timeline_events)
 
+             except mysql.connector.Error as err:
+              if err.errno != 1062 or self.suppress_duplicates == False:
+               self.print_stuff("%s, Match: %s, Timeframe: %s-- Timeline-Events" % (err.errno, x, cur_match_timeline_raw["frames"].index(y)), error=True)
+             else:
+              self.print_stuff("Updated Timeline-Events")
+         else: 
+            with open(path.join(os.getcwd(), 'matchfiles/match_timeline_events_%s.tsv' % self.mte), "ab+") as csvfile:
 
-    #       stop
+                fieldnames = ['eventId','matchId','summonerId','timelineTimestamp','eventTimestamp','ascendedType',
+                                'assistingParticipants','buildingType','creatorId','eventType','itemAfter','itemBefore','itemId',
+                                'killerId','laneType','levelUpType','monsterType','pointCaptured','positionX','positionY','skillSlot',
+                                'teamId','towerType','victimId','wardType']
+                swriter = csv.DictWriter(csvfile, restval = 'NULL', delimiter='\t',
+                                quotechar='|', quoting=csv.QUOTE_MINIMAL, fieldnames=fieldnames)
+                maxsize = 150000000
+                size = os.fstat(csvfile.fileno()).st_size 
+                if size > maxsize:
+                    self.mte = self.mte + 1
+                for row in timeline_events:
+                    swriter.writerow(row)            
+         if assists != []:
+             if self.SQL == True:
+                  try:
+           #         print assists
+                   self.cursor.executemany(add_match_timeline_event_assist, assists)
+
+                  except mysql.connector.Error as err:
+                   if err.errno != 1062 or self.suppress_duplicates == False:
+                    self.print_stuff("%s, Match: %s, Timeframe: %s-- Timeline-Events-Assists" % (err.errno, x, cur_match_timeline_raw["frames"].index(y)),error=True)
+                  else:
+                   self.print_stuff("Updated Timeline-Assists")
+             else:
+                with open(path.join(os.getcwd(), 'matchfiles/match_timeline_events_assist_%s.tsv' % self.mtea), "ab+") as csvfile:
+                    fieldnames = ['eventId', 'matchId', 'assistId']
+                    swriter = csv.DictWriter(csvfile, restval = 'NULL', delimiter='\t',
+                                    quotechar='|', quoting=csv.QUOTE_MINIMAL, fieldnames = fieldnames)
+                    maxsize = 150000000
+                    size = os.fstat(csvfile.fileno()).st_size 
+                    if size > maxsize:
+                        self.mtea = self.mtea + 1
+                    for row in assists:
+                        swriter.writerow(row)   
+            #       stop
     
        
-        
-        try:
-         self.cursor.executemany(add_match_timeline, cur_timeline)
-        except mysql.connector.Error as err:
-         if err.errno != 1062 or self.suppress_duplicates == False:
-          self.print_stuff("%s, Match: %s, Timeframe: %s-- Timeline" % (err.errno, x, cur_match_timeline_raw["frames"].index(y)), error=True)
+        if self.SQL == True:
+            try:
+             self.cursor.executemany(add_match_timeline, cur_timeline)
+            except mysql.connector.Error as err:
+             if err.errno != 1062 or self.suppress_duplicates == False:
+              self.print_stuff("%s, Match: %s, Timeframe: %s-- Timeline" % (err.errno, x, cur_match_timeline_raw["frames"].index(y)), error=True)
+            else:
+             self.print_stuff("Updated Timeline")
         else:
-         self.print_stuff("Updated Timeline")
+            with open(path.join(os.getcwd(), 'matchfiles/match_timeline_%s.tsv' % self.mt), "ab+") as csvfile:
+                fieldnames = ['matchId','summonerId','timestamp','currentGold','positionX','positionY',
+                                'minionsKilled','level','jungleMinionsKilled','totalGold','dominionScore','participantId',
+                                'xp','teamScore','timelineInterval']
+                maxsize = 150000000 
+                size = os.fstat(csvfile.fileno()).st_size
+                if size > maxsize:
+                    self.mt = self.mt + 1
+                swriter = csv.DictWriter(csvfile, restval = 'NULL', delimiter='\t',
+                                quotechar='|', quoting=csv.QUOTE_MINIMAL, fieldnames=fieldnames)
+                for row in cur_timeline:
+                    swriter.writerow(row)   
       
       
       
       
    #       if killerid == 0, Minion
-       if timeline_events != []:
-         try:
-          self.cursor.executemany(add_match_timeline_event, timeline_events)
 
-         except mysql.connector.Error as err:
-          if err.errno != 1062 or self.suppress_duplicates == False:
-           self.print_stuff("%s, Match: %s, Timeframe: %s-- Timeline-Events" % (err.errno, x, cur_match_timeline_raw["frames"].index(y)), error=True)
-         else:
-          self.print_stuff("Updated Timeline-Events")
-
-       if assists != []:
-          try:
-    #         print assists
-           self.cursor.executemany(add_match_timeline_event_assist, assists)
-
-          except mysql.connector.Error as err:
-           if err.errno != 1062 or self.suppress_duplicates == False:
-            self.print_stuff("%s, Match: %s, Timeframe: %s-- Timeline-Events-Assists" % (err.errno, x, cur_match_timeline_raw["frames"].index(y)),error=True)
-          else:
-           self.print_stuff("Updated Timeline-Assists")
        self.print_stuff("Finished Timeline")
       else:
        self.print_stuff("No Timeline Data; %s" % (x))
@@ -2094,44 +1383,100 @@ class Scraper:
   #      if feedback == "all":
   #       print cur_match_participant["nodeCapture"]
        all_match_participants.append(cur_match_participant)
-      try:
-       self.cursor.executemany(add_match_participant_rune, runes)
-      except mysql.connector.Error as err:
-       if err.errno != 1062 or self.suppress_duplicates == False:
-        self.print_stuff("%s, Match: %s -- Rune" % (err.errno, x),error=True)
-#          print add_team % cur_team
-      else:
-       self.print_stuff("Updated Rune")
+      if self.SQL == True:
+          try:
+           self.cursor.executemany(add_match_participant_rune, runes)
+          except mysql.connector.Error as err:
+           if err.errno != 1062 or self.suppress_duplicates == False:
+            self.print_stuff("%s, Match: %s -- Rune" % (err.errno, x),error=True)
+    #          print add_team % cur_team
+          else:
+           self.print_stuff("Updated Rune")      
       
-      try:
-       self.cursor.executemany(add_match_participant_mastery, masteries)
-      except mysql.connector.Error as err:
-       if err.errno != 1062 or self.suppress_duplicates == False:
-        self.print_stuff("%s, Match: %s -- Mastery" % (err.errno, x),error=True)
-#          print add_team % cur_team
-      else:
-       self.print_stuff("Updated Mastery")    
+          try:
+           self.cursor.executemany(add_match_participant_mastery, masteries)
+          except mysql.connector.Error as err:
+           if err.errno != 1062 or self.suppress_duplicates == False:
+            self.print_stuff("%s, Match: %s -- Mastery" % (err.errno, x),error=True)
+    #          print add_team % cur_team
+          else:
+           self.print_stuff("Updated Mastery")    
+          try:
+           self.cursor.executemany(add_match_participant_delta, deltas)
+          except mysql.connector.Error as err:
+           if err.errno != 1062 or self.suppress_duplicates == False:
+            self.print_stuff("%s, Match: %s -- Delta" % (err.errno, x),error=True)
+    #          print add_team % cur_team
+          else:
+           self.print_stuff("Updated Participant Deltas") 
 
-      try:
-       self.cursor.executemany(add_match_participant_delta, deltas)
-      except mysql.connector.Error as err:
-       if err.errno != 1062 or self.suppress_duplicates == False:
-        self.print_stuff("%s, Match: %s -- Delta" % (err.errno, x),error=True)
-#          print add_team % cur_team
-      else:
-       self.print_stuff("Updated Participant Deltas") 
-
-      try: 
-       self.cursor.executemany(add_match_participants, all_match_participants)
- #       print "Try"
+          try: 
+           self.cursor.executemany(add_match_participants, all_match_participants)
+     #       print "Try"
     
-      except mysql.connector.Error as err:
-       if err.errno != 1062 or self.suppress_duplicates == False:
-        self.print_stuff("%s, Match: %s-- Participant" % (err.errno, x), error=True)
- #       print add_team % cur_team
-      else:
-       self.print_stuff("Updated Match-Participants")
+          except mysql.connector.Error as err:
+           if err.errno != 1062 or self.suppress_duplicates == False:
+            self.print_stuff("%s, Match: %s-- Participant" % (err.errno, x), error=True)
+     #       print add_team % cur_team
+          else:
+           self.print_stuff("Updated Match-Participants")
 
+      else: 
+        with open(path.join(os.getcwd(), 'matchfiles/match_participant_runes_%s.tsv' % self.mpr), "ab+") as csvfile:
+            fieldnames = ['matchId','summonerId','rank','runeId']
+            swriter = csv.DictWriter(csvfile, restval = 'NULL', delimiter='\t',
+                            quotechar='|', quoting=csv.QUOTE_MINIMAL, fieldnames=fieldnames)
+            maxsize = 150000000 
+            size = os.fstat(csvfile.fileno()).st_size
+            if size > maxsize:
+                self.mpr = self.mpr + 1                            
+            for row in runes:
+                swriter.writerow(row)   
+        with open(path.join(os.getcwd(), 'matchfiles/match_participant_masteries_%s.tsv' % self.mpm), "ab+") as csvfile:
+            fieldnames = ['matchId','summonerId','rank','masteryId']
+            swriter = csv.DictWriter(csvfile, restval = 'NULL', delimiter='\t',
+                            quotechar='|', quoting=csv.QUOTE_MINIMAL, fieldnames=fieldnames)
+            maxsize = 150000000 
+            size = os.fstat(csvfile.fileno()).st_size
+            if size > maxsize:
+                self.mpm = self.mpm + 1
+            for row in masteries:
+                swriter.writerow(row)   
+        with open(path.join(os.getcwd(), 'matchfiles/match_participant_deltas_%s.tsv' % self.mpd), "ab+") as csvfile:
+            fieldnames = ['matchId','summonerId','deltaName','deltaTimeframe', 'value']
+            swriter = csv.DictWriter(csvfile, restval = 'NULL', delimiter='\t',
+                            quotechar='|', quoting=csv.QUOTE_MINIMAL, fieldnames=fieldnames)
+            maxsize = 150000000 
+            size = os.fstat(csvfile.fileno()).st_size
+            if size > maxsize:
+                self.mpd = self.mpd + 1
+            for row in deltas:
+                swriter.writerow(row)   
+        with open(path.join(os.getcwd(), 'matchfiles/match_participants_%s.tsv' % self.mp), "ab+") as csvfile:
+            fieldnames = ['matchId', 'championId','highestAchievedSeasonTier',
+                            'participantId','profileIcon','matchHistoryUri','summonerName','summonerId',
+                            'spell1Id','spell2Id','assists','champLevel','combatPlayerScore','deaths','doubleKills',
+                            'firstBloodAssist','firstBloodKill','firstInhibitorAssist',
+                            'firstInhibitorKill','firstTowerAssist','firstTowerKill','goldEarned','goldSpent',
+                            'inhibitorKills','item0','item1','item2','item3','item4','item5','item6','killingSprees','kills',
+                            'largestCriticalStrike','largestKillingSpree','largestMultiKill','magicDamageDealt',
+                            'magicDamageDealtToChampions','magicDamageTaken','minionsKilled','neutralMinionsKilled',
+                            'neutralMinionsKilledEnemyJungle','neutralMinionsKilledTeamJungle','nodeCapture','nodeCaptureAssist',
+                            'nodeNeutralize','nodeNeutralizeAssist','objectivePlayerScore','pentaKills','physicalDamageDealt',
+                            'physicalDamageDealtToChampions','physicalDamageTaken','quadrakills','sightWardsBoughtInGame','teamObjective',
+                            'totalDamageDealt','totalDamageDealtToChampions','totalDamageTaken','totalHeal','totalPlayerScore',
+                            'totalScoreRank','totalTimeCrowdControlDealt','totalUnitsHealed','towerKills','tripleKills',
+                            'trueDamageDealt','trueDamageDealtToChampions','trueDamageTaken','unrealKills','visionWardsBoughtInGame',
+                            'wardsKilled','wardsPlaced','winner','teamId','lane','role']
+            swriter = csv.DictWriter(csvfile, restval = 'NULL', delimiter='\t',
+                            quotechar='|', quoting=csv.QUOTE_MINIMAL, fieldnames=fieldnames)
+            maxsize = 150000000 
+            size = os.fstat(csvfile.fileno()).st_size
+            if size > maxsize:
+                self.mp = self.mp + 1
+            for row in all_match_participants:
+                row['summonerName'] = unicode(row['summonerName']).encode("utf-8")
+                swriter.writerow(row)  
          ##OLD
 #        try: 
 #         self.cursor.execute(add_match_participants, cur_match_participant)
@@ -2143,6 +1488,84 @@ class Scraper:
 #   #       print add_team % cur_team
 #        else:
 #         self.print_stuff("Updated Match-Participants")
+        
+        
+        if teamIds != False:
+            add_team_history = ("INSERT IGNORE INTO team_history "
+                 "(fullId, assists, date, deaths, gameId, gameMode, invalid, kills, mapId, opposingTeamKills, opposingTeamName, win)" 
+                 "VALUES (%(fullId)s, %(assists)s, %(date)s, %(deaths)s, %(gameId)s, %(gameMode)s, %(invalid)s, %(kills)s, %(mapId)s, %(opposingTeamKills)s, %(opposingTeamName)s, %(win)s)" )
+            all_teams = {}
+            ## we have to figure out how we're gonna get these fields, 
+        
+            all_teams['gameId'] = int(x)
+            all_teams['gameMode'] = cur_match_raw['matchMode']
+            all_teams['date'] = cur_match_raw['matchCreation']
+            all_teams['mapId'] = cur_match_raw['mapId']
+            all_teams['fullId'] = teamIds[0]
+        
+            focus = {}
+            opposing = {}
+        
+            for row in all_match_participants:
+                if int(row['teamId']) == int(teamIds[1]):
+                    for cur in ['assists', 'deaths', 'kills']:
+                        if cur in focus:
+                            focus[cur] = focus[cur] + row[cur]
+                        else:
+                            focus[cur] = row[cur]
+                    focus['win'] = row['winner']
+                else:
+                    if 'kills' in opposing:
+                        opposing['kills'] = opposing['kills'] + row['kills']
+                    else:
+                        opposing['kills'] = row['kills']
+    #             y['stats']
+#             print focus, opposing
+            all_teams['opposingTeamKills'] = opposing['kills']
+            all_teams['assists'] = focus['assists']
+            all_teams['deaths'] = focus['deaths']
+            all_teams['kills'] = focus['kills']
+            all_teams['win'] = focus['win']
+#             self.cursor.execute("SELECT name FROM team WHERE fullId = '%s' " % teamId[2])
+#             teamname = self.cursor.fetchall()
+#             all_teams['opposingTeamName'] = [x[0] for x in teamname][0]
+            finished = False
+            attempt = 0
+            failed = False
+            all_teams['opposingTeamName'] = teamIds[2]
+            ## we no longer have a "Teams" api.
+#             while finished == False:
+#                 if attempt < 50:
+#                     try:
+#                         oppteams_data = self.w.get_teams([teamIds[2]])
+#                         all_teams['opposingTeamName'] = oppteams_data[teamIds[2]]['name']
+#                         finished = True
+#                     except:
+#                         attempt += 1
+#                         pass
+#                 else:
+#                     failed = True
+#                     finished = True
+#             if failed == True:
+#                 with open(path.join(os.getcwd(), 'failed_teamnames.tsv'), "ab+") as csvfile:
+#                     fieldnames = ['matchId']
+#                     swriter = csv.DictWriter(csvfile, restval = 'NULL', delimiter='\t',
+#                                     quotechar='|', quoting=csv.QUOTE_MINIMAL, fieldnames=fieldnames)
+#                     swriter.writerow({'matchId': int(x)})   
+                    
+            ##NOT SURE WHAT THIS MEANS YET
+            all_teams['invalid'] = False
+        
+ 
+            try:
+             self.cursor.execute(add_team_history, all_teams)
+            #       print test_team
+            except mysql.connector.Error as err:
+             if err.errno != 1062 or suppress_duplicates == False:
+              self.print_stuff("Error %s" % err.errno, error = True)
+              print(all_teams)
+            else:
+             self.print_stuff("Updated Team-History")  
         
         
         

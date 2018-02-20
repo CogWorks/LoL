@@ -236,7 +236,11 @@ class Scraper:
  #  if riotwatcher.RiotWatcher(key).can_make_request():
 
   if self.rate.lower() == "fast":
-   self.w = riotwatcher.RiotWatcher(self.key, limits=(riotwatcher.RateLimit(1500,10), riotwatcher.RateLimit(90000,600)))
+#   Not sure how to establish fast rate limit with new api, need to implement new solution?
+#    self.w = riotwatcher.RiotWatcher(self.key, limits=(riotwatcher.RateLimit(1500,10), riotwatcher.RateLimit(90000,600)))
+
+    self.w = riotwatcher.RiotWatcher(self.key)
+    
   else:
    self.w = riotwatcher.RiotWatcher(self.key)
   self.wait()

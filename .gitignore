@@ -8,6 +8,13 @@ credentials.py
 =======
 reference.py
 
+testCode/
+
+build/
+
+dist/
+
+lol.egg-info/
 
 credentials-cogsci.py
 

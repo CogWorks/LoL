@@ -143,17 +143,18 @@ class Scraper:
 
 
  def wait(self):
-  if self.rate_limiting == True:
-   while not self.w.can_make_request():
-    time.sleep(0.1)
-   if self.rate == "Slow":
-    rate1 = 10
-    rate2 = 500
-   else:
-    rate1 = 3000
-    rate2 = 180000
-   if self.keydict[self.key][0] >= rate1 or self.keydict[self.key][1] >= rate2:
-    self.new_key()
+    ## need new wait() function? 
+#   if self.rate_limiting == True:
+#    while not self.w.can_make_request():
+#     time.sleep(0.1)
+#    if self.rate == "Slow":
+#     rate1 = 10
+#     rate2 = 500
+#    else:
+#     rate1 = 3000
+#     rate2 = 180000
+#    if self.keydict[self.key][0] >= rate1 or self.keydict[self.key][1] >= rate2:
+#     self.new_key()
     
     
  def write_to_skip(self, teams):

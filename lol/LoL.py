@@ -143,6 +143,7 @@ class Scraper:
 
 
  def wait(self):
+    return
     ## need new wait() function? 
 #   if self.rate_limiting == True:
 #    while not self.w.can_make_request():

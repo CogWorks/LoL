@@ -1,6 +1,12 @@
 LoL v1.0.2
 ==================
 
+In order for this code to work, you must have mysql installed. On mac, the easiest way to do this is through brew,
+
+$ /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+
+$ brew install mysql
+
 
 Make copy of credentials-template.py and rename it credentials.py
 create a file called skiplist.tsv

@@ -20,10 +20,11 @@ change directory to the repo.
 
 
 $ python setup.py install
+
 $ easy_install LoL
 
 if "easy_install LoL" does not immediately work, try:
-$ pip install LoL
+$ pip install .
 
 
 
